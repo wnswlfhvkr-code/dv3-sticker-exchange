@@ -424,40 +424,42 @@ function App() {
 
             </div>
           ) : (
-            // [2. 상세 3x3 스티커 도감일 때는 단독 거대 레이아웃 (가로폭 최대 640px 중앙 집중)]
+            // [2. 상세 3x3 스티커 도감일 때는 단독 거대 레이아웃 (가로폭 최대 800px 중앙 집중)]
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', textAlign: 'left', marginBottom: '2.5rem', width: '100%' }} className="detail-work-layout">
               
               {/* 3x3 대형 그리드 영역 */}
-              <div className="glass-card" style={{ width: '100%', maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-                  {/* 카테고리 목록 뒤로가기 버튼이 헤더 타이틀 왼쪽에 위치 */}
-                  <button 
-                    className="btn btn-outline" 
-                    onClick={() => setSelectedCategoryId(null)}
-                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
-                  >
-                    <ArrowLeft size={14} /> 카테고리 목록
-                  </button>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
-                    <BookOpen size={18} color="var(--primary-color)" />
-                    <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '700' }}>
-                      {currentCategory.name} (3x3 도감)
-                    </h2>
+              <div className="glass-card" style={{ width: '100%', maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem', flexWrap: 'nowrap' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    {/* 카테고리 목록 뒤로가기 버튼이 헤더 타이틀 왼쪽에 단단하게 위치 */}
+                    <button 
+                      className="btn btn-outline" 
+                      onClick={() => setSelectedCategoryId(null)}
+                      style={{ padding: '0.45rem 0.9rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}
+                    >
+                      <ArrowLeft size={14} /> 카테고리 목록
+                    </button>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <BookOpen size={18} color="var(--primary-color)" />
+                      <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '700', color: '#fff' }}>
+                        {currentCategory.name} (3x3 도감)
+                      </h2>
+                    </div>
                   </div>
                   {getCategoryImage(currentCategory.id) && (
                     <div style={{ 
-                      width: '36px', 
-                      height: '48px', 
-                      borderRadius: '4px', 
+                      width: '42px', 
+                      height: '56px', 
+                      borderRadius: '6px', 
                       overflow: 'hidden', 
                       border: '1px solid var(--border-color)', 
-                      background: 'rgba(0,0,0,0.2)',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                      background: 'rgba(0,0,0,0.3)',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       cursor: 'pointer',
-                      marginLeft: 'auto'
+                      flexShrink: 0
                     }} title="대표 이미지 크게 대조하려면 클릭">
                       <img 
                         src={getCategoryImage(currentCategory.id)} 
@@ -576,7 +578,7 @@ function App() {
               </div>
 
               {/* 하단 바구니 영역 (그리드 바로 밑에 배치) */}
-              <div className="glass-card" style={{ width: '100%', maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem' }}>
+              <div className="glass-card" style={{ width: '100%', maxWidth: '800px', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem' }}>
                 <div>
                   <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
                     <ShoppingCart color="var(--primary-color)" size={18} />
