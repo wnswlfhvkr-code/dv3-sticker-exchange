@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { dbService } from './supabaseClient';
-import { stickersData, gradeColors } from './stickersData';
+import { stickersData, totalPages, getPageImage } from './stickersData';
 import { 
   Sparkles, 
-  Plus, 
-  Search, 
+  ArrowLeft, 
   MessageCircle, 
   User, 
   RefreshCw, 
   Trash2, 
   Info, 
   Check, 
-  X, 
-  ArrowRightLeft,
+  Plus, 
+  Search,
+  ShoppingCart,
+  Tag,
   BookOpen,
-  Maximize2
+  X
 } from 'lucide-react';
 
 function App() {
@@ -22,153 +23,95 @@ function App() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dbMode, setDbMode] = useState(dbService.isMock ? '로컬' : 'Supabase 실시간');
+
+  // 사용자 모드: null (진입 대기), 'buyer' (구해요), 'seller' (팝니다)
+  const [role, setRole] = useState(() => localStorage.getItem('dv3_role') || null);
   
-  // 내 상태 (LocalStorage 연동)
+  // 선택된 스티커북 페이지 (1 ~ 23)
+  const [selectedPage, setSelectedPage] = useState(null);
+
+  // 내 프로필 정보 (LocalStorage 연동)
   const [myNickname, setMyNickname] = useState(() => localStorage.getItem('dv3_my_nickname') || '');
   const [myContact, setMyContact] = useState(() => localStorage.getItem('dv3_my_contact') || '');
-  const [myHaves, setMyHaves] = useState(() => JSON.parse(localStorage.getItem('dv3_my_haves')) || []);
-  const [myWants, setMyWants] = useState(() => JSON.parse(localStorage.getItem('dv3_my_wants')) || []);
-
-  // 카드 검색/선택 관련 임시 상태
-  const [searchHaveQuery, setSearchHaveQuery] = useState('');
-  const [searchWantQuery, setSearchWantQuery] = useState('');
-  const [haveResults, setHaveResults] = useState([]);
-  const [wantResults, setWantResults] = useState([]);
-
-  // 글 등록 모달 관련 상태
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formNickname, setFormNickname] = useState('');
-  const [formContact, setFormContact] = useState('');
-  const [formHaves, setFormHaves] = useState([]);
-  const [formWants, setFormWants] = useState([]);
-  const [formHaveSearch, setFormHaveSearch] = useState('');
-  const [formWantSearch, setFormWantSearch] = useState('');
-  const [formHaveResults, setFormHaveResults] = useState([]);
-  const [formWantResults, setFormWantResults] = useState([]);
-
-  // 실물 도감 기능 상태
-  const [showGallery, setShowGallery] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
-
-  // 필터 및 검색
-  const [filterMode, setFilterMode] = useState('all'); // 'all', 'matched'
-  const [searchFilterQuery, setSearchFilterQuery] = useState('');
-
-  // 내 글 목록 추적용 (삭제 권한 보장용)
-  const [myPostIds, setMyPostIds] = useState(() => JSON.parse(localStorage.getItem('dv3_my_post_ids')) || []);
-
-  // --- 이미지 파일명 리스트 구성 (00 ~ 22) ---
-  const stickerImages = Array.from({ length: 23 }, (_, i) => {
-    const num = String(i).padStart(2, '0');
-    return `/sticker_images/KakaoTalk_20260604_202516419_${num.toString()}.png`;
+  
+  // 내가 선택한 스티커 목록 (ID 배열 형태, 예: ['1-3', '2-5'])
+  // 역할에 따라 '가진 것' 또는 '구하는 것'으로 자동 분류됨
+  const [mySelectedStickers, setMySelectedStickers] = useState(() => {
+    return JSON.parse(localStorage.getItem('dv3_selected_stickers')) || [];
   });
 
-  // --- 최초 및 변경 효과 ---
+  // 검색 및 필터 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterMatchedOnly, setFilterMatchedOnly] = useState(false);
+
+  // 내가 작성한 글 ID 목록 (삭제 권한용)
+  const [myPostIds, setMyPostIds] = useState(() => JSON.parse(localStorage.getItem('dv3_my_post_ids')) || []);
+
+  // --- 최초 로드 및 동기화 ---
   useEffect(() => {
     fetchData();
   }, []);
 
   useEffect(() => {
+    if (role) {
+      localStorage.setItem('dv3_role', role);
+    } else {
+      localStorage.removeItem('dv3_role');
+    }
     localStorage.setItem('dv3_my_nickname', myNickname);
     localStorage.setItem('dv3_my_contact', myContact);
-    localStorage.setItem('dv3_my_haves', JSON.stringify(myHaves));
-    localStorage.setItem('dv3_my_wants', JSON.stringify(myWants));
-  }, [myNickname, myContact, myHaves, myWants]);
+    localStorage.setItem('dv3_selected_stickers', JSON.stringify(mySelectedStickers));
+  }, [role, myNickname, myContact, mySelectedStickers]);
 
-  // --- 스티커 검색 검색창 로직 ---
-  const handleStickerSearch = (query, setResults) => {
-    if (!query.trim()) {
-      setResults([]);
-      return;
-    }
-    const filtered = stickersData.filter(sticker => 
-      sticker.name.toLowerCase().includes(query.toLowerCase())
-    );
-    setResults(filtered.slice(0, 5)); // 최대 5개 노출
-  };
-
-  const addStickerToMyList = (sticker, type) => {
-    if (type === 'have') {
-      if (!myHaves.some(item => item.id === sticker.id)) {
-        setMyHaves([...myHaves, sticker]);
-      }
-      setSearchHaveQuery('');
-      setHaveResults([]);
-    } else {
-      if (!myWants.some(item => item.id === sticker.id)) {
-        setMyWants([...myWants, sticker]);
-      }
-      setSearchWantQuery('');
-      setWantResults([]);
-    }
-  };
-
-  const removeStickerFromMyList = (id, type) => {
-    if (type === 'have') {
-      setMyHaves(myHaves.filter(item => item.id !== id));
-    } else {
-      setMyWants(myWants.filter(item => item.id !== id));
-    }
-  };
-
-  // 모달용 카드 추가/삭제
-  const addStickerToFormList = (sticker, type) => {
-    if (type === 'have') {
-      if (!formHaves.some(item => item.id === sticker.id)) {
-        setFormHaves([...formHaves, sticker]);
-      }
-      setFormHaveSearch('');
-      setFormHaveResults([]);
-    } else {
-      if (!formWants.some(item => item.id === sticker.id)) {
-        setFormWants([...formWants, sticker]);
-      }
-      setFormWantSearch('');
-      setFormWantResults([]);
-    }
-  };
-
-  const removeStickerFromFormList = (id, type) => {
-    if (type === 'have') {
-      setFormHaves(formHaves.filter(item => item.id !== id));
-    } else {
-      setFormWants(formWants.filter(item => item.id !== id));
-    }
-  };
-
-  // --- 데이터 패칭 ---
+  // --- 데이터 불러오기 ---
   const fetchData = async () => {
     setLoading(true);
     const { data, error } = await dbService.fetchPosts();
-    if (error) {
-      alert("데이터를 가져오는 도중 오류가 발생했습니다.");
-    } else {
+    if (!error) {
       setPosts(data || []);
     }
     setLoading(false);
   };
 
-  // --- 게시글 등록 ---
-  const handleFormSubmit = async (e) => {
+  // --- 스티커 선택 핸들러 (토글 방식) ---
+  const toggleStickerSelection = (stickerId) => {
+    if (mySelectedStickers.includes(stickerId)) {
+      setMySelectedStickers(mySelectedStickers.filter(id => id !== stickerId));
+    } else {
+      setMySelectedStickers([...mySelectedStickers, stickerId]);
+    }
+  };
+
+  // --- 해당 페이지에서 몇 개의 스티커가 선택되었는지 집계 ---
+  const getSelectedCountInPage = (pageNumber) => {
+    return mySelectedStickers.filter(id => id.startsWith(`${pageNumber}-`)).length;
+  };
+
+  // --- 교환 게시글 등록하기 ---
+  const handleSubmitPost = async (e) => {
     e.preventDefault();
-    if (!formNickname.trim() || !formContact.trim()) {
-      alert("닉네임과 연락처(오픈프로필 등)를 입력해주세요!");
+    if (!myNickname.trim() || !myContact.trim()) {
+      alert("닉네임과 연락처(카톡 오픈챗 등)를 입력해주세요!");
       return;
     }
-    if (formHaves.length === 0 && formWants.length === 0) {
-      alert("가진 카드나 필요한 카드 중 최소 하나는 입력해야 합니다.");
+    if (mySelectedStickers.length === 0) {
+      alert("최소 한 개 이상의 스티커를 스티커북에서 선택해 주세요!");
       return;
     }
 
-    // 이름 목록으로 변환하여 저장
-    const havesNames = formHaves.map(s => s.name);
-    const wantsNames = formWants.map(s => s.name);
+    // 역할에 맞춰 가진 스티커 / 구하는 스티커 데이터 매핑
+    // 판매자는 선택한 스티커를 가진 카드(haves)로, 구매자는 구하는 카드(wants)로 등록합니다.
+    const haves = role === 'seller' ? mySelectedStickers : [];
+    const wants = role === 'buyer' ? mySelectedStickers : [];
+
+    // 역할 표시 접미사를 닉네임에 붙여 식별을 용이하게 합니다.
+    const displayNickname = `${myNickname} [${role === 'seller' ? '판매자' : '구매자'}]`;
 
     const { data, error } = await dbService.addPost(
-      formNickname,
-      formContact,
-      havesNames,
-      wantsNames
+      displayNickname,
+      myContact,
+      haves,
+      wants
     );
 
     if (error) {
@@ -179,81 +122,69 @@ function App() {
         setMyPostIds(newPostIds);
         localStorage.setItem('dv3_my_post_ids', JSON.stringify(newPostIds));
       }
-      setIsModalOpen(false);
-      // 폼 초기화
-      setFormNickname('');
-      setFormContact('');
-      setFormHaves([]);
-      setFormWants([]);
+      alert("성공적으로 교환 게시판에 등록되었습니다!");
       fetchData();
     }
   };
 
   // --- 게시글 삭제 ---
   const handleDeletePost = async (id) => {
-    if (!window.confirm("정말 이 교환글을 삭제하시겠습니까?")) return;
-    
+    if (!window.confirm("정말 이 교환 요청글을 삭제하시겠습니까?")) return;
     const { error } = await dbService.removePost(id);
-    if (error) {
-      alert("삭제 실패: " + error.message);
-    } else {
+    if (!error) {
       const updatedPostIds = myPostIds.filter(postId => postId !== id);
       setMyPostIds(updatedPostIds);
       localStorage.setItem('dv3_my_post_ids', JSON.stringify(updatedPostIds));
       fetchData();
+    } else {
+      alert("삭제 실패: " + error.message);
     }
   };
 
-  // --- 내 조건 복사하기 ---
-  const copyMySetupToForm = () => {
-    setFormNickname(myNickname);
-    setFormContact(myContact);
-    setFormHaves([...myHaves]);
-    setFormWants([...myWants]);
-  };
-
-  // --- 매칭 알고리즘 연산 함수 ---
+  // --- 100% 매칭 엔진 연산 ---
+  // 매칭 기준:
+  // 내가 구매자(buyer)일 때: 상대가 판매자(seller)이고, 상대의 haves와 내 wants(mySelectedStickers)의 교집합이 존재하면 매칭!
+  // 내가 판매자(seller)일 때: 상대가 구매자(buyer)이고, 상대의 wants와 내 haves(mySelectedStickers)의 교집합이 존재하면 매칭!
   const checkMatching = (post) => {
     const postHaves = post.haves || [];
     const postWants = post.wants || [];
 
-    const myHavesNames = myHaves.map(s => s.name);
-    const myWantsNames = myWants.map(s => s.name);
+    let matchedItems = [];
+    let isMatched = false;
 
-    // 1. 내가 줄 수 있는 것 중 상대가 원하는 것 교집합
-    const giveToThem = myHavesNames.filter(name => postWants.includes(name));
-    
-    // 2. 상대가 줄 수 있는 것 중 내가 원하는 것 교집합
-    const takeFromThem = postHaves.filter(name => myWantsNames.includes(name));
+    if (role === 'buyer') {
+      // 내 구함 목록과 상대의 보유 목록 비교
+      matchedItems = postHaves.filter(id => mySelectedStickers.includes(id));
+      isMatched = matchedItems.length > 0;
+    } else if (role === 'seller') {
+      // 내 보유 목록과 상대의 구함 목록 비교
+      matchedItems = postWants.filter(id => mySelectedStickers.includes(id));
+      isMatched = matchedItems.length > 0;
+    }
 
-    // 완전 일치 매칭 (둘 다 최소 1개 이상 겹침)
-    const isPerfectMatch = giveToThem.length > 0 && takeFromThem.length > 0;
-    
     return {
-      isPerfectMatch,
-      giveToThem,
-      takeFromThem,
-      matchScore: giveToThem.length + takeFromThem.length
+      isMatched,
+      matchedItems,
+      matchCount: matchedItems.length
     };
   };
 
-  // 필터링 및 매칭 분석된 포스트 목록
-  const analyzedPosts = posts.map(post => {
-    const matchAnalysis = checkMatching(post);
-    return { ...post, matchAnalysis };
+  // 게시글 정보 정제
+  const parsedPosts = posts.map(post => {
+    const analysis = checkMatching(post);
+    return { ...post, analysis };
   });
 
-  // 최종 필터 적용
-  const filteredPosts = analyzedPosts.filter(post => {
-    if (filterMode === 'matched' && !post.matchAnalysis.isPerfectMatch) {
+  // 필터링 적용
+  const filteredPosts = parsedPosts.filter(post => {
+    if (filterMatchedOnly && !post.analysis.isMatched) {
       return false;
     }
-    if (searchFilterQuery.trim()) {
-      const query = searchFilterQuery.toLowerCase();
-      const nameMatch = post.nickname.toLowerCase().includes(query);
-      const haveMatch = post.haves.some(h => h.toLowerCase().includes(query));
-      const wantMatch = post.wants.some(w => w.toLowerCase().includes(query));
-      return nameMatch || haveMatch || wantMatch;
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const nicknameMatch = post.nickname.toLowerCase().includes(query);
+      const itemsMatch = [...(post.haves || []), ...(post.wants || [])].some(id => id.includes(query));
+      return nicknameMatch || itemsMatch;
     }
     return true;
   });
@@ -264,523 +195,450 @@ function App() {
       <header>
         <div className="logo-container">
           <h1 className="logo-text">DRAGON VILLAGE 3</h1>
-          <div className="sub-logo-text">STICKER EXCHANGE CENTER</div>
+          <div className="sub-logo-text">STICKER BOOK MATCHING CENTER</div>
         </div>
-        <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+        <div style={{ marginTop: '0.5rem' }}>
           <span className="badge badge-have" style={{ textTransform: 'none' }}>
-            서버 상태: {dbMode} 모드
+            서버 연결: {dbMode}
           </span>
-          <button 
-            className="btn btn-outline" 
-            style={{ padding: '0.2rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-            onClick={() => setShowGallery(!showGallery)}
-          >
-            <BookOpen size={14} /> {showGallery ? "실물 도감 닫기" : "📖 실물 도감 앨범 보기"}
-          </button>
         </div>
       </header>
 
-      {/* 실물 도감 갤러리 섹션 */}
-      {showGallery && (
-        <section className="glass-card" style={{ marginBottom: '2rem', border: '1px solid rgba(139, 92, 246, 0.4)' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', color: '#a78bfa' }}>
-            <BookOpen />
-            드빌 3 실물 스티커 캡쳐 앨범
-          </h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            아래 이미지를 클릭하여 실물 카드 번호 및 명칭을 선명하게 확인해 보세요.
-          </p>
+      {/* 역할이 지정되지 않은 첫 홈화면 (Landing Gateway) */}
+      {role === null && (
+        <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', margin: '3rem 0' }}>
+          <h2 style={{ fontSize: '1.8rem', fontWeight: '700' }}>원하시는 거래 역할을 선택해 주세요</h2>
+          <p style={{ color: 'var(--text-secondary)' }}>스티커북 페이지 매칭 시스템에 오신 것을 환영합니다.</p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', width: '100%', maxWidth: '700px' }} className="gateway-grid">
+            <div 
+              className="glass-card" 
+              style={{ cursor: 'pointer', padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+              onClick={() => setRole('buyer')}
+            >
+              <ShoppingCart size={48} color="#ef4444" />
+              <h3 style={{ fontSize: '1.5rem', margin: 0, color: '#f87171' }}>구해요 (구매자)</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                부족한 스티커를 카테고리별로 선택하여 구하는 글을 올립니다.
+              </p>
+            </div>
 
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
-            gap: '1rem',
-            maxHeight: '400px',
-            overflowY: 'auto',
-            padding: '0.5rem'
-          }}>
-            {stickerImages.map((src, index) => (
-              <div 
-                key={index} 
-                style={{ 
-                  position: 'relative', 
-                  borderRadius: '10px', 
-                  overflow: 'hidden', 
-                  cursor: 'pointer',
-                  border: '1px solid var(--border-color)',
-                  aspectRatio: '3/4'
-                }}
-                className="gallery-item"
-                onClick={() => setSelectedImage(src)}
-              >
-                <img 
-                  src={src} 
-                  alt={`드빌3 스티커 도감 ${index + 1}`} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-                <div style={{ 
-                  position: 'absolute', 
-                  bottom: 0, 
-                  left: 0, 
-                  right: 0, 
-                  background: 'rgba(0,0,0,0.7)', 
-                  padding: '0.2rem', 
-                  fontSize: '0.75rem', 
-                  textAlign: 'center' 
-                }}>
-                  페이지 {index + 1}
-                </div>
-              </div>
-            ))}
+            <div 
+              className="glass-card" 
+              style={{ cursor: 'pointer', padding: '3rem 2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+              onClick={() => setRole('seller')}
+            >
+              <Tag size={48} color="#10b981" />
+              <h3 style={{ fontSize: '1.5rem', margin: 0, color: '#34d399' }}>팝니다 (판매자)</h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+                남는 중복 스티커를 페이지별로 선택하여 파는 글을 올립니다.
+              </p>
+            </div>
           </div>
         </section>
       )}
 
-      {/* 내 매칭 설정 카드 */}
-      <section className="glass-card" style={{ marginBottom: '2rem' }}>
-        <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-          <Sparkles color="#fbbf24" fill="#fbbf24" />
-          내 교환 프로필 설정
-        </h2>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '1.5rem' }}>
-          내 닉네임과 보유/필요 스티커를 설정하면 아래 게시판에서 실시간 매칭률이 계산됩니다.
-        </p>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', textAlign: 'left' }} className="profile-grid">
-          <div className="form-group">
-            <label><User size={14} style={{ marginRight: '4px' }} /> 내 닉네임</label>
-            <input 
-              type="text" 
-              placeholder="예: 드래곤마스터" 
-              value={myNickname}
-              onChange={(e) => setMyNickname(e.target.value)}
-            />
-          </div>
-          <div className="form-group">
-            <label><MessageCircle size={14} style={{ marginRight: '4px' }} /> 내 연락처 (카톡 오픈채팅 주소 등)</label>
-            <input 
-              type="text" 
-              placeholder="예: open.kakao.com/o/..." 
-              value={myContact}
-              onChange={(e) => setMyContact(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginTop: '1rem' }} className="sticker-selection-grid">
-          {/* 가진 카드 설정 */}
-          <div style={{ textAlign: 'left' }}>
-            <label>내가 가진 스티커 (중복)</label>
-            <div style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="스티커 이름 검색..." 
-                value={searchHaveQuery}
-                onChange={(e) => {
-                  setSearchHaveQuery(e.target.value);
-                  handleStickerSearch(e.target.value, setHaveResults);
-                }}
-              />
-              {haveResults.length > 0 && (
-                <div className="sticker-search-result">
-                  {haveResults.map(sticker => (
-                    <div 
-                      key={sticker.id} 
-                      className="sticker-item"
-                      onClick={() => addStickerToMyList(sticker, 'have')}
-                    >
-                      {sticker.name} <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>({sticker.grade} / {sticker.type})</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="tag-container">
-              {myHaves.map(sticker => (
-                <span key={sticker.id} className="sticker-tag">
-                  {sticker.name}
-                  <button onClick={() => removeStickerFromMyList(sticker.id, 'have')}><X size={12} /></button>
-                </span>
-              ))}
-              {myHaves.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>가진 스티커를 검색해 추가하세요.</span>}
-            </div>
+      {/* 역할이 정해졌을 때 노출되는 교환 관리 영역 */}
+      {role !== null && (
+        <>
+          {/* 뒤로가기 및 역할 변경 단추 */}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: '1.5rem' }}>
+            <button 
+              className="btn btn-outline"
+              onClick={() => {
+                setRole(null);
+                setSelectedPage(null);
+                setMySelectedStickers([]);
+              }}
+              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
+            >
+              <ArrowLeft size={16} /> 역할 선택 홈으로 돌아가기 (선택 초기화)
+            </button>
           </div>
 
-          {/* 필요한 카드 설정 */}
-          <div style={{ textAlign: 'left' }}>
-            <label>내가 구하는 스티커</label>
-            <div style={{ position: 'relative' }}>
-              <input 
-                type="text" 
-                placeholder="스티커 이름 검색..." 
-                value={searchWantQuery}
-                onChange={(e) => {
-                  setSearchWantQuery(e.target.value);
-                  handleStickerSearch(e.target.value, setWantResults);
-                }}
-              />
-              {wantResults.length > 0 && (
-                <div className="sticker-search-result">
-                  {wantResults.map(sticker => (
-                    <div 
-                      key={sticker.id} 
-                      className="sticker-item"
-                      onClick={() => addStickerToMyList(sticker, 'want')}
-                    >
-                      {sticker.name} <span style={{ fontSize: '0.8rem', opacity: 0.7 }}>({sticker.grade} / {sticker.type})</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="tag-container">
-              {myWants.map(sticker => (
-                <span key={sticker.id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.4)' }}>
-                  {sticker.name}
-                  <button onClick={() => removeStickerFromMyList(sticker.id, 'want')}><X size={12} /></button>
-                </span>
-              ))}
-              {myWants.length === 0 && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>구하는 스티커를 검색해 추가하세요.</span>}
-            </div>
-          </div>
-        </div>
-      </section>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', textAlign: 'left', marginBottom: '2.5rem' }} className="main-work-grid">
+            
+            {/* 왼쪽 영역: 카테고리 앨범 또는 3x3 9 그리드 선택기 */}
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              
+              {selectedPage === null ? (
+                // 카테고리(페이지) 리스트 뷰
+                <>
+                  <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <BookOpen size={20} color="var(--primary-color)" />
+                    스티커북 페이지 선택 ({role === 'buyer' ? '구하는' : '파는'} 스티커 추가)
+                  </h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    총 23개 페이지 중 스티커가 들어있는 페이지를 클릭해 3x3 슬롯을 열어주세요.
+                  </p>
 
-      {/* 리스트 헤더 및 액션바 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button 
-            className={`btn ${filterMode === 'all' ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setFilterMode('all')}
-          >
-            전체 글 보기
-          </button>
-          <button 
-            className={`btn ${filterMode === 'matched' ? 'btn-secondary' : 'btn-outline'}`}
-            onClick={() => setFilterMode('matched')}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
-          >
-            <Sparkles size={16} /> 100% 매칭 교환만 보기
-          </button>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, justifySelf: 'flex-end', maxWidth: '400px' }}>
-          <div style={{ position: 'relative', width: '100%' }}>
-            <input 
-              type="text" 
-              placeholder="닉네임 또는 스티커 이름 검색..." 
-              value={searchFilterQuery}
-              onChange={(e) => setSearchFilterQuery(e.target.value)}
-              style={{ width: '100%', paddingRight: '2.5rem' }}
-            />
-            <Search size={18} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          </div>
-          <button 
-            className="btn btn-outline" 
-            onClick={fetchData} 
-            title="새로고침"
-            style={{ padding: '0.75rem' }}
-          >
-            <RefreshCw size={18} className={loading ? 'spin-anim' : ''} />
-          </button>
-          <button 
-            className="btn btn-primary"
-            onClick={() => {
-              setIsModalOpen(true);
-              copyMySetupToForm();
-            }}
-            style={{ whiteSpace: 'nowrap' }}
-          >
-            <Plus size={18} /> 글 올리기
-          </button>
-        </div>
-      </div>
-
-      {/* 게시글 목록 */}
-      {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 0', gap: '1rem' }}>
-          <RefreshCw size={32} className="spin-anim" />
-          <p>스티커 목록 로딩 중...</p>
-        </div>
-      ) : filteredPosts.length === 0 ? (
-        <div className="glass-card" style={{ padding: '4rem 2rem', color: 'var(--text-secondary)' }}>
-          등록된 교환 글이 없거나 필터와 매칭되는 조건이 없습니다.<br />
-          첫 교환 글을 올려 교환을 시작해보세요!
-        </div>
-      ) : (
-        <div className="grid-container">
-          {filteredPosts.map(post => {
-            const isMyPost = myPostIds.includes(post.id);
-            const { isPerfectMatch, giveToThem, takeFromThem } = post.matchAnalysis;
-
-            return (
-              <div 
-                key={post.id} 
-                className={`glass-card ${isPerfectMatch ? 'matching-card' : ''}`}
-                style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
-              >
-                <div>
-                  {/* 상단 닉네임 및 매칭 뱃지 */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: '700', fontSize: '1.15rem' }}>{post.nickname}</span>
-                        {isMyPost && <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}>내 글</span>}
-                      </div>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        {new Date(post.created_at).toLocaleString('ko-KR', { hour12: false }).slice(0, -3)}
-                      </span>
-                    </div>
-
-                    {isPerfectMatch && (
-                      <span className="badge badge-match">
-                        ⚡ 교환 매칭 성사!
-                      </span>
-                    )}
+                  <div style={{ 
+                    display: 'grid', 
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                    gap: '1rem',
+                    maxHeight: '450px',
+                    overflowY: 'auto',
+                    padding: '0.5rem'
+                  }}>
+                    {Array.from({ length: totalPages }).map((_, idx) => {
+                      const pageNum = idx + 1;
+                      const selectedCount = getSelectedCountInPage(pageNum);
+                      return (
+                        <div 
+                          key={pageNum}
+                          className="glass-card"
+                          style={{ 
+                            padding: '0.5rem', 
+                            cursor: 'pointer', 
+                            position: 'relative', 
+                            aspectRatio: '3/4',
+                            overflow: 'hidden',
+                            border: selectedCount > 0 ? '2px solid var(--primary-color)' : '1px solid var(--border-color)'
+                          }}
+                          onClick={() => setSelectedPage(pageNum)}
+                        >
+                          <img 
+                            src={getPageImage(pageNum)} 
+                            alt={`도감 ${pageNum}페이지`} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4, position: 'absolute', top: 0, left: 0 }}
+                          />
+                          <div style={{ 
+                            position: 'absolute', 
+                            inset: 0, 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            justifyContent: 'space-between',
+                            padding: '0.5rem',
+                            background: 'rgba(10, 8, 20, 0.4)'
+                          }}>
+                            <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{pageNum} 페이지</span>
+                            {selectedCount > 0 && (
+                              <span className="badge badge-match" style={{ alignSelf: 'flex-start', animation: 'none' }}>
+                                선택: {selectedCount}개
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-
-                  {/* 가진/원하는 스티커 리스트 */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                    <div>
-                      <div style={{ fontSize: '0.85rem', color: '#34d399', fontWeight: '700', marginBottom: '0.25rem' }}>가진 스티커</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                        {post.haves && post.haves.map((haveName, idx) => (
-                          <span 
-                            key={idx} 
-                            className="sticker-tag" 
-                            style={{ 
-                              background: 'rgba(16, 185, 129, 0.1)', 
-                              borderColor: 'rgba(16, 185, 129, 0.3)',
-                              color: '#a7f3d0'
-                            }}
-                          >
-                            {haveName}
-                          </span>
-                        ))}
-                        {(!post.haves || post.haves.length === 0) && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>없음</span>}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div style={{ fontSize: '0.85rem', color: '#f87171', fontWeight: '700', marginBottom: '0.25rem' }}>필요한 스티커</div>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
-                        {post.wants && post.wants.map((wantName, idx) => (
-                          <span 
-                            key={idx} 
-                            className="sticker-tag" 
-                            style={{ 
-                              background: 'rgba(239, 68, 68, 0.1)', 
-                              borderColor: 'rgba(239, 68, 68, 0.3)',
-                              color: '#fca5a5'
-                            }}
-                          >
-                            {wantName}
-                          </span>
-                        ))}
-                        {(!post.wants || post.wants.length === 0) && <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>없음</span>}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 100% 매칭 세부 정보 */}
-                  {isPerfectMatch && (
-                    <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', padding: '0.75rem', marginBottom: '1.2rem', fontSize: '0.85rem' }}>
-                      <div style={{ fontWeight: '700', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.25rem', marginBottom: '0.4rem' }}>
-                        <ArrowRightLeft size={14} /> 교환 상세 시나리오
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                        <div>🟢 상대방에게 제공: <strong style={{ color: '#fff' }}>{giveToThem.join(', ')}</strong></div>
-                        <div>🔴 상대방으로부터 받음: <strong style={{ color: '#fff' }}>{takeFromThem.join(', ')}</strong></div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 하단 액션 버튼 */}
-                <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
-                  <a 
-                    href={post.contact.startsWith('http') ? post.contact : `https://${post.contact}`}
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="btn btn-secondary"
-                    style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.9rem' }}
-                  >
-                    <MessageCircle size={16} /> 연락 및 교환하기
-                  </a>
-                  {isMyPost && (
+                </>
+              ) : (
+                // 3x3 9 그리드 스티커 선택창
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <BookOpen size={20} color="var(--primary-color)" />
+                      스티커북 {selectedPage}페이지 9 그리드
+                    </h2>
                     <button 
                       className="btn btn-outline" 
-                      onClick={() => handleDeletePost(post.id)}
-                      style={{ padding: '0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                      title="내 글 삭제"
+                      onClick={() => setSelectedPage(null)}
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                     >
-                      <Trash2 size={16} />
+                      <ArrowLeft size={12} /> 페이지 목록
                     </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
+                  </div>
+                  
+                  <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }} className="grid-details-layout">
+                    {/* 실물 도감 썸네일 미리보기 */}
+                    <div style={{ width: '140px', flexShrink: 0, border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden' }}>
+                      <img src={getPageImage(selectedPage)} alt="도감 실물" style={{ width: '100%', display: 'block' }} />
+                      <div style={{ background: 'rgba(0,0,0,0.6)', padding: '0.25rem', fontSize: '0.75rem', textAlign: 'center' }}>실물 도감 대조</div>
+                    </div>
 
-      {/* 글 올리기 모달 */}
-      {isModalOpen && (
-        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
-            <h2 style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Plus color="var(--primary-color)" /> 교환 요청 등록
-            </h2>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
+                        왼쪽 실물 사진의 1번(좌상단)부터 9번(우하단) 슬롯 구조에 맞게 클릭하여 선택하세요.
+                      </p>
+                      
+                      {/* 3x3 바둑판 그리드 */}
+                      <div style={{ 
+                        display: 'grid', 
+                        gridTemplateColumns: 'repeat(3, 1fr)', 
+                        gap: '0.75rem',
+                        aspectRatio: '1'
+                      }}>
+                        {Array.from({ length: 9 }).map((_, slotIdx) => {
+                          const slotNum = slotIdx + 1;
+                          const stickerId = `${selectedPage}-${slotNum}`;
+                          const isSelected = mySelectedStickers.includes(stickerId);
 
-            <form onSubmit={handleFormSubmit} style={{ textAlign: 'left' }}>
-              <div className="form-group">
-                <label>닉네임</label>
-                <input 
-                  type="text" 
-                  placeholder="예: 카드콜렉터" 
-                  value={formNickname}
-                  onChange={(e) => setFormNickname(e.target.value)}
-                  required
-                />
-              </div>
+                          return (
+                            <div 
+                              key={stickerId}
+                              onClick={() => toggleStickerSelection(stickerId)}
+                              style={{ 
+                                display: 'flex', 
+                                flexDirection: 'column', 
+                                alignItems: 'center', 
+                                justifyContent: 'center', 
+                                border: isSelected ? '2px solid #a855f7' : '1px solid var(--border-color)',
+                                borderRadius: '8px', 
+                                cursor: 'pointer',
+                                background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.2)',
+                                fontWeight: isSelected ? '700' : '400'
+                              }}
+                              className="slot-item"
+                            >
+                              <span style={{ fontSize: '1.2rem', color: isSelected ? '#c084fc' : 'var(--text-secondary)' }}>
+                                {slotNum}번
+                              </span>
+                              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                slot {slotNum}
+                              </span>
+                              {isSelected && (
+                                <Check size={14} color="#c084fc" style={{ marginTop: '0.2rem' }} />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
-              <div className="form-group">
-                <label>연락수단 (카카오톡 오픈챗 주소 등)</label>
-                <input 
-                  type="text" 
-                  placeholder="예: open.kakao.com/o/xxxxxx" 
-                  value={formContact}
-                  onChange={(e) => setFormContact(e.target.value)}
-                  required
-                />
-              </div>
-
-              {/* 스티커 등록 */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+            {/* 오른쪽 영역: 닉네임 입력 및 현재 내 선택 바구니 / 글 올리기 폼 */}
+            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <form onSubmit={handleSubmitPost} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', height: '100%' }}>
                 <div>
-                  <label>가진 스티커</label>
-                  <div style={{ position: 'relative' }}>
+                  <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <Sparkles color="#fbbf24" fill="#fbbf24" size={20} />
+                    내 교환 글 올리기 폼
+                  </h2>
+
+                  <div className="form-group">
+                    <label><User size={14} style={{ marginRight: '4px' }} /> 내 닉네임</label>
                     <input 
                       type="text" 
-                      placeholder="검색 후 클릭..." 
-                      value={formHaveSearch}
-                      onChange={(e) => {
-                        setFormHaveSearch(e.target.value);
-                        handleStickerSearch(e.target.value, setFormHaveResults);
-                      }}
+                      placeholder="예: 드래곤러버" 
+                      value={myNickname}
+                      onChange={(e) => setMyNickname(e.target.value)}
+                      required
                     />
-                    {formHaveResults.length > 0 && (
-                      <div className="sticker-search-result">
-                        {formHaveResults.map(sticker => (
-                          <div 
-                            key={sticker.id} 
-                            className="sticker-item"
-                            onClick={() => addStickerToFormList(sticker, 'have')}
-                          >
-                            {sticker.name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                  <div className="tag-container" style={{ minHeight: '80px' }}>
-                    {formHaves.map(sticker => (
-                      <span key={sticker.id} className="sticker-tag">
-                        {sticker.name}
-                        <button type="button" onClick={() => removeStickerFromFormList(sticker.id, 'have')}><X size={10} /></button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
 
-                <div>
-                  <label>필요한 스티커</label>
-                  <div style={{ position: 'relative' }}>
+                  <div className="form-group">
+                    <label><MessageCircle size={14} style={{ marginRight: '4px' }} /> 내 연락처 (카카오톡 오픈프로필 링크 등)</label>
                     <input 
                       type="text" 
-                      placeholder="검색 후 클릭..." 
-                      value={formWantSearch}
-                      onChange={(e) => {
-                        setFormWantSearch(e.target.value);
-                        handleStickerSearch(e.target.value, setFormWantResults);
-                      }}
+                      placeholder="예: open.kakao.com/o/xxxxxx" 
+                      value={myContact}
+                      onChange={(e) => setMyContact(e.target.value)}
+                      required
                     />
-                    {formWantResults.length > 0 && (
-                      <div className="sticker-search-result">
-                        {formWantResults.map(sticker => (
-                          <div 
-                            key={sticker.id} 
-                            className="sticker-item"
-                            onClick={() => addStickerToFormList(sticker, 'want')}
-                          >
-                            {sticker.name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
-                  <div className="tag-container" style={{ minHeight: '80px' }}>
-                    {formWants.map(sticker => (
-                      <span key={sticker.id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.2)', borderColor: 'rgba(239, 68, 68, 0.4)' }}>
-                        {sticker.name}
-                        <button type="button" onClick={() => removeStickerFromFormList(sticker.id, 'want')}><X size={10} /></button>
-                      </span>
-                    ))}
+
+                  {/* 선택한 바구니 요약 */}
+                  <div style={{ marginTop: '1.5rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+                      내가 선택한 스티커 ({mySelectedStickers.length}개 선택됨)
+                    </label>
+                    <div className="tag-container" style={{ minHeight: '120px', maxHeight: '180px', overflowY: 'auto' }}>
+                      {mySelectedStickers.map(id => {
+                        const [p, s] = id.split('-');
+                        return (
+                          <span key={id} className="sticker-tag" style={{ background: role === 'buyer' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)', borderColor: role === 'buyer' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)' }}>
+                            {p}페이지 {s}번
+                            <button type="button" onClick={() => toggleStickerSelection(id)}><X size={10} /></button>
+                          </span>
+                        );
+                      })}
+                      {mySelectedStickers.length === 0 && (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                          왼쪽 스티커북 페이지를 열어 카드를 선택해 주세요.
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-                <button type="button" className="btn btn-outline" onClick={() => setIsModalOpen(false)}>
-                  취소
-                </button>
-                <button type="submit" className="btn btn-primary">
-                  게시물 등록하기
-                </button>
-              </div>
-            </form>
+                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                  <button type="submit" className="btn btn-primary" style={{ width: '100%', padding: '1rem' }}>
+                    {role === 'buyer' ? '🔴 구해요 등록글 올리기' : '🟢 팝니다 등록글 올리기'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
           </div>
-        </div>
+
+          {/* 게시판 리스트 섹션 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                className={`btn ${!filterMatchedOnly ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setFilterMatchedOnly(false)}
+              >
+                전체 등록글 보기
+              </button>
+              <button 
+                className={`btn ${filterMatchedOnly ? 'btn-secondary' : 'btn-outline'}`}
+                onClick={() => setFilterMatchedOnly(true)}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+              >
+                <Sparkles size={16} /> 실시간 매칭글만 보기 ({role === 'buyer' ? '파는 사람' : '구하는 사람'})
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, justifySelf: 'flex-end', maxWidth: '400px' }}>
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input 
+                  type="text" 
+                  placeholder="닉네임 또는 페이지-번호 검색 (예: 1-3)..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  style={{ width: '100%', paddingRight: '2.5rem' }}
+                />
+                <Search size={18} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+              </div>
+              <button 
+                className="btn btn-outline" 
+                onClick={fetchData} 
+                title="새로고침"
+                style={{ padding: '0.75rem' }}
+              >
+                <RefreshCw size={18} className={loading ? 'spin-anim' : ''} />
+              </button>
+            </div>
+          </div>
+
+          {/* 등록된 글 피드 그리드 */}
+          {loading ? (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 0', gap: '1rem' }}>
+              <RefreshCw size={32} className="spin-anim" />
+              <p>교환 피드 데이터 로딩 중...</p>
+            </div>
+          ) : filteredPosts.length === 0 ? (
+            <div className="glass-card" style={{ padding: '4rem 2rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+              조건에 맞는 교환 글이 존재하지 않습니다.<br />
+              상단의 버튼을 눌러 스티커 정보를 올리고 기다려보세요!
+            </div>
+          ) : (
+            <div className="grid-container">
+              {filteredPosts.map(post => {
+                const isMyPost = myPostIds.includes(post.id);
+                const { isMatched, matchedItems } = post.analysis;
+                
+                // 상대가 올린 품목 정보
+                const hasHaves = post.haves && post.haves.length > 0;
+                const hasWants = post.wants && post.wants.length > 0;
+
+                return (
+                  <div 
+                    key={post.id} 
+                    className={`glass-card ${isMatched ? 'matching-card' : ''}`}
+                    style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                  >
+                    <div>
+                      {/* 닉네임 및 매칭 뱃지 */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontWeight: '700', fontSize: '1.1rem' }}>{post.nickname}</span>
+                            {isMyPost && <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}>내 글</span>}
+                          </div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                            {new Date(post.created_at).toLocaleString('ko-KR', { hour12: false }).slice(0, -3)}
+                          </span>
+                        </div>
+
+                        {isMatched && (
+                          <span className="badge badge-match">
+                            ⚡ {role === 'buyer' ? '교환 가능 판매자!' : '교환 가능 구매자!'}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 교환 상품 리스트 */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.2rem' }}>
+                        {hasHaves && (
+                          <div>
+                            <div style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: '700', marginBottom: '0.25rem' }}>보유 카드 (팝니다)</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                              {post.haves.map(id => {
+                                const [p, s] = id.split('-');
+                                return (
+                                  <span key={id} className="sticker-tag" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#a7f3d0' }}>
+                                    {p}페이지 {s}번
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+
+                        {hasWants && (
+                          <div>
+                            <div style={{ fontSize: '0.8rem', color: '#f87171', fontWeight: '700', marginBottom: '0.25rem' }}>구함 카드 (구해요)</div>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                              {post.wants.map(id => {
+                                const [p, s] = id.split('-');
+                                return (
+                                  <span key={id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5' }}>
+                                    {p}페이지 {s}번
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 매칭 상세 내역 */}
+                      {isMatched && (
+                        <div style={{ background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.2)', borderRadius: '8px', padding: '0.6rem', marginBottom: '1rem', fontSize: '0.8rem' }}>
+                          <span style={{ fontWeight: '700', color: '#fbbf24', display: 'block', marginBottom: '0.25rem' }}>
+                            💡 나와 겹치는 카드 ({matchedItems.length}개):
+                          </span>
+                          <span style={{ color: '#fff' }}>
+                            {matchedItems.map(id => {
+                              const [p, s] = id.split('-');
+                              return `${p}페이지 ${s}번`;
+                            }).join(', ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 액션 버튼 */}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+                      <a 
+                        href={post.contact.startsWith('http') ? post.contact : `https://${post.contact}`}
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="btn btn-secondary"
+                        style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem' }}
+                      >
+                        <MessageCircle size={14} /> 연락하기
+                      </a>
+                      {isMyPost && (
+                        <button 
+                          className="btn btn-outline" 
+                          onClick={() => handleDeletePost(post.id)}
+                          style={{ padding: '0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                          title="내 글 삭제"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
 
-      {/* 이미지 라이트박스(확대) 모달 */}
-      {selectedImage && (
-        <div className="modal-overlay" onClick={() => setSelectedImage(null)} style={{ zIndex: 1100 }}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ 
-            maxWidth: '90%', 
-            width: 'auto', 
-            background: 'transparent',
-            border: 'none',
-            boxShadow: 'none',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center'
-          }}>
-            <button className="modal-close" onClick={() => setSelectedImage(null)} style={{ fontSize: '2.5rem', top: '10px', right: '10px' }}>×</button>
-            <img 
-              src={selectedImage} 
-              alt="스티커 도감 원본" 
-              style={{ 
-                maxHeight: '80vh', 
-                maxWidth: '100%', 
-                borderRadius: '12px',
-                boxShadow: '0 0 40px rgba(0,0,0,0.8)',
-                border: '1px solid rgba(255,255,255,0.1)'
-              }}
-            />
-            <p style={{ marginTop: '1rem', color: 'var(--text-secondary)' }}>
-              화면 바깥이나 X 단추를 누르면 닫힙니다.
-            </p>
-          </div>
-        </div>
-      )}
-      
       {/* 푸터 */}
       <footer style={{ marginTop: 'auto', paddingTop: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
-        <p>드래곤 빌리지 3 스티커 교환소 © 2026. All Rights Reserved.</p>
+        <p>드래곤 빌리지 3 스티커 매칭 교환소 © 2026. All Rights Reserved.</p>
         <p style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-          <Info size={14} /> 본 사이트는 개인 교환용이며, 어떠한 상업적 이용 및 공식 연계를 포함하지 않습니다.
+          <Info size={14} /> 본 사이트는 드빌 3 유저 간의 교환 편의 제공을 위해 개인 제작되었습니다.
         </p>
       </footer>
     </div>
