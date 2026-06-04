@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { dbService } from './supabaseClient';
-import { stickersData, totalPages, getPageImage } from './stickersData';
+import { stickersData, categories, getCategoryImage } from './stickersData';
 import { 
   Sparkles, 
   ArrowLeft, 
@@ -15,7 +15,8 @@ import {
   ShoppingCart,
   Tag,
   BookOpen,
-  X
+  X,
+  HelpCircle
 } from 'lucide-react';
 
 function App() {
@@ -27,15 +28,14 @@ function App() {
   // 사용자 모드: null (진입 대기), 'buyer' (구해요), 'seller' (팝니다)
   const [role, setRole] = useState(() => localStorage.getItem('dv3_role') || null);
   
-  // 선택된 스티커북 페이지 (1 ~ 23)
-  const [selectedPage, setSelectedPage] = useState(null);
+  // 선택된 카테고리 ID (null 또는 1 ~ 20)
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
 
   // 내 프로필 정보 (LocalStorage 연동)
   const [myNickname, setMyNickname] = useState(() => localStorage.getItem('dv3_my_nickname') || '');
   const [myContact, setMyContact] = useState(() => localStorage.getItem('dv3_my_contact') || '');
   
   // 내가 선택한 스티커 목록 (ID 배열 형태, 예: ['1-3', '2-5'])
-  // 역할에 따라 '가진 것' 또는 '구하는 것'으로 자동 분류됨
   const [mySelectedStickers, setMySelectedStickers] = useState(() => {
     return JSON.parse(localStorage.getItem('dv3_selected_stickers')) || [];
   });
@@ -82,9 +82,9 @@ function App() {
     }
   };
 
-  // --- 해당 페이지에서 몇 개의 스티커가 선택되었는지 집계 ---
-  const getSelectedCountInPage = (pageNumber) => {
-    return mySelectedStickers.filter(id => id.startsWith(`${pageNumber}-`)).length;
+  // --- 해당 카테고리에서 몇 개의 스티커가 선택되었는지 집계 ---
+  const getSelectedCountInPage = (categoryId) => {
+    return mySelectedStickers.filter(id => id.startsWith(`${categoryId}-`)).length;
   };
 
   // --- 교환 게시글 등록하기 ---
@@ -99,12 +99,8 @@ function App() {
       return;
     }
 
-    // 역할에 맞춰 가진 스티커 / 구하는 스티커 데이터 매핑
-    // 판매자는 선택한 스티커를 가진 카드(haves)로, 구매자는 구하는 카드(wants)로 등록합니다.
     const haves = role === 'seller' ? mySelectedStickers : [];
     const wants = role === 'buyer' ? mySelectedStickers : [];
-
-    // 역할 표시 접미사를 닉네임에 붙여 식별을 용이하게 합니다.
     const displayNickname = `${myNickname} [${role === 'seller' ? '판매자' : '구매자'}]`;
 
     const { data, error } = await dbService.addPost(
@@ -142,9 +138,6 @@ function App() {
   };
 
   // --- 100% 매칭 엔진 연산 ---
-  // 매칭 기준:
-  // 내가 구매자(buyer)일 때: 상대가 판매자(seller)이고, 상대의 haves와 내 wants(mySelectedStickers)의 교집합이 존재하면 매칭!
-  // 내가 판매자(seller)일 때: 상대가 구매자(buyer)이고, 상대의 wants와 내 haves(mySelectedStickers)의 교집합이 존재하면 매칭!
   const checkMatching = (post) => {
     const postHaves = post.haves || [];
     const postWants = post.wants || [];
@@ -153,11 +146,9 @@ function App() {
     let isMatched = false;
 
     if (role === 'buyer') {
-      // 내 구함 목록과 상대의 보유 목록 비교
       matchedItems = postHaves.filter(id => mySelectedStickers.includes(id));
       isMatched = matchedItems.length > 0;
     } else if (role === 'seller') {
-      // 내 보유 목록과 상대의 구함 목록 비교
       matchedItems = postWants.filter(id => mySelectedStickers.includes(id));
       isMatched = matchedItems.length > 0;
     }
@@ -183,11 +174,22 @@ function App() {
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const nicknameMatch = post.nickname.toLowerCase().includes(query);
-      const itemsMatch = [...(post.haves || []), ...(post.wants || [])].some(id => id.includes(query));
+      
+      // 검색 시 "야생몬스터 3번" 등으로 검색하거나 "1-3"으로 검색할 때 모두 대응
+      const itemsMatch = [...(post.haves || []), ...(post.wants || [])].some(id => {
+        const [catId, slot] = id.split('-');
+        const cat = categories.find(c => String(c.id) === catId);
+        const nameMatch = cat ? cat.name.toLowerCase().includes(query) : false;
+        return id.includes(query) || nameMatch || `${cat?.name} ${slot}번`.toLowerCase().includes(query);
+      });
+      
       return nicknameMatch || itemsMatch;
     }
     return true;
   });
+
+  // 선택된 카테고리 정보 찾기
+  const currentCategory = categories.find(c => c.id === selectedCategoryId);
 
   return (
     <div className="app-container">
@@ -208,7 +210,7 @@ function App() {
       {role === null && (
         <section style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', margin: '3rem 0' }}>
           <h2 style={{ fontSize: '1.8rem', fontWeight: '700' }}>원하시는 거래 역할을 선택해 주세요</h2>
-          <p style={{ color: 'var(--text-secondary)' }}>스티커북 페이지 매칭 시스템에 오신 것을 환영합니다.</p>
+          <p style={{ color: 'var(--text-secondary)' }}>스티커북 카테고리 매칭 시스템에 오신 것을 환영합니다.</p>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', width: '100%', maxWidth: '700px' }} className="gateway-grid">
             <div 
@@ -231,14 +233,14 @@ function App() {
               <Tag size={48} color="#10b981" />
               <h3 style={{ fontSize: '1.5rem', margin: 0, color: '#34d399' }}>팝니다 (판매자)</h3>
               <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', textAlign: 'center' }}>
-                남는 중복 스티커를 페이지별로 선택하여 파는 글을 올립니다.
+                남는 중복 스티커를 카테고리별로 선택하여 파는 글을 올립니다.
               </p>
             </div>
           </div>
         </section>
       )}
 
-      {/* 역할이 정해졌을 때 노출되는 교환 관리 영역 */}
+      {/* 역할이 정해졌을 때 노출되는 영역 */}
       {role !== null && (
         <>
           {/* 뒤로가기 및 역할 변경 단추 */}
@@ -247,7 +249,7 @@ function App() {
               className="btn btn-outline"
               onClick={() => {
                 setRole(null);
-                setSelectedPage(null);
+                setSelectedCategoryId(null);
                 setMySelectedStickers([]);
               }}
               style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}
@@ -258,18 +260,18 @@ function App() {
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', textAlign: 'left', marginBottom: '2.5rem' }} className="main-work-grid">
             
-            {/* 왼쪽 영역: 카테고리 앨범 또는 3x3 9 그리드 선택기 */}
+            {/* 왼쪽 영역: 카테고리 리스트 또는 3x3 9 그리드 선택기 */}
             <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               
-              {selectedPage === null ? (
-                // 카테고리(페이지) 리스트 뷰
+              {selectedCategoryId === null ? (
+                // 카테고리 목록 뷰
                 <>
                   <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <BookOpen size={20} color="var(--primary-color)" />
-                    스티커북 페이지 선택 ({role === 'buyer' ? '구하는' : '파는'} 스티커 추가)
+                    스티커북 카테고리 선택 ({role === 'buyer' ? '구하는' : '파는'} 스티커 추가)
                   </h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    총 23개 페이지 중 스티커가 들어있는 페이지를 클릭해 3x3 슬롯을 열어주세요.
+                    정리된 20개 카테고리 목록입니다. 클릭하여 9칸 스티커 그리드를 열어보세요.
                   </p>
 
                   <div style={{ 
@@ -280,12 +282,12 @@ function App() {
                     overflowY: 'auto',
                     padding: '0.5rem'
                   }}>
-                    {Array.from({ length: totalPages }).map((_, idx) => {
-                      const pageNum = idx + 1;
-                      const selectedCount = getSelectedCountInPage(pageNum);
+                    {categories.map((cat) => {
+                      const selectedCount = getSelectedCountInPage(cat.id);
+                      const imgUrl = getCategoryImage(cat.image);
                       return (
                         <div 
-                          key={pageNum}
+                          key={cat.id}
                           className="glass-card"
                           style={{ 
                             padding: '0.5rem', 
@@ -295,13 +297,29 @@ function App() {
                             overflow: 'hidden',
                             border: selectedCount > 0 ? '2px solid var(--primary-color)' : '1px solid var(--border-color)'
                           }}
-                          onClick={() => setSelectedPage(pageNum)}
+                          onClick={() => setSelectedCategoryId(cat.id)}
                         >
-                          <img 
-                            src={getPageImage(pageNum)} 
-                            alt={`도감 ${pageNum}페이지`} 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4, position: 'absolute', top: 0, left: 0 }}
-                          />
+                          {imgUrl ? (
+                            <img 
+                              src={imgUrl} 
+                              alt={cat.name} 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4, position: 'absolute', top: 0, left: 0 }}
+                            />
+                          ) : (
+                            <div style={{ 
+                              position: 'absolute', 
+                              top: 0, 
+                              left: 0, 
+                              width: '100%', 
+                              height: '100%', 
+                              background: 'linear-gradient(135deg, rgba(88, 28, 135, 0.4), rgba(15, 23, 42, 0.6))',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <HelpCircle size={28} color="rgba(255,255,255,0.2)" />
+                            </div>
+                          )}
                           <div style={{ 
                             position: 'absolute', 
                             inset: 0, 
@@ -309,11 +327,11 @@ function App() {
                             flexDirection: 'column', 
                             justifyContent: 'space-between',
                             padding: '0.5rem',
-                            background: 'rgba(10, 8, 20, 0.4)'
+                            background: 'rgba(10, 8, 20, 0.45)'
                           }}>
-                            <span style={{ fontWeight: '700', fontSize: '0.9rem' }}>{pageNum} 페이지</span>
+                            <span style={{ fontWeight: '700', fontSize: '0.85rem', wordBreak: 'keep-all' }}>{cat.name}</span>
                             {selectedCount > 0 && (
-                              <span className="badge badge-match" style={{ alignSelf: 'flex-start', animation: 'none' }}>
+                              <span className="badge badge-match" style={{ alignSelf: 'flex-start', animation: 'none', fontSize: '0.7rem' }}>
                                 선택: {selectedCount}개
                               </span>
                             )}
@@ -329,27 +347,51 @@ function App() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       <BookOpen size={20} color="var(--primary-color)" />
-                      스티커북 {selectedPage}페이지 9 그리드
+                      {currentCategory.name} (9 그리드)
                     </h2>
                     <button 
                       className="btn btn-outline" 
-                      onClick={() => setSelectedPage(null)}
+                      onClick={() => setSelectedCategoryId(null)}
                       style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
                     >
-                      <ArrowLeft size={12} /> 페이지 목록
+                      <ArrowLeft size={12} /> 카테고리 목록
                     </button>
                   </div>
                   
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }} className="grid-details-layout">
                     {/* 실물 도감 썸네일 미리보기 */}
                     <div style={{ width: '140px', flexShrink: 0, border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden' }}>
-                      <img src={getPageImage(selectedPage)} alt="도감 실물" style={{ width: '100%', display: 'block' }} />
-                      <div style={{ background: 'rgba(0,0,0,0.6)', padding: '0.25rem', fontSize: '0.75rem', textAlign: 'center' }}>실물 도감 대조</div>
+                      {getCategoryImage(currentCategory.image) ? (
+                        <>
+                          <img src={getCategoryImage(currentCategory.image)} alt="도감 실물" style={{ width: '100%', display: 'block' }} />
+                          <div style={{ background: 'rgba(0,0,0,0.6)', padding: '0.25rem', fontSize: '0.75rem', textAlign: 'center' }}>실물 도감 대조</div>
+                        </>
+                      ) : (
+                        <div style={{ 
+                          height: '180px', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          padding: '1rem', 
+                          background: 'rgba(255,255,255,0.05)',
+                          textAlign: 'center',
+                          gap: '0.5rem'
+                        }}>
+                          <HelpCircle size={32} color="var(--text-muted)" />
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            실물 캡쳐본<br />준비 중
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     <div style={{ flex: 1 }}>
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                        왼쪽 실물 사진의 1번(좌상단)부터 9번(우하단) 슬롯 구조에 맞게 클릭하여 선택하세요.
+                        {getCategoryImage(currentCategory.image) 
+                          ? "왼쪽 사진의 1번(좌상단)부터 9번(우하단) 슬롯 번호에 맞춰 원하는 자리를 선택해 주세요."
+                          : "상세 이미지가 누락된 카테고리입니다. 인게임 3x3 구조(1~9번)에 맞춰 슬롯 번호를 선택해 주세요."
+                        }
                       </p>
                       
                       {/* 3x3 바둑판 그리드 */}
@@ -361,7 +403,7 @@ function App() {
                       }}>
                         {Array.from({ length: 9 }).map((_, slotIdx) => {
                           const slotNum = slotIdx + 1;
-                          const stickerId = `${selectedPage}-${slotNum}`;
+                          const stickerId = `${currentCategory.id}-${slotNum}`;
                           const isSelected = mySelectedStickers.includes(stickerId);
 
                           return (
@@ -421,7 +463,7 @@ function App() {
                   </div>
 
                   <div className="form-group">
-                    <label><MessageCircle size={14} style={{ marginRight: '4px' }} /> 내 연락처 (카카오톡 오픈프로필 링크 등)</label>
+                    <label><MessageCircle size={14} style={{ marginRight: '4px' }} /> 내 연락처 (오픈카톡 링크 등)</label>
                     <input 
                       type="text" 
                       placeholder="예: open.kakao.com/o/xxxxxx" 
@@ -438,17 +480,18 @@ function App() {
                     </label>
                     <div className="tag-container" style={{ minHeight: '120px', maxHeight: '180px', overflowY: 'auto' }}>
                       {mySelectedStickers.map(id => {
-                        const [p, s] = id.split('-');
+                        const [catId, s] = id.split('-');
+                        const cat = categories.find(c => String(c.id) === catId);
                         return (
                           <span key={id} className="sticker-tag" style={{ background: role === 'buyer' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)', borderColor: role === 'buyer' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)' }}>
-                            {p}페이지 {s}번
+                            {cat ? cat.name : `${catId}페이지`} {s}번
                             <button type="button" onClick={() => toggleStickerSelection(id)}><X size={10} /></button>
                           </span>
                         );
                       })}
                       {mySelectedStickers.length === 0 && (
                         <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                          왼쪽 스티커북 페이지를 열어 카드를 선택해 주세요.
+                          왼쪽 목록에서 카테고리를 눌러 카드를 선택해 주세요.
                         </span>
                       )}
                     </div>
@@ -487,7 +530,7 @@ function App() {
               <div style={{ position: 'relative', width: '100%' }}>
                 <input 
                   type="text" 
-                  placeholder="닉네임 또는 페이지-번호 검색 (예: 1-3)..." 
+                  placeholder="닉네임 또는 카테고리 검색..." 
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   style={{ width: '100%', paddingRight: '2.5rem' }}
@@ -522,7 +565,6 @@ function App() {
                 const isMyPost = myPostIds.includes(post.id);
                 const { isMatched, matchedItems } = post.analysis;
                 
-                // 상대가 올린 품목 정보
                 const hasHaves = post.haves && post.haves.length > 0;
                 const hasWants = post.wants && post.wants.length > 0;
 
@@ -559,10 +601,11 @@ function App() {
                             <div style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: '700', marginBottom: '0.25rem' }}>보유 카드 (팝니다)</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                               {post.haves.map(id => {
-                                const [p, s] = id.split('-');
+                                const [catId, s] = id.split('-');
+                                const cat = categories.find(c => String(c.id) === catId);
                                 return (
                                   <span key={id} className="sticker-tag" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#a7f3d0' }}>
-                                    {p}페이지 {s}번
+                                    {cat ? cat.name : `${catId}페이지`} {s}번
                                   </span>
                                 );
                               })}
@@ -575,10 +618,11 @@ function App() {
                             <div style={{ fontSize: '0.8rem', color: '#f87171', fontWeight: '700', marginBottom: '0.25rem' }}>구함 카드 (구해요)</div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                               {post.wants.map(id => {
-                                const [p, s] = id.split('-');
+                                const [catId, s] = id.split('-');
+                                const cat = categories.find(c => String(c.id) === catId);
                                 return (
                                   <span key={id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5' }}>
-                                    {p}페이지 {s}번
+                                    {cat ? cat.name : `${catId}페이지`} {s}번
                                   </span>
                                 );
                               })}
@@ -595,8 +639,9 @@ function App() {
                           </span>
                           <span style={{ color: '#fff' }}>
                             {matchedItems.map(id => {
-                              const [p, s] = id.split('-');
-                              return `${p}페이지 ${s}번`;
+                              const [catId, s] = id.split('-');
+                              const cat = categories.find(c => String(c.id) === catId);
+                              return cat ? `${cat.name} ${s}번` : `${catId}페이지 ${s}번`;
                             }).join(', ')}
                           </span>
                         </div>
