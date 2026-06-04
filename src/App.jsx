@@ -284,7 +284,7 @@ function App() {
                   }}>
                     {categories.map((cat) => {
                       const selectedCount = getSelectedCountInPage(cat.id);
-                      const imgUrl = getCategoryImage(cat.image);
+                      const imgUrl = getCategoryImage(cat.id);
                       return (
                         <div 
                           key={cat.id}
@@ -303,7 +303,16 @@ function App() {
                             <img 
                               src={imgUrl} 
                               alt={cat.name} 
-                              style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.4, position: 'absolute', top: 0, left: 0 }}
+                              style={{ 
+                                width: '100%', 
+                                height: '100%', 
+                                objectFit: 'contain', 
+                                opacity: selectedCount > 0 ? 0.75 : 0.45, 
+                                position: 'absolute', 
+                                top: 0, 
+                                left: 0,
+                                transition: 'opacity 0.2s, transform 0.2s'
+                              }}
                             />
                           ) : (
                             <div style={{ 
@@ -327,9 +336,9 @@ function App() {
                             flexDirection: 'column', 
                             justifyContent: 'space-between',
                             padding: '0.5rem',
-                            background: 'rgba(10, 8, 20, 0.45)'
+                            background: 'linear-gradient(to top, rgba(10, 8, 20, 0.85) 0%, rgba(10, 8, 20, 0.1) 70%)'
                           }}>
-                            <span style={{ fontWeight: '700', fontSize: '0.85rem', wordBreak: 'keep-all' }}>{cat.name}</span>
+                            <span style={{ fontWeight: '700', fontSize: '0.85rem', wordBreak: 'keep-all', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{cat.name}</span>
                             {selectedCount > 0 && (
                               <span className="badge badge-match" style={{ alignSelf: 'flex-start', animation: 'none', fontSize: '0.7rem' }}>
                                 선택: {selectedCount}개
@@ -360,11 +369,11 @@ function App() {
                   
                   <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }} className="grid-details-layout">
                     {/* 실물 도감 썸네일 미리보기 */}
-                    <div style={{ width: '140px', flexShrink: 0, border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden' }}>
-                      {getCategoryImage(currentCategory.image) ? (
+                    <div style={{ width: '140px', flexShrink: 0, border: '1px solid var(--border-color)', borderRadius: '10px', overflow: 'hidden', background: 'rgba(0,0,0,0.3)' }}>
+                      {getCategoryImage(currentCategory.id) ? (
                         <>
-                          <img src={getCategoryImage(currentCategory.image)} alt="도감 실물" style={{ width: '100%', display: 'block' }} />
-                          <div style={{ background: 'rgba(0,0,0,0.6)', padding: '0.25rem', fontSize: '0.75rem', textAlign: 'center' }}>실물 도감 대조</div>
+                          <img src={getCategoryImage(currentCategory.id)} alt="도감 실물" style={{ width: '100%', display: 'block', objectFit: 'contain', maxHeight: '180px' }} />
+                          <div style={{ background: 'rgba(0,0,0,0.6)', padding: '0.25rem', fontSize: '0.75rem', textAlign: 'center', color: 'var(--text-secondary)' }}>대표 이미지</div>
                         </>
                       ) : (
                         <div style={{ 
@@ -380,18 +389,15 @@ function App() {
                         }}>
                           <HelpCircle size={32} color="var(--text-muted)" />
                           <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                            실물 캡쳐본<br />준비 중
+                            이미지 준비 중
                           </span>
                         </div>
                       )}
                     </div>
-
+ 
                     <div style={{ flex: 1 }}>
                       <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1rem' }}>
-                        {getCategoryImage(currentCategory.image) 
-                          ? "왼쪽 사진의 1번(좌상단)부터 9번(우하단) 슬롯 번호에 맞춰 원하는 자리를 선택해 주세요."
-                          : "상세 이미지가 누락된 카테고리입니다. 인게임 3x3 구조(1~9번)에 맞춰 슬롯 번호를 선택해 주세요."
-                        }
+                        위하이브 인게임 초고화질 CDN 실물 3x3 구조입니다. 원하는 카드를 클릭하여 {role === 'buyer' ? '구할' : '팔'} 스티커 목록에 담아 보세요.
                       </p>
                       
                       {/* 3x3 바둑판 그리드 */}
@@ -405,6 +411,8 @@ function App() {
                           const slotNum = slotIdx + 1;
                           const stickerId = `${currentCategory.id}-${slotNum}`;
                           const isSelected = mySelectedStickers.includes(stickerId);
+                          const sticker = stickersData.find(s => s.id === stickerId);
+                          const imageUrl = sticker ? sticker.image : null;
 
                           return (
                             <div 
@@ -418,19 +426,64 @@ function App() {
                                 border: isSelected ? '2px solid #a855f7' : '1px solid var(--border-color)',
                                 borderRadius: '8px', 
                                 cursor: 'pointer',
-                                background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.2)',
-                                fontWeight: isSelected ? '700' : '400'
+                                background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.3)',
+                                fontWeight: isSelected ? '700' : '400',
+                                position: 'relative',
+                                overflow: 'hidden',
+                                aspectRatio: '1'
                               }}
                               className="slot-item"
                             >
-                              <span style={{ fontSize: '1.2rem', color: isSelected ? '#c084fc' : 'var(--text-secondary)' }}>
-                                {slotNum}번
-                              </span>
-                              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                                slot {slotNum}
-                              </span>
+                              {imageUrl ? (
+                                <img 
+                                  src={imageUrl} 
+                                  alt={sticker.name} 
+                                  style={{ 
+                                    width: '100%', 
+                                    height: '100%', 
+                                    objectFit: 'contain', 
+                                    opacity: isSelected ? 1 : 0.65,
+                                    transition: 'opacity 0.2s, transform 0.2s',
+                                    transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                                    padding: '0.15rem'
+                                  }} 
+                                />
+                              ) : (
+                                <span style={{ fontSize: '1.2rem', color: isSelected ? '#c084fc' : 'var(--text-secondary)' }}>
+                                  {slotNum}번
+                                </span>
+                              )}
+                              
+                              <div style={{
+                                position: 'absolute',
+                                bottom: 0,
+                                left: 0,
+                                right: 0,
+                                background: 'rgba(10, 8, 20, 0.75)',
+                                fontSize: '0.6rem',
+                                padding: '0.1rem 0',
+                                textAlign: 'center',
+                                color: isSelected ? '#c084fc' : 'var(--text-muted)',
+                                borderTop: '1px solid rgba(255,255,255,0.05)'
+                              }}>
+                                {slotNum}번 카드
+                              </div>
+
                               {isSelected && (
-                                <Check size={14} color="#c084fc" style={{ marginTop: '0.2rem' }} />
+                                <div style={{ 
+                                  position: 'absolute', 
+                                  top: '4px', 
+                                  right: '4px', 
+                                  background: '#a855f7', 
+                                  borderRadius: '50%', 
+                                  padding: '2px',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  boxShadow: '0 0 4px #a855f7'
+                                }}>
+                                  <Check size={8} color="#fff" />
+                                </div>
                               )}
                             </div>
                           );
