@@ -314,24 +314,25 @@ function App() {
                         }}
                         onClick={() => setSelectedCategoryId(cat.id)}
                       >
-                        {/* 상단: 대표 이미지 영역 (완전 contain 비율 유지) */}
+                        {/* 상단: 대표 이미지 영역 (스크린샷 좌상단 대표 배지만 정밀 조준 크롭하여 꽉 채움) */}
                         <div style={{ 
                           height: '135px', 
                           width: '100%', 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'center',
-                          background: '#15181c',
-                          position: 'relative'
+                          overflow: 'hidden',
+                          position: 'relative',
+                          background: '#15181c'
                         }}>
                           {imgUrl ? (
                             <img 
                               src={imgUrl} 
                               alt={cat.name} 
                               style={{ 
-                                width: '85%', 
-                                height: '85%', 
-                                objectFit: 'contain', 
+                                position: 'absolute',
+                                width: '430%', 
+                                height: 'auto',
+                                left: '-28%',
+                                top: '-35%',
+                                objectFit: 'cover',
                                 display: 'block'
                               }}
                             />
@@ -451,25 +452,30 @@ function App() {
                   </div>
                   {getCategoryImage(currentCategory.id) && (
                     <div style={{ 
-                      width: '42px', 
-                      height: '56px', 
-                      borderRadius: '6px', 
+                      width: '45px', 
+                      height: '45px', 
+                      borderRadius: '50%', 
                       overflow: 'hidden', 
-                      border: '1px solid var(--border-color)', 
+                      border: '2px solid var(--primary-color)', 
                       background: 'rgba(0,0,0,0.3)',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      boxShadow: '0 0 10px rgba(133, 195, 0, 0.4)',
+                      position: 'relative',
                       cursor: 'pointer',
                       flexShrink: 0
-                    }} title="대표 이미지 크게 대조하려면 클릭">
+                    }} title="전체 원본 캡쳐본을 새 창으로 보려면 클릭">
                       <img 
                         src={getCategoryImage(currentCategory.id)} 
                         alt="도감 대표 실물" 
-                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                        style={{ 
+                          position: 'absolute',
+                          width: '430%', 
+                          height: 'auto',
+                          left: '-28%',
+                          top: '-35%',
+                          objectFit: 'cover',
+                          display: 'block'
+                        }} 
                         onClick={() => {
-                          alert("전체 도감 통본 사진을 확대하여 매칭에 참고하세요!");
                           window.open(getCategoryImage(currentCategory.id), '_blank');
                         }}
                       />
