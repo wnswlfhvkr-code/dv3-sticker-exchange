@@ -270,11 +270,11 @@ function App() {
           </div>
 
           {selectedCategoryId === null ? (
-            // [1. 카테고리 목록일 때는 기존의 좌우 2열 배치 (카테고리 목록 + 장바구니)]
-            <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '2rem', textAlign: 'left', marginBottom: '2.5rem' }} className="main-work-grid">
+            // [1. 카테고리 목록일 때는 단독 메인 카드 중앙 정렬 후 하단에 장바구니를 1열로 붙임]
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem', textAlign: 'left', marginBottom: '2.5rem', width: '100%' }} className="main-work-layout">
               
-              {/* 왼쪽 영역: 카테고리 리스트 */}
-              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              {/* 메인: 카테고리 리스트 */}
+              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '800px' }}>
                 <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <BookOpen size={20} color="var(--primary-color)" />
                   스티커북 카테고리 선택 ({role === 'buyer' ? '구하는' : '파는'} 스티커 추가)
@@ -309,7 +309,7 @@ function App() {
                           border: selectedCount > 0 ? '2.5px solid var(--primary-color)' : '2px solid var(--border-color)',
                           boxShadow: selectedCount > 0 ? '0 0 15px rgba(133, 195, 0, 0.35)' : 'none',
                           transition: 'all 0.2s ease',
-                          height: '215px',
+                          height: '180px',
                           background: '#1d2025'
                         }}
                         onClick={() => setSelectedCategoryId(cat.id)}
@@ -340,23 +340,21 @@ function App() {
                           )}
                         </div>
 
-                        {/* 하단: 카테고리 이름 및 획득 개수 배지 영역 */}
+                        {/* 하단: 카테고리 이름 영역 (0/9 배지 완전 삭제) */}
                         <div style={{ 
-                          height: '80px',
+                          height: '45px',
                           background: '#25282e',
                           display: 'flex', 
-                          flexDirection: 'column',
                           alignItems: 'center', 
                           justifyContent: 'center',
-                          padding: '0.4rem 0.5rem',
+                          padding: '0.25rem 0.5rem',
                           borderTop: '1.5px solid rgba(255,255,255,0.05)',
                           textAlign: 'center',
-                          width: '100%',
-                          gap: '0.25rem'
+                          width: '100%'
                         }}>
                           <span style={{ 
                             fontWeight: '700', 
-                            fontSize: '0.85rem', 
+                            fontSize: '0.88rem', 
                             color: '#fff',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -365,21 +363,6 @@ function App() {
                           }}>
                             {cat.name}
                           </span>
-                          {/* 인게임 실물과 똑같은 초록/연두색 획득 개수 배지 */}
-                          <div style={{
-                            background: selectedCount > 0 ? '#85c300' : '#4b5563',
-                            color: '#fff',
-                            fontSize: '0.75rem',
-                            fontWeight: '800',
-                            padding: '0.15rem 0.55rem',
-                            borderRadius: '9999px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            boxShadow: selectedCount > 0 ? '0 2px 4px rgba(133, 195, 0, 0.3)' : 'none'
-                          }}>
-                            {selectedCount}/9
-                          </div>
                         </div>
                       </div>
                     );
@@ -387,15 +370,15 @@ function App() {
                 </div>
               </div>
 
-              {/* 오른쪽 영역: 현재 내 선택 바구니 및 교환 등록 액션 */}
-              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.5rem' }}>
+              {/* 하단 영역: 현재 내 선택 바구니 및 교환 등록 액션 */}
+              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.5rem', width: '100%', maxWidth: '800px' }}>
                 <div>
                   <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
                     <ShoppingCart color="var(--primary-color)" size={20} />
                     내가 선택한 스티커 목록
                   </h2>
                   <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.2rem' }}>
-                    왼쪽 도감 그리드에서 고른 스티커들이 담기는 공간입니다. 등록 완료 버튼을 눌러 교환 글을 올려 보세요.
+                    위 도감 그리드에서 고른 스티커들이 담기는 공간입니다. 등록 완료 버튼을 눌러 교환 글을 올려 보세요.
                   </p>
 
                   {/* 선택한 바구니 요약 */}
@@ -403,7 +386,7 @@ function App() {
                     <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                       담은 카드 ({mySelectedStickers.length}개 선택됨)
                     </label>
-                    <div className="tag-container" style={{ minHeight: '220px', maxHeight: '320px', overflowY: 'auto', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
+                    <div className="tag-container" style={{ minHeight: '120px', maxHeight: '220px', overflowY: 'auto', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
                       {mySelectedStickers.map(id => {
                         const [catId, s] = id.split('-');
                         const cat = categories.find(c => String(c.id) === catId);
@@ -415,9 +398,9 @@ function App() {
                         );
                       })}
                       {mySelectedStickers.length === 0 && (
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '180px', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '90px', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', gap: '0.5rem' }}>
                           <BookOpen size={24} color="rgba(255,255,255,0.15)" />
-                          <span>왼쪽 목록에서 카테고리를 눌러<br/>카드를 선택해 주세요.</span>
+                          <span>상단 목록에서 카테고리를 눌러<br/>카드를 선택해 주세요.</span>
                         </div>
                       )}
                     </div>
@@ -495,7 +478,7 @@ function App() {
                 </div>
 
                 <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem', lineHeight: '1.4' }}>
-                  위하이브 인게임 초고화질 CDN 실물 3x3 구조입니다. 원하는 카드를 클릭하여 {role === 'buyer' ? '구할' : '팔'} 스티커 목록에 담아 보세요. <span style={{ color: '#c084fc', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => window.open(getCategoryImage(currentCategory.id), '_blank')}>[상단 대표이미지 썸네일]</span>을 누르면 전체 인게임 캡쳐본이 새 창으로 확대됩니다.
+                  위하이브 인게임 초고화질 CDN 실물 3x3 구조입니다. 원하는 카드를 클릭하여 {role === 'buyer' ? '구할' : '팔'} 스티커 목록에 담아 보세요.
                 </p>
                 
                 {/* 3x3 바둑판 그리드 - 가로폭 100% 꽉 채워서 크게 렌더링 (세로 직사각형 카드형식) */}
@@ -544,7 +527,7 @@ function App() {
                             alt={sticker.name} 
                             style={{ 
                               width: '88%', 
-                              height: '62%', 
+                              height: '70%', 
                               objectFit: 'contain', 
                               transition: 'all 0.2s ease',
                               transform: isSelected ? 'scale(1.05)' : 'scale(1)',
@@ -562,14 +545,14 @@ function App() {
                           display: 'flex', 
                           justifyContent: 'center', 
                           gap: '1px', 
-                          margin: '0.3rem 0 0 0'
+                          margin: '0.15rem 0 0 0'
                         }}>
                           {Array.from({ length: 5 }).map((_, i) => (
                             <span 
                               key={i} 
                               style={{ 
                                 color: isSelected ? '#fbbf24' : '#4b5563', 
-                                fontSize: '0.65rem',
+                                fontSize: '0.6rem',
                                 textShadow: isSelected ? '0 0 3px rgba(251, 191, 36, 0.8)' : 'none'
                               }}
                             >
@@ -583,9 +566,9 @@ function App() {
                           bottom: 0,
                           left: 0,
                           right: 0,
-                          background: 'rgba(10, 8, 20, 0.95)',
-                          fontSize: '0.62rem',
-                          padding: '0.25rem 0.15rem',
+                          background: 'rgba(10, 8, 20, 0.88)',
+                          fontSize: '0.55rem',
+                          padding: '0.15rem 0.1rem',
                           textAlign: 'center',
                           color: isSelected ? '#fff' : '#a1a8b5',
                           borderTop: '1px solid rgba(255,255,255,0.05)',

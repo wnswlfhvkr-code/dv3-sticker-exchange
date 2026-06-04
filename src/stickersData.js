@@ -222,13 +222,8 @@ categories.forEach(cat => {
   }
 });
 
-// 카테고리 대표 썸네일은 로컬 이미지를 반환하며, 누락된 경우 1번 카드 CDN 이미지로 보완
+// 카테고리 대표 썸네일은 항상 해당 카테고리의 1번 카드 단독 CDN 일러스트 이미지를 반환합니다.
 export const getCategoryImage = (catId) => {
-  const cat = categories.find(c => c.id === catId);
-  if (!cat) return null;
-  if (cat.image) {
-    return `/sticker_images/KakaoTalk_20260604_202516419_${cat.image}.png`;
-  }
   const firstCard = stickersData.find(s => s.categoryId === catId && s.slot === 1);
   return firstCard ? firstCard.image : null;
 };
