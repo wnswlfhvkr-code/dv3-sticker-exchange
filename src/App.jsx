@@ -269,271 +269,324 @@ function App() {
             </button>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', textAlign: 'left', marginBottom: '2.5rem' }} className="main-work-grid">
-            
-            {/* 왼쪽 영역: 카테고리 리스트 또는 3x3 9 그리드 선택기 */}
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {selectedCategoryId === null ? (
+            // [1. 카테고리 목록일 때는 기존의 좌우 2열 배치 (카테고리 목록 + 장바구니)]
+            <div style={{ display: 'grid', gridTemplateColumns: '1.1fr 0.9fr', gap: '2rem', textAlign: 'left', marginBottom: '2.5rem' }} className="main-work-grid">
               
-              {selectedCategoryId === null ? (
-                // 카테고리 목록 뷰
-                <>
-                  <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <BookOpen size={20} color="var(--primary-color)" />
-                    스티커북 카테고리 선택 ({role === 'buyer' ? '구하는' : '파는'} 스티커 추가)
-                  </h2>
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                    정리된 20개 카테고리 목록입니다. 클릭하여 9칸 스티커 그리드를 열어보세요.
-                  </p>
+              {/* 왼쪽 영역: 카테고리 리스트 */}
+              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <BookOpen size={20} color="var(--primary-color)" />
+                  스티커북 카테고리 선택 ({role === 'buyer' ? '구하는' : '파는'} 스티커 추가)
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  정리된 20개 카테고리 목록입니다. 클릭하여 9칸 스티커 그리드를 열어보세요.
+                </p>
 
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
-                    gap: '1rem',
-                    maxHeight: '450px',
-                    overflowY: 'auto',
-                    padding: '0.5rem'
-                  }}>
-                    {categories.map((cat) => {
-                      const selectedCount = getSelectedCountInPage(cat.id);
-                      const imgUrl = getCategoryImage(cat.id);
-                      return (
-                        <div 
-                          key={cat.id}
-                          className="glass-card slot-item"
-                          style={{ 
-                            padding: 0, 
-                            cursor: 'pointer', 
-                            overflow: 'hidden',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            border: selectedCount > 0 ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-                            boxShadow: selectedCount > 0 ? '0 0 12px rgba(168, 85, 247, 0.4)' : 'none',
-                            transition: 'all 0.2s ease',
-                            height: '190px'
-                          }}
-                          onClick={() => setSelectedCategoryId(cat.id)}
-                        >
-                          {/* 상단: 대표 이미지 영역 (겹치거나 잘리지 않고contain 비율 유지) */}
-                          <div style={{ 
-                            height: '145px', 
-                            width: '100%', 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            background: 'rgba(0, 0, 0, 0.35)',
-                            position: 'relative'
-                          }}>
-                            {imgUrl ? (
-                              <img 
-                                src={imgUrl} 
-                                alt={cat.name} 
-                                style={{ 
-                                  width: '90%', 
-                                  height: '90%', 
-                                  objectFit: 'contain', 
-                                  display: 'block'
-                                }}
-                              />
-                            ) : (
-                              <HelpCircle size={32} color="rgba(255,255,255,0.15)" />
-                            )}
-                          </div>
-
-                          {/* 하단: 카테고리 이름 영역 */}
-                          <div style={{ 
-                            height: '45px',
-                            background: 'rgba(15, 12, 30, 0.95)',
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            justifyContent: 'center',
-                            padding: '0.25rem 0.5rem',
-                            borderTop: '1px solid rgba(255,255,255,0.08)',
-                            textAlign: 'center',
-                            width: '100%'
-                          }}>
-                            <span style={{ 
-                              fontWeight: '700', 
-                              fontSize: '0.9rem', 
-                              color: '#fff',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              width: '100%'
-                            }}>
-                              {cat.name}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              ) : (
-                // 3x3 9 그리드 스티커 선택창
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <BookOpen size={20} color="var(--primary-color)" />
-                      <h2 style={{ fontSize: '1.3rem', margin: 0 }}>
-                        {currentCategory.name} (3x3 도감)
-                      </h2>
-                      {getCategoryImage(currentCategory.id) && (
-                        <div style={{ 
-                          width: '45px', 
-                          height: '60px', 
-                          borderRadius: '6px', 
-                          overflow: 'hidden', 
-                          border: '1px solid var(--border-color)', 
-                          background: 'rgba(0,0,0,0.2)',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.4)',
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
+                  gap: '1rem',
+                  maxHeight: '450px',
+                  overflowY: 'auto',
+                  padding: '0.5rem'
+                }}>
+                  {categories.map((cat) => {
+                    const selectedCount = getSelectedCountInPage(cat.id);
+                    const imgUrl = getCategoryImage(cat.id);
+                    return (
+                      <div 
+                        key={cat.id}
+                        className="glass-card slot-item"
+                        style={{ 
+                          padding: 0, 
+                          cursor: 'pointer', 
+                          overflow: 'hidden',
                           display: 'flex',
-                          alignItems: 'center',
+                          flexDirection: 'column',
+                          border: selectedCount > 0 ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
+                          boxShadow: selectedCount > 0 ? '0 0 12px rgba(168, 85, 247, 0.4)' : 'none',
+                          transition: 'all 0.2s ease',
+                          height: '190px'
+                        }}
+                        onClick={() => setSelectedCategoryId(cat.id)}
+                      >
+                        {/* 상단: 대표 이미지 영역 */}
+                        <div style={{ 
+                          height: '145px', 
+                          width: '100%', 
+                          display: 'flex', 
+                          alignItems: 'center', 
                           justifyContent: 'center',
-                          cursor: 'pointer'
-                        }} title="대표 이미지 크게 대조하려면 클릭">
-                          <img 
-                            src={getCategoryImage(currentCategory.id)} 
-                            alt="도감 대표 실물" 
-                            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                            onClick={() => {
-                              alert("전체 도감 통본 사진을 확대하여 매칭에 참고하세요!");
-                              window.open(getCategoryImage(currentCategory.id), '_blank');
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <button 
-                      className="btn btn-outline" 
-                      onClick={() => setSelectedCategoryId(null)}
-                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem' }}
-                    >
-                      <ArrowLeft size={12} /> 카테고리 목록
-                    </button>
-                  </div>
-
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem', lineHeight: '1.4' }}>
-                    위하이브 인게임 초고화질 CDN 실물 3x3 구조입니다. 원하는 카드를 클릭하여 {role === 'buyer' ? '구할' : '팔'} 스티커 목록에 담아 보세요. <span style={{ color: '#c084fc', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => window.open(getCategoryImage(currentCategory.id), '_blank')}>[상단 대표이미지 썸네일]</span>을 누르면 전체 인게임 캡쳐본이 새 창으로 확대됩니다.
-                  </p>
-                  
-                  {/* 3x3 바둑판 그리드 - 가로폭 100% 꽉 채워서 큰 사이즈로 렌더링 */}
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(3, 1fr)', 
-                    gap: '1rem',
-                    width: '100%',
-                    aspectRatio: '1',
-                    marginBottom: '1rem'
-                  }}>
-                    {Array.from({ length: 9 }).map((_, slotIdx) => {
-                      const slotNum = slotIdx + 1;
-                      const stickerId = `${currentCategory.id}-${slotNum}`;
-                      const isSelected = mySelectedStickers.includes(stickerId);
-                      const sticker = stickersData.find(s => s.id === stickerId);
-                      const imageUrl = sticker ? sticker.image : null;
-
-                      return (
-                        <div 
-                          key={stickerId}
-                          onClick={() => toggleStickerSelection(stickerId)}
-                          style={{ 
-                            display: 'flex', 
-                            flexDirection: 'column', 
-                            alignItems: 'center', 
-                            justifyContent: 'center', 
-                            border: isSelected ? '2px solid #a855f7' : '1px solid var(--border-color)',
-                            borderRadius: '12px', 
-                            cursor: 'pointer',
-                            background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.3)',
-                            fontWeight: isSelected ? '700' : '400',
-                            position: 'relative',
-                            overflow: 'hidden',
-                            aspectRatio: '1',
-                            transition: 'all 0.2s ease',
-                            boxShadow: isSelected ? '0 0 10px rgba(168, 85, 247, 0.3)' : 'none'
-                          }}
-                          className="slot-item"
-                        >
-                          {imageUrl ? (
+                          background: 'rgba(0, 0, 0, 0.35)',
+                          position: 'relative'
+                        }}>
+                          {imgUrl ? (
                             <img 
-                              src={imageUrl} 
-                              alt={sticker.name} 
+                              src={imgUrl} 
+                              alt={cat.name} 
                               style={{ 
                                 width: '90%', 
                                 height: '90%', 
                                 objectFit: 'contain', 
-                                opacity: isSelected ? 1 : 0.7,
-                                transition: 'all 0.2s ease',
-                                transform: isSelected ? 'scale(1.08)' : 'scale(1)',
-                                padding: '0.2rem'
-                              }} 
+                                display: 'block'
+                              }}
                             />
                           ) : (
-                            <span style={{ fontSize: '1.5rem', color: isSelected ? '#c084fc' : 'var(--text-secondary)' }}>
-                              {slotNum}번
-                            </span>
-                          )}
-                          
-                          <div style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            background: 'rgba(10, 8, 20, 0.9)',
-                            fontSize: '0.65rem',
-                            padding: '0.25rem 0.15rem',
-                            textAlign: 'center',
-                            color: isSelected ? '#c084fc' : 'var(--text-secondary)',
-                            borderTop: '1px solid rgba(255,255,255,0.05)',
-                            fontWeight: '600',
-                            whiteSpace: 'nowrap',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis'
-                          }} title={sticker ? sticker.name : `${slotNum}번 카드`}>
-                            {sticker ? sticker.name : `${slotNum}번 카드`}
-                          </div>
-
-                          {isSelected && (
-                            <div style={{ 
-                              position: 'absolute', 
-                              top: '6px', 
-                              right: '6px', 
-                              background: '#a855f7', 
-                              borderRadius: '50%', 
-                              padding: '3px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              boxShadow: '0 0 6px #a855f7'
-                            }}>
-                              <Check size={10} color="#fff" />
-                            </div>
+                            <HelpCircle size={32} color="rgba(255,255,255,0.15)" />
                           )}
                         </div>
-                      );
-                    })}
+
+                        {/* 하단: 카테고리 이름 영역 */}
+                        <div style={{ 
+                          height: '45px',
+                          background: 'rgba(15, 12, 30, 0.95)',
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          padding: '0.25rem 0.5rem',
+                          borderTop: '1px solid rgba(255,255,255,0.08)',
+                          textAlign: 'center',
+                          width: '100%'
+                        }}>
+                          <span style={{ 
+                            fontWeight: '700', 
+                            fontSize: '0.9rem', 
+                            color: '#fff',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            width: '100%'
+                          }}>
+                            {cat.name}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 오른쪽 영역: 현재 내 선택 바구니 및 교환 등록 액션 */}
+              <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.5rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                    <ShoppingCart color="var(--primary-color)" size={20} />
+                    내가 선택한 스티커 목록
+                  </h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.2rem' }}>
+                    왼쪽 도감 그리드에서 고른 스티커들이 담기는 공간입니다. 등록 완료 버튼을 눌러 교환 글을 올려 보세요.
+                  </p>
+
+                  {/* 선택한 바구니 요약 */}
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                      담은 카드 ({mySelectedStickers.length}개 선택됨)
+                    </label>
+                    <div className="tag-container" style={{ minHeight: '220px', maxHeight: '320px', overflowY: 'auto', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
+                      {mySelectedStickers.map(id => {
+                        const [catId, s] = id.split('-');
+                        const cat = categories.find(c => String(c.id) === catId);
+                        return (
+                          <span key={id} className="sticker-tag" style={{ background: role === 'buyer' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)', borderColor: role === 'buyer' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)', padding: '0.4rem 0.6rem', borderRadius: '6px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', margin: '3px' }}>
+                            {cat ? cat.name : `${catId}페이지`} {s}번
+                            <button type="button" onClick={() => toggleStickerSelection(id)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={12} /></button>
+                          </span>
+                        );
+                      })}
+                      {mySelectedStickers.length === 0 && (
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '180px', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', gap: '0.5rem' }}>
+                          <BookOpen size={24} color="rgba(255,255,255,0.15)" />
+                          <span>왼쪽 목록에서 카테고리를 눌러<br/>카드를 선택해 주세요.</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </>
-              )}
+                </div>
+
+                <div style={{ paddingTop: '1rem' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary" 
+                    onClick={() => {
+                      if (mySelectedStickers.length === 0) {
+                        alert("최소 한 개 이상의 스티커를 스티커북에서 선택해 주세요!");
+                        return;
+                      }
+                      setIsFormOpen(true);
+                    }}
+                    style={{ width: '100%', padding: '1rem', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  >
+                    <Sparkles size={16} /> {role === 'buyer' ? '🔴 구해요 교환 등록하기' : '🟢 팝니다 교환 등록하기'}
+                  </button>
+                </div>
+              </div>
+
             </div>
+          ) : (
+            // [2. 상세 3x3 스티커 도감일 때는 단독 거대 레이아웃 (가로폭 최대 640px 중앙 집중)]
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', textAlign: 'left', marginBottom: '2.5rem', width: '100%' }} className="detail-work-layout">
+              
+              {/* 3x3 대형 그리드 영역 */}
+              <div className="glass-card" style={{ width: '100%', maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                  {/* 카테고리 목록 뒤로가기 버튼이 헤더 타이틀 왼쪽에 위치 */}
+                  <button 
+                    className="btn btn-outline" 
+                    onClick={() => setSelectedCategoryId(null)}
+                    style={{ padding: '0.4rem 0.8rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <ArrowLeft size={14} /> 카테고리 목록
+                  </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginLeft: '0.5rem' }}>
+                    <BookOpen size={18} color="var(--primary-color)" />
+                    <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '700' }}>
+                      {currentCategory.name} (3x3 도감)
+                    </h2>
+                  </div>
+                  {getCategoryImage(currentCategory.id) && (
+                    <div style={{ 
+                      width: '36px', 
+                      height: '48px', 
+                      borderRadius: '4px', 
+                      overflow: 'hidden', 
+                      border: '1px solid var(--border-color)', 
+                      background: 'rgba(0,0,0,0.2)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      marginLeft: 'auto'
+                    }} title="대표 이미지 크게 대조하려면 클릭">
+                      <img 
+                        src={getCategoryImage(currentCategory.id)} 
+                        alt="도감 대표 실물" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                        onClick={() => {
+                          alert("전체 도감 통본 사진을 확대하여 매칭에 참고하세요!");
+                          window.open(getCategoryImage(currentCategory.id), '_blank');
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
 
-            {/* 오른쪽 영역: 현재 내 선택 바구니 및 교환 등록 액션 */}
-            <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1.5rem' }}>
-              <div>
-                <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                  <ShoppingCart color="var(--primary-color)" size={20} />
-                  내가 선택한 스티커 목록
-                </h2>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.2rem' }}>
-                  왼쪽 도감 그리드에서 고른 스티커들이 담기는 공간입니다. 등록 완료 버튼을 눌러 교환 글을 올려 보세요.
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '0.5rem', lineHeight: '1.4' }}>
+                  위하이브 인게임 초고화질 CDN 실물 3x3 구조입니다. 원하는 카드를 클릭하여 {role === 'buyer' ? '구할' : '팔'} 스티커 목록에 담아 보세요. <span style={{ color: '#c084fc', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => window.open(getCategoryImage(currentCategory.id), '_blank')}>[상단 대표이미지 썸네일]</span>을 누르면 전체 인게임 캡쳐본이 새 창으로 확대됩니다.
                 </p>
+                
+                {/* 3x3 바둑판 그리드 - 가로폭 100% 꽉 채워서 크게 렌더링 */}
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '1rem',
+                  width: '100%',
+                  aspectRatio: '1',
+                  marginBottom: '0.5rem'
+                }}>
+                  {Array.from({ length: 9 }).map((_, slotIdx) => {
+                    const slotNum = slotIdx + 1;
+                    const stickerId = `${currentCategory.id}-${slotNum}`;
+                    const isSelected = mySelectedStickers.includes(stickerId);
+                    const sticker = stickersData.find(s => s.id === stickerId);
+                    const imageUrl = sticker ? sticker.image : null;
 
-                {/* 선택한 바구니 요약 */}
-                <div style={{ marginTop: '0.5rem' }}>
-                  <label style={{ display: 'block', marginBottom: '0.75rem', fontWeight: '600', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                    담은 카드 ({mySelectedStickers.length}개 선택됨)
-                  </label>
-                  <div className="tag-container" style={{ minHeight: '220px', maxHeight: '320px', overflowY: 'auto', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
+                    return (
+                      <div 
+                        key={stickerId}
+                        onClick={() => toggleStickerSelection(stickerId)}
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          justifyContent: 'center', 
+                          border: isSelected ? '2px solid #a855f7' : '1px solid var(--border-color)',
+                          borderRadius: '12px', 
+                          cursor: 'pointer',
+                          background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.3)',
+                          fontWeight: isSelected ? '700' : '400',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          aspectRatio: '1',
+                          transition: 'all 0.2s ease',
+                          boxShadow: isSelected ? '0 0 10px rgba(168, 85, 247, 0.3)' : 'none'
+                        }}
+                        className="slot-item"
+                      >
+                        {imageUrl ? (
+                          <img 
+                            src={imageUrl} 
+                            alt={sticker.name} 
+                            style={{ 
+                              width: '90%', 
+                              height: '90%', 
+                              objectFit: 'contain', 
+                              opacity: isSelected ? 1 : 0.7,
+                              transition: 'all 0.2s ease',
+                              transform: isSelected ? 'scale(1.08)' : 'scale(1)',
+                              padding: '0.2rem'
+                            }} 
+                          />
+                        ) : (
+                          <span style={{ fontSize: '1.5rem', color: isSelected ? '#c084fc' : 'var(--text-secondary)' }}>
+                            {slotNum}번
+                          </span>
+                        )}
+                        
+                        <div style={{
+                          position: 'absolute',
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          background: 'rgba(10, 8, 20, 0.9)',
+                          fontSize: '0.65rem',
+                          padding: '0.25rem 0.15rem',
+                          textAlign: 'center',
+                          color: isSelected ? '#c084fc' : 'var(--text-secondary)',
+                          borderTop: '1px solid rgba(255,255,255,0.05)',
+                          fontWeight: '600',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }} title={sticker ? sticker.name : `${slotNum}번 카드`}>
+                          {sticker ? sticker.name : `${slotNum}번 카드`}
+                        </div>
+
+                        {isSelected && (
+                          <div style={{ 
+                            position: 'absolute', 
+                            top: '6px', 
+                            right: '6px', 
+                            background: '#a855f7', 
+                            borderRadius: '50%', 
+                            padding: '3px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 0 6px #a855f7'
+                          }}>
+                            <Check size={10} color="#fff" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 하단 바구니 영역 (그리드 바로 밑에 배치) */}
+              <div className="glass-card" style={{ width: '100%', maxWidth: '640px', display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.5rem' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                    <ShoppingCart color="var(--primary-color)" size={18} />
+                    내가 선택한 스티커 목록
+                  </h2>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginBottom: '0.75rem' }}>
+                    도감 그리드에서 선택한 스티커 내역입니다. 아래 완료 버튼을 눌러 교환 신청을 하세요.
+                  </p>
+
+                  <div className="tag-container" style={{ minHeight: '100px', maxHeight: '180px', overflowY: 'auto', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
                     {mySelectedStickers.map(id => {
                       const [catId, s] = id.split('-');
                       const cat = categories.find(c => String(c.id) === catId);
@@ -545,34 +598,33 @@ function App() {
                       );
                     })}
                     {mySelectedStickers.length === 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '180px', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center', gap: '0.5rem' }}>
-                        <BookOpen size={24} color="rgba(255,255,255,0.15)" />
-                        <span>왼쪽 목록에서 카테고리를 눌러<br/>카드를 선택해 주세요.</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '80px', color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center' }}>
+                        <span>선택된 카드가 없습니다. 상단 그리드에서 카드를 선택해 주세요.</span>
                       </div>
                     )}
                   </div>
                 </div>
+
+                <div style={{ paddingTop: '0.5rem' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-primary" 
+                    onClick={() => {
+                      if (mySelectedStickers.length === 0) {
+                        alert("최소 한 개 이상의 스티커를 스티커북에서 선택해 주세요!");
+                        return;
+                      }
+                      setIsFormOpen(true);
+                    }}
+                    style={{ width: '100%', padding: '0.85rem', fontWeight: 'bold', fontSize: '0.95rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  >
+                    <Sparkles size={16} /> {role === 'buyer' ? '🔴 구해요 교환 등록하기' : '🟢 팝니다 교환 등록하기'}
+                  </button>
+                </div>
               </div>
 
-              <div style={{ paddingTop: '1rem' }}>
-                <button 
-                  type="button" 
-                  className="btn btn-primary" 
-                  onClick={() => {
-                    if (mySelectedStickers.length === 0) {
-                      alert("최소 한 개 이상의 스티커를 스티커북에서 선택해 주세요!");
-                      return;
-                    }
-                    setIsFormOpen(true);
-                  }}
-                  style={{ width: '100%', padding: '1rem', fontWeight: 'bold', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-                >
-                  <Sparkles size={16} /> {role === 'buyer' ? '🔴 구해요 교환 등록하기' : '🟢 팝니다 교환 등록하기'}
-                </button>
-              </div>
             </div>
-
-          </div>
+          )}
 
           {/* 게시판 리스트 섹션 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
