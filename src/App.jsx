@@ -286,8 +286,8 @@ function App() {
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', 
-                  gap: '1rem',
-                  maxHeight: '450px',
+                  gap: '1.2rem',
+                  maxHeight: '480px',
                   overflowY: 'auto',
                   padding: '0.5rem'
                 }}>
@@ -304,21 +304,24 @@ function App() {
                           overflow: 'hidden',
                           display: 'flex',
                           flexDirection: 'column',
-                          border: selectedCount > 0 ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-                          boxShadow: selectedCount > 0 ? '0 0 12px rgba(168, 85, 247, 0.4)' : 'none',
+                          alignItems: 'center',
+                          borderRadius: '20px',
+                          border: selectedCount > 0 ? '2.5px solid var(--primary-color)' : '2px solid var(--border-color)',
+                          boxShadow: selectedCount > 0 ? '0 0 15px rgba(133, 195, 0, 0.35)' : 'none',
                           transition: 'all 0.2s ease',
-                          height: '190px'
+                          height: '215px',
+                          background: '#1d2025'
                         }}
                         onClick={() => setSelectedCategoryId(cat.id)}
                       >
-                        {/* 상단: 대표 이미지 영역 */}
+                        {/* 상단: 대표 이미지 영역 (완전 contain 비율 유지) */}
                         <div style={{ 
-                          height: '145px', 
+                          height: '135px', 
                           width: '100%', 
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center',
-                          background: 'rgba(0, 0, 0, 0.35)',
+                          background: '#15181c',
                           position: 'relative'
                         }}>
                           {imgUrl ? (
@@ -326,8 +329,8 @@ function App() {
                               src={imgUrl} 
                               alt={cat.name} 
                               style={{ 
-                                width: '90%', 
-                                height: '90%', 
+                                width: '85%', 
+                                height: '85%', 
                                 objectFit: 'contain', 
                                 display: 'block'
                               }}
@@ -337,21 +340,23 @@ function App() {
                           )}
                         </div>
 
-                        {/* 하단: 카테고리 이름 영역 */}
+                        {/* 하단: 카테고리 이름 및 획득 개수 배지 영역 */}
                         <div style={{ 
-                          height: '45px',
-                          background: 'rgba(15, 12, 30, 0.95)',
+                          height: '80px',
+                          background: '#25282e',
                           display: 'flex', 
+                          flexDirection: 'column',
                           alignItems: 'center', 
                           justifyContent: 'center',
-                          padding: '0.25rem 0.5rem',
-                          borderTop: '1px solid rgba(255,255,255,0.08)',
+                          padding: '0.4rem 0.5rem',
+                          borderTop: '1.5px solid rgba(255,255,255,0.05)',
                           textAlign: 'center',
-                          width: '100%'
+                          width: '100%',
+                          gap: '0.25rem'
                         }}>
                           <span style={{ 
                             fontWeight: '700', 
-                            fontSize: '0.9rem', 
+                            fontSize: '0.85rem', 
                             color: '#fff',
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -360,6 +365,21 @@ function App() {
                           }}>
                             {cat.name}
                           </span>
+                          {/* 인게임 실물과 똑같은 초록/연두색 획득 개수 배지 */}
+                          <div style={{
+                            background: selectedCount > 0 ? '#85c300' : '#4b5563',
+                            color: '#fff',
+                            fontSize: '0.75rem',
+                            fontWeight: '800',
+                            padding: '0.15rem 0.55rem',
+                            borderRadius: '9999px',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: selectedCount > 0 ? '0 2px 4px rgba(133, 195, 0, 0.3)' : 'none'
+                          }}>
+                            {selectedCount}/9
+                          </div>
                         </div>
                       </div>
                     );
@@ -478,13 +498,12 @@ function App() {
                   위하이브 인게임 초고화질 CDN 실물 3x3 구조입니다. 원하는 카드를 클릭하여 {role === 'buyer' ? '구할' : '팔'} 스티커 목록에 담아 보세요. <span style={{ color: '#c084fc', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => window.open(getCategoryImage(currentCategory.id), '_blank')}>[상단 대표이미지 썸네일]</span>을 누르면 전체 인게임 캡쳐본이 새 창으로 확대됩니다.
                 </p>
                 
-                {/* 3x3 바둑판 그리드 - 가로폭 100% 꽉 채워서 크게 렌더링 */}
+                {/* 3x3 바둑판 그리드 - 가로폭 100% 꽉 채워서 크게 렌더링 (세로 직사각형 카드형식) */}
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(3, 1fr)', 
-                  gap: '1rem',
+                  gap: '1.2rem',
                   width: '100%',
-                  aspectRatio: '1',
                   marginBottom: '0.5rem'
                 }}>
                   {Array.from({ length: 9 }).map((_, slotIdx) => {
@@ -502,17 +521,20 @@ function App() {
                           display: 'flex', 
                           flexDirection: 'column', 
                           alignItems: 'center', 
-                          justifyContent: 'center', 
-                          border: isSelected ? '2px solid #a855f7' : '1px solid var(--border-color)',
-                          borderRadius: '12px', 
+                          justifyContent: 'flex-start', 
+                          border: isSelected ? '3px solid var(--primary-color)' : '2px solid var(--border-color)',
+                          borderRadius: '16px', 
                           cursor: 'pointer',
-                          background: isSelected ? 'rgba(168, 85, 247, 0.15)' : 'rgba(0,0,0,0.3)',
-                          fontWeight: isSelected ? '700' : '400',
+                          background: isSelected ? '#252c23' : '#1d2025',
+                          fontWeight: isSelected ? '700' : '500',
                           position: 'relative',
                           overflow: 'hidden',
-                          aspectRatio: '1',
-                          transition: 'all 0.2s ease',
-                          boxShadow: isSelected ? '0 0 10px rgba(168, 85, 247, 0.3)' : 'none'
+                          aspectRatio: '0.78', // 인게임 비디오처럼 세로가 긴 직사각형 비율 사용
+                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                          boxShadow: isSelected ? '0 0 18px rgba(133, 195, 0, 0.4)' : 'none',
+                          opacity: isSelected ? 1 : 0.65,
+                          filter: isSelected ? 'none' : 'grayscale(60%) brightness(70%)',
+                          paddingTop: '0.5rem'
                         }}
                         className="slot-item"
                       >
@@ -521,33 +543,53 @@ function App() {
                             src={imageUrl} 
                             alt={sticker.name} 
                             style={{ 
-                              width: '90%', 
-                              height: '90%', 
+                              width: '88%', 
+                              height: '62%', 
                               objectFit: 'contain', 
-                              opacity: isSelected ? 1 : 0.7,
                               transition: 'all 0.2s ease',
-                              transform: isSelected ? 'scale(1.08)' : 'scale(1)',
-                              padding: '0.2rem'
+                              transform: isSelected ? 'scale(1.05)' : 'scale(1)',
+                              display: 'block'
                             }} 
                           />
                         ) : (
-                          <span style={{ fontSize: '1.5rem', color: isSelected ? '#c084fc' : 'var(--text-secondary)' }}>
+                          <span style={{ fontSize: '1.2rem', color: isSelected ? '#a3e635' : 'var(--text-secondary)', marginTop: '2rem' }}>
                             {slotNum}번
                           </span>
                         )}
+
+                        {/* 인게임 감성의 노란 별 등급 5개 노출 */}
+                        <div style={{ 
+                          display: 'flex', 
+                          justifyContent: 'center', 
+                          gap: '1px', 
+                          margin: '0.3rem 0 0 0'
+                        }}>
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <span 
+                              key={i} 
+                              style={{ 
+                                color: isSelected ? '#fbbf24' : '#4b5563', 
+                                fontSize: '0.65rem',
+                                textShadow: isSelected ? '0 0 3px rgba(251, 191, 36, 0.8)' : 'none'
+                              }}
+                            >
+                              ★
+                            </span>
+                          ))}
+                        </div>
                         
                         <div style={{
                           position: 'absolute',
                           bottom: 0,
                           left: 0,
                           right: 0,
-                          background: 'rgba(10, 8, 20, 0.9)',
-                          fontSize: '0.65rem',
+                          background: 'rgba(10, 8, 20, 0.95)',
+                          fontSize: '0.62rem',
                           padding: '0.25rem 0.15rem',
                           textAlign: 'center',
-                          color: isSelected ? '#c084fc' : 'var(--text-secondary)',
+                          color: isSelected ? '#fff' : '#a1a8b5',
                           borderTop: '1px solid rgba(255,255,255,0.05)',
-                          fontWeight: '600',
+                          fontWeight: '700',
                           whiteSpace: 'nowrap',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis'
@@ -558,15 +600,16 @@ function App() {
                         {isSelected && (
                           <div style={{ 
                             position: 'absolute', 
-                            top: '6px', 
-                            right: '6px', 
-                            background: '#a855f7', 
+                            top: '8px', 
+                            right: '8px', 
+                            background: 'var(--primary-color)', 
                             borderRadius: '50%', 
                             padding: '3px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            boxShadow: '0 0 6px #a855f7'
+                            boxShadow: '0 0 8px var(--primary-color)',
+                            zIndex: 10
                           }}>
                             <Check size={10} color="#fff" />
                           </div>

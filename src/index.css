@@ -1,23 +1,23 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
 
 :root {
-  --bg-gradient: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0f0c1b 50%, #080510 100%);
-  --card-bg: rgba(20, 16, 38, 0.6);
-  --card-hover-bg: rgba(30, 26, 54, 0.8);
-  --border-color: rgba(124, 58, 237, 0.2);
-  --border-hover-color: rgba(124, 58, 237, 0.5);
+  --bg-gradient: #15181c;
+  --card-bg: #212429;
+  --card-hover-bg: #2b2e34;
+  --border-color: #31343b;
+  --border-hover-color: #434852;
   --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
+  --text-secondary: #a1a8b5;
   --text-muted: #6b7280;
   
-  --primary-color: #8b5cf6;
-  --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
-  --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  --accent-gradient: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  --primary-color: #85c300;
+  --primary-gradient: linear-gradient(135deg, #85c300 0%, #a3e635 100%);
+  --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  --accent-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   
-  --shadow-main: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.2);
-  --shadow-glow-hover: 0 0 30px rgba(236, 72, 153, 0.4);
+  --shadow-main: 0 8px 24px 0 rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 15px rgba(133, 195, 0, 0.25);
+  --shadow-glow-hover: 0 0 25px rgba(163, 230, 53, 0.45);
 
   font-family: 'Outfit', 'Noto Sans KR', sans-serif;
   color-scheme: dark;
