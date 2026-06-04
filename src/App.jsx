@@ -198,7 +198,15 @@ function App() {
     <div className="app-container">
       {/* 헤더 */}
       <header>
-        <div className="logo-container">
+        <div 
+          className="logo-container" 
+          onClick={() => {
+            setRole(null);
+            setSelectedCategoryId(null);
+          }}
+          style={{ cursor: 'pointer', userSelect: 'none' }}
+          title="홈(역할 선택)으로 이동"
+        >
           <h1 className="logo-text">DRAGON VILLAGE 3</h1>
           <div className="sub-logo-text">STICKER BOOK MATCHING CENTER</div>
         </div>
@@ -291,62 +299,69 @@ function App() {
                       return (
                         <div 
                           key={cat.id}
-                          className="glass-card"
+                          className="glass-card slot-item"
                           style={{ 
-                            padding: '0.5rem', 
+                            padding: 0, 
                             cursor: 'pointer', 
-                            position: 'relative', 
-                            aspectRatio: '3/4',
                             overflow: 'hidden',
-                            border: selectedCount > 0 ? '2px solid var(--primary-color)' : '1px solid var(--border-color)'
+                            display: 'flex',
+                            flexDirection: 'column',
+                            border: selectedCount > 0 ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
+                            boxShadow: selectedCount > 0 ? '0 0 12px rgba(168, 85, 247, 0.4)' : 'none',
+                            transition: 'all 0.2s ease',
+                            height: '190px'
                           }}
                           onClick={() => setSelectedCategoryId(cat.id)}
                         >
-                          {imgUrl ? (
-                            <img 
-                              src={imgUrl} 
-                              alt={cat.name} 
-                              style={{ 
-                                width: '100%', 
-                                height: '100%', 
-                                objectFit: 'contain', 
-                                opacity: selectedCount > 0 ? 0.75 : 0.45, 
-                                position: 'absolute', 
-                                top: 0, 
-                                left: 0,
-                                transition: 'opacity 0.2s, transform 0.2s'
-                              }}
-                            />
-                          ) : (
-                            <div style={{ 
-                              position: 'absolute', 
-                              top: 0, 
-                              left: 0, 
-                              width: '100%', 
-                              height: '100%', 
-                              background: 'linear-gradient(135deg, rgba(88, 28, 135, 0.4), rgba(15, 23, 42, 0.6))',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
-                              <HelpCircle size={28} color="rgba(255,255,255,0.2)" />
-                            </div>
-                          )}
+                          {/* 상단: 대표 이미지 영역 (겹치거나 잘리지 않고contain 비율 유지) */}
                           <div style={{ 
-                            position: 'absolute', 
-                            inset: 0, 
+                            height: '145px', 
+                            width: '100%', 
                             display: 'flex', 
-                            flexDirection: 'column', 
-                            justifyContent: 'space-between',
-                            padding: '0.5rem',
-                            background: 'linear-gradient(to top, rgba(10, 8, 20, 0.85) 0%, rgba(10, 8, 20, 0.1) 70%)'
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            background: 'rgba(0, 0, 0, 0.35)',
+                            position: 'relative'
                           }}>
-                            <span style={{ fontWeight: '700', fontSize: '0.85rem', wordBreak: 'keep-all', textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{cat.name}</span>
-                            {selectedCount > 0 && (
-                              <span className="badge badge-match" style={{ alignSelf: 'flex-start', animation: 'none', fontSize: '0.7rem' }}>
-                                선택: {selectedCount}개
-                              </span>
+                            {imgUrl ? (
+                              <img 
+                                src={imgUrl} 
+                                alt={cat.name} 
+                                style={{ 
+                                  width: '90%', 
+                                  height: '90%', 
+                                  objectFit: 'contain', 
+                                  display: 'block'
+                                }}
+                              />
+                            ) : (
+                              <HelpCircle size={32} color="rgba(255,255,255,0.15)" />
                             )}
+                          </div>
+
+                          {/* 하단: 카테고리 이름 영역 */}
+                          <div style={{ 
+                            height: '45px',
+                            background: 'rgba(15, 12, 30, 0.95)',
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center',
+                            padding: '0.25rem 0.5rem',
+                            borderTop: '1px solid rgba(255,255,255,0.08)',
+                            textAlign: 'center',
+                            width: '100%'
+                          }}>
+                            <span style={{ 
+                              fontWeight: '700', 
+                              fontSize: '0.9rem', 
+                              color: '#fff',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              width: '100%'
+                            }}>
+                              {cat.name}
+                            </span>
                           </div>
                         </div>
                       );
@@ -464,15 +479,18 @@ function App() {
                             bottom: 0,
                             left: 0,
                             right: 0,
-                            background: 'rgba(10, 8, 20, 0.85)',
-                            fontSize: '0.7rem',
-                            padding: '0.2rem 0',
+                            background: 'rgba(10, 8, 20, 0.9)',
+                            fontSize: '0.65rem',
+                            padding: '0.25rem 0.15rem',
                             textAlign: 'center',
-                            color: isSelected ? '#c084fc' : 'var(--text-muted)',
+                            color: isSelected ? '#c084fc' : 'var(--text-secondary)',
                             borderTop: '1px solid rgba(255,255,255,0.05)',
-                            fontWeight: '600'
-                          }}>
-                            {slotNum}번 카드
+                            fontWeight: '600',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis'
+                          }} title={sticker ? sticker.name : `${slotNum}번 카드`}>
+                            {sticker ? sticker.name : `${slotNum}번 카드`}
                           </div>
 
                           {isSelected && (
