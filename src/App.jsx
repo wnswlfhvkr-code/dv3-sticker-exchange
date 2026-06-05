@@ -327,11 +327,8 @@ function App() {
                               src={imgUrl} 
                               alt={cat.name} 
                               style={{ 
-                                position: 'absolute',
-                                width: '430%', 
-                                height: 'auto',
-                                left: '-28%',
-                                top: '-35%',
+                                width: '100%',
+                                height: '100%',
                                 objectFit: 'cover',
                                 display: 'block'
                               }}
@@ -465,18 +462,16 @@ function App() {
                     }} title="전체 원본 캡쳐본을 새 창으로 보려면 클릭">
                       <img 
                         src={getCategoryImage(currentCategory.id)} 
-                        alt="도감 대표 실물" 
+                        alt="도감 대표" 
                         style={{ 
-                          position: 'absolute',
-                          width: '430%', 
-                          height: 'auto',
-                          left: '-28%',
-                          top: '-35%',
+                          width: '100%',
+                          height: '100%',
                           objectFit: 'cover',
-                          display: 'block'
+                          display: 'block',
+                          borderRadius: '50%'
                         }} 
                         onClick={() => {
-                          window.open(getCategoryImage(currentCategory.id), '_blank');
+                          window.open(`/sticker_images/KakaoTalk_20260604_202516419_${currentCategory.image || ''}.png`, '_blank');
                         }}
                       />
                     </div>
