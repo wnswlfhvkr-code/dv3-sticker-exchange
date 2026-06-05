@@ -20,9 +20,7 @@ import {
   X,
   HelpCircle,
   LogOut,
-  Send,
-  ChevronLeft,
-  ChevronRight
+  Send
 } from 'lucide-react';
 
 function App() {
@@ -35,7 +33,6 @@ function App() {
   const [userNickname, setUserNickname] = useState(() => {
     return sessionStorage.getItem('dv3_nickname') || localStorage.getItem('dv3_nickname') || '';
   });
-  const [onlineUsers, setOnlineUsers] = useState([]);
   const [isGuest, setIsGuest] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem('dv3_is_guest')) || false;
@@ -45,7 +42,6 @@ function App() {
   });
   const [showLoginModal, setShowLoginModal] = useState(!userNickname);
   const [loginInput, setLoginInput] = useState('');
-  const [loginPassword, setLoginPassword] = useState('');
   
   // 연락처 정보
   const [myContact, setMyContact] = useState(() => localStorage.getItem('dv3_my_contact') || '');
@@ -140,18 +136,6 @@ function App() {
     }
   }, [userNickname]);
 
-  // 실시간 접속자 목록(Presence) 구독 설정
-  useEffect(() => {
-    if (userNickname) {
-      const unsubscribe = chatService.subscribeOnlineUsers(userNickname, (users) => {
-        setOnlineUsers(users);
-      });
-      return () => unsubscribe();
-    } else {
-      setOnlineUsers([]);
-    }
-  }, [userNickname]);
-
   // 채팅방 활성화 시 메시지 히스토리 로드 및 실시간 구독
   useEffect(() => {
     if (!chatActiveRoomId) {
@@ -211,77 +195,31 @@ function App() {
   };
 
   // 로그인 처리
-  const handleLogin = async (isGuestMode) => {
+  const handleLogin = (isGuestMode) => {
     if (!loginInput.trim()) {
       alert("사용할 닉네임을 입력해 주세요!");
       return;
     }
     const nickname = loginInput.trim();
+    setUserNickname(nickname);
+    setIsGuest(isGuestMode);
 
-    // 게스트 모드가 아닐 때 (비밀번호 필수 및 자동 저장 회원가입/로그인 흐름)
-    if (!isGuestMode) {
-      if (!loginPassword.trim()) {
-        alert("비밀번호를 입력해 주세요!");
-        return;
-      }
-      const password = loginPassword.trim();
-      
-      try {
-        const { exists, isMatch, error } = await dbService.verifyUser(nickname, password);
-        if (error) {
-          console.error("회원 검증 오류:", error);
-          alert("회원 정보를 조회하는 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
-          return;
-        }
-        
-        if (exists) {
-          if (!isMatch) {
-            alert("입력하신 비밀번호가 등록된 정보와 일치하지 않습니다!");
-            return;
-          }
-        } else {
-          const confirmSignUp = window.confirm(`"${nickname}"님은 등록되지 않은 회원입니다.\n이 비밀번호로 새로운 계정을 등록(회원가입)하시겠습니까?`);
-          if (!confirmSignUp) return;
-          
-          const { error: registerError } = await dbService.registerUser(nickname, password);
-          if (registerError) {
-            console.error("회원 등록 오류:", registerError);
-            alert("회원 등록에 실패했습니다. (중복 닉네임 또는 특수문자 제한일 수 있습니다)");
-            return;
-          }
-          alert("성공적으로 회원 등록이 완료되었습니다!");
-        }
-      } catch (err) {
-        console.error("로그인 프로세스 오류:", err);
-        alert("로그인 처리 중 오류가 발생했습니다.");
-        return;
-      }
-      
-      localStorage.setItem('dv3_nickname', nickname);
-      localStorage.setItem('dv3_password', password);
-      sessionStorage.setItem('dv3_nickname', nickname);
-      sessionStorage.setItem('dv3_is_guest', 'false');
-      setIsGuest(false);
-    } else {
-      // 게스트 로그인
-      setUserNickname(nickname);
-      setIsGuest(true);
+    if (isGuestMode) {
       sessionStorage.setItem('dv3_nickname', nickname);
       sessionStorage.setItem('dv3_is_guest', 'true');
       localStorage.removeItem('dv3_nickname');
-      localStorage.removeItem('dv3_password');
+    } else {
+      localStorage.setItem('dv3_nickname', nickname);
+      sessionStorage.setItem('dv3_nickname', nickname);
+      sessionStorage.setItem('dv3_is_guest', 'false');
     }
-
-    setUserNickname(nickname);
     setShowLoginModal(false);
-    setLoginPassword('');
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem('dv3_nickname');
     sessionStorage.removeItem('dv3_is_guest');
     localStorage.removeItem('dv3_nickname');
-    localStorage.removeItem('dv3_password');
     setUserNickname('');
     setIsGuest(false);
     setShowLoginModal(true);
@@ -710,81 +648,11 @@ function App() {
                   >
                     <ArrowLeft size={14} /> 카테고리 목록
                   </button>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <BookOpen size={18} color="var(--primary-color)" style={{ marginRight: '0.2rem' }} />
-                    
-                    {/* 이전 카테고리 이동 버튼 */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const currentIndex = categories.findIndex(c => c.id === currentCategory.id);
-                        const prevIndex = currentIndex === 0 ? categories.length - 1 : currentIndex - 1;
-                        setSelectedCategoryId(categories[prevIndex].id);
-                      }}
-                      style={{
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: '#fff',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        padding: '0.3rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--primary-color)';
-                        e.currentTarget.style.color = '#000';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                        e.currentTarget.style.color = '#fff';
-                      }}
-                      title="이전 카테고리"
-                    >
-                      <ChevronLeft size={16} />
-                    </button>
-
-                    <h2 style={{ fontSize: '1.15rem', margin: 0, fontWeight: '700', color: '#fff', minWidth: '100px', textAlign: 'center' }}>
-                      {currentCategory.name}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <BookOpen size={18} color="var(--primary-color)" />
+                    <h2 style={{ fontSize: '1.2rem', margin: 0, fontWeight: '700', color: '#fff' }}>
+                      {currentCategory.name} (3x3 도감)
                     </h2>
-
-                    {/* 다음 카테고리 이동 버튼 */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const currentIndex = categories.findIndex(c => c.id === currentCategory.id);
-                        const nextIndex = currentIndex === categories.length - 1 ? 0 : currentIndex + 1;
-                        setSelectedCategoryId(categories[nextIndex].id);
-                      }}
-                      style={{
-                        background: 'rgba(255,255,255,0.06)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        color: '#fff',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        padding: '0.3rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        transition: 'all 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = 'var(--primary-color)';
-                        e.currentTarget.style.color = '#000';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
-                        e.currentTarget.style.color = '#fff';
-                      }}
-                      title="다음 카테고리"
-                    >
-                      <ChevronRight size={16} />
-                    </button>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '4px', whiteSpace: 'nowrap' }}>
-                      ({currentCategory.id}/20)
-                    </span>
                   </div>
                 </div>
                 {getCategoryImage(currentCategory.id) && (
@@ -1141,41 +1009,6 @@ function App() {
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{ fontWeight: '800', fontSize: '1.05rem', color: '#fff' }}>{post.nickname}</span>
-                          
-                          {/* 실시간 접속 상태 배지 */}
-                          {onlineUsers.includes(post.nickname) ? (
-                            <span style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: '3px', 
-                              fontSize: '0.68rem', 
-                              color: '#34d399', 
-                              background: 'rgba(52, 211, 153, 0.08)',
-                              border: '1px solid rgba(52, 211, 153, 0.25)', 
-                              padding: '1px 6px', 
-                              borderRadius: '4px',
-                              fontWeight: '600'
-                            }}>
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 5px #10b981', display: 'inline-block' }}></span>
-                              온라인
-                            </span>
-                          ) : (
-                            <span style={{ 
-                              display: 'inline-flex', 
-                              alignItems: 'center', 
-                              gap: '3px', 
-                              fontSize: '0.68rem', 
-                              color: 'var(--text-muted)', 
-                              background: 'rgba(255, 255, 255, 0.03)',
-                              border: '1px solid rgba(255, 255, 255, 0.08)', 
-                              padding: '1px 6px', 
-                              borderRadius: '4px'
-                            }}>
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6b7280', display: 'inline-block' }}></span>
-                              오프라인
-                            </span>
-                          )}
-
                           {isMyPost && <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}>내 글</span>}
                         </div>
                         <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
@@ -1361,22 +1194,6 @@ function App() {
                 />
               </div>
 
-              <div className="form-group">
-                <label style={{ display: 'block', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)', fontWeight: '600' }}>
-                  비밀번호
-                </label>
-                <input 
-                  type="password" 
-                  placeholder="비밀번호 입력 (최소 1자 이상)" 
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  style={{ width: '100%', padding: '0.75rem', fontSize: '0.95rem' }}
-                />
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-                  ※ 자동 저장 로그인 시에만 비밀번호 저장 및 검증이 수행됩니다.
-                </span>
-              </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button 
                   type="button" 
@@ -1392,7 +1209,7 @@ function App() {
                   onClick={() => handleLogin(false)}
                   style={{ padding: '0.85rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                 >
-                  <User size={16} /> 💾 로그인 & 회원가입 (자동 저장)
+                  <User size={16} /> 💾 로그인 (닉네임 자동 저장)
                 </button>
               </div>
             </div>
@@ -1523,17 +1340,9 @@ function App() {
               <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <MessageSquare size={18} color="var(--primary-color)" />
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <span style={{ fontWeight: '700', fontSize: '0.95rem', color: '#fff' }}>
-                      {chatActiveRoomId ? `${chatActiveRoomNickname} 님과의 대화` : '💬 실시간 1:1 채팅방 목록'}
-                    </span>
-                    {chatActiveRoomId && (
-                      <span style={{ fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '3px', marginTop: '2px', color: onlineUsers.includes(chatActiveRoomNickname) ? '#34d399' : 'var(--text-muted)' }}>
-                        <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: onlineUsers.includes(chatActiveRoomNickname) ? '#10b981' : '#6b7280', display: 'inline-block' }}></span>
-                        {onlineUsers.includes(chatActiveRoomNickname) ? '실시간 접속 중' : '오프라인'}
-                      </span>
-                    )}
-                  </div>
+                  <span style={{ fontWeight: '700', fontSize: '0.95rem', color: '#fff' }}>
+                    {chatActiveRoomId ? `${chatActiveRoomNickname} 님과의 대화` : '💬 실시간 1:1 채팅방 목록'}
+                  </span>
                 </div>
                 <button 
                   onClick={() => setChatWindowOpen(false)} 
@@ -1575,17 +1384,7 @@ function App() {
                           className="chat-room-item"
                         >
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                              <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#fff' }}>{room.otherUser}</span>
-                              <span style={{ 
-                                width: '6px', 
-                                height: '6px', 
-                                borderRadius: '50%', 
-                                background: onlineUsers.includes(room.otherUser) ? '#10b981' : '#6b7280',
-                                boxShadow: onlineUsers.includes(room.otherUser) ? '0 0 4px #10b981' : 'none',
-                                display: 'inline-block'
-                              }} title={onlineUsers.includes(room.otherUser) ? '온라인' : '오프라인'}></span>
-                            </div>
+                            <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#fff' }}>{room.otherUser}</span>
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' }}>
                               {room.lastMessage || '대화를 시작해 보세요.'}
                             </span>

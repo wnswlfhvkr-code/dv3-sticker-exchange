@@ -84,5 +84,50 @@ export const dbService = {
     } else {
       return mockDB.deletePost(id);
     }
+  },
+  verifyUser: async (nickname, password) => {
+    if (!isMock) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('nickname', nickname)
+          .maybeSingle(); // single() 대신 maybeSingle()로 데이터 부재 시 오류 방지
+        if (error) return { user: null, exists: false, error };
+        if (!data) return { user: null, exists: false, error: null };
+        return { user: data, exists: true, isMatch: data.password === password, error: null };
+      } catch (err) {
+        return { user: null, exists: false, error: err };
+      }
+    } else {
+      const users = JSON.parse(localStorage.getItem('dv3_users')) || [];
+      const user = users.find(u => u.nickname === nickname);
+      if (!user) {
+        return { user: null, exists: false, error: null };
+      }
+      return { user, exists: true, isMatch: user.password === password, error: null };
+    }
+  },
+  registerUser: async (nickname, password) => {
+    if (!isMock) {
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .insert([{ nickname, password }])
+          .select()
+          .maybeSingle();
+        return { data, error };
+      } catch (err) {
+        return { data: null, error: err };
+      }
+    } else {
+      const users = JSON.parse(localStorage.getItem('dv3_users')) || [];
+      const newUser = { nickname, password };
+      users.push(newUser);
+      localStorage.setItem('dv3_users', JSON.stringify(users));
+      return { data: newUser, error: null };
+    }
   }
 };
+
+export { supabase, isMock };
