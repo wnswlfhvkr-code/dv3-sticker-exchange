@@ -452,4 +452,9 @@ input:focus, select:focus, textarea:focus {
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* 브라우저 포토샵(Ps) 크롬 확장 프로그램 이미지 오버레이 배지 차단 */
+img {
+  pointer-events: none;
+}
+
 

@@ -441,6 +441,14 @@ function App() {
 
   const handleDeletePost = async (id) => {
     if (!window.confirm("정말 이 교환 등록글을 삭제하시겠습니까?")) return;
+    
+    // 내가 작성한 글인지 닉네임으로 한 번 더 방어 검증
+    const targetPost = posts.find(p => p.id === id);
+    if (targetPost && targetPost.nickname !== userNickname) {
+      alert("본인의 교환 등록 글만 삭제할 수 있습니다!");
+      return;
+    }
+
     const { error } = await dbService.removePost(id);
     if (!error) {
       const updated = myPostIds.filter(postId => postId !== id);
@@ -876,18 +884,24 @@ function App() {
                   </div>
                 </div>
                 {getCategoryImage(currentCategory.id) && (
-                  <div style={{ 
-                    width: '45px', 
-                    height: '45px', 
-                    borderRadius: '50%', 
-                    overflow: 'hidden', 
-                    border: '2px solid var(--primary-color)', 
-                    background: 'rgba(0,0,0,0.3)',
-                    boxShadow: '0 0 10px rgba(133, 195, 0, 0.4)',
-                    position: 'relative',
-                    cursor: 'pointer',
-                    flexShrink: 0
-                  }} title="전체 원본 캡쳐본을 새 창으로 보려면 클릭">
+                  <div 
+                    onClick={() => {
+                      window.open(`/sticker_images/KakaoTalk_20260604_202516419_${currentCategory.image || ''}.png`, '_blank');
+                    }}
+                    style={{ 
+                      width: '45px', 
+                      height: '45px', 
+                      borderRadius: '50%', 
+                      overflow: 'hidden', 
+                      border: '2px solid var(--primary-color)', 
+                      background: 'rgba(0,0,0,0.3)',
+                      boxShadow: '0 0 10px rgba(133, 195, 0, 0.4)',
+                      position: 'relative',
+                      cursor: 'pointer',
+                      flexShrink: 0
+                    }} 
+                    title="전체 원본 캡쳐본을 새 창으로 보려면 클릭"
+                  >
                     <img 
                       src={getCategoryImage(currentCategory.id)} 
                       alt="도감 대표" 
@@ -896,11 +910,9 @@ function App() {
                         height: '100%',
                         objectFit: 'cover',
                         display: 'block',
-                        borderRadius: '50%'
+                        borderRadius: '50%',
+                        pointerEvents: 'none'
                       }} 
-                      onClick={() => {
-                        window.open(`/sticker_images/KakaoTalk_20260604_202516419_${currentCategory.image || ''}.png`, '_blank');
-                      }}
                     />
                   </div>
                 )}
@@ -1194,7 +1206,7 @@ function App() {
         ) : (
           <div className="grid-container" style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
             {filteredPosts.map(post => {
-              const isMyPost = myPostIds.includes(post.id);
+              const isMyPost = post.nickname === userNickname;
               
               // 내 Haves/Wants 리스트와 교차 대조
               const { isPerfectMatch, isPartialMatch, myWantsMatch, myHavesMatch } = checkMatching(post);
