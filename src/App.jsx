@@ -36,6 +36,26 @@ function App() {
     return sessionStorage.getItem('dv3_nickname') || localStorage.getItem('dv3_nickname') || '';
   });
   const [onlineUsers, setOnlineUsers] = useState([]);
+
+  // 안 읽은 메시지 개수 관리 (로컬스토리지 복구 지원)
+  const [unreadCounts, setUnreadCounts] = useState(() => {
+    const counts = {};
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('dv3_unread_')) {
+          const roomId = key.replace('dv3_unread_', '');
+          counts[roomId] = parseInt(localStorage.getItem(key)) || 0;
+        }
+      }
+    } catch (e) {
+      console.error("안 읽은 메시지 수 로딩 에러:", e);
+    }
+    return counts;
+  });
+
+  // 실시간 메시지 미리보기 팝업(Toast) 알림 상태
+  const [chatNotification, setChatNotification] = useState(null);
   const [isGuest, setIsGuest] = useState(() => {
     try {
       return JSON.parse(sessionStorage.getItem('dv3_is_guest')) || false;
@@ -151,6 +171,62 @@ function App() {
       setOnlineUsers([]);
     }
   }, [userNickname]);
+
+  // 채팅방 활성화 시 안 읽은 메시지 수 리셋
+  useEffect(() => {
+    if (chatActiveRoomId) {
+      setUnreadCounts(prev => {
+        const next = { ...prev, [chatActiveRoomId]: 0 };
+        localStorage.setItem(`dv3_unread_${chatActiveRoomId}`, '0');
+        return next;
+      });
+    }
+  }, [chatActiveRoomId]);
+
+  // 실시간 알림 팝업(Toast) 자동 소멸 타이머 (4초 후 소멸)
+  useEffect(() => {
+    if (chatNotification) {
+      const timer = setTimeout(() => {
+        setChatNotification(null);
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [chatNotification]);
+
+  // 글로벌 새 메시지 감지 훅 (알림음, 토스트 팝업, 안 읽은 카운트 제어)
+  useEffect(() => {
+    if (!userNickname) return;
+
+    const unsubscribe = chatService.subscribeAllMyMessages(userNickname, (msg) => {
+      // 현재 열려 있는 방이 아니거나 채팅방 창이 아예 닫혀있을 때만 알림 발생
+      if (!chatWindowOpen || chatActiveRoomId !== msg.roomId) {
+        // 1. 안 읽은 개수 증가
+        setUnreadCounts(prev => {
+          const newCount = (prev[msg.roomId] || 0) + 1;
+          localStorage.setItem(`dv3_unread_${msg.roomId}`, String(newCount));
+          return { ...prev, [msg.roomId]: newCount };
+        });
+
+        // 2. 청아한 띵동 알림음 재생
+        try {
+          const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav");
+          audio.volume = 0.55;
+          audio.play().catch(e => console.log("알림음 재생 대기 (브라우저 상호작용 제약):", e));
+        } catch (e) {
+          console.error("오디오 로드 에러:", e);
+        }
+
+        // 3. 토스트 팝업 알림 설정
+        setChatNotification({
+          sender: msg.sender,
+          text: msg.text,
+          roomId: msg.roomId
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [userNickname, chatWindowOpen, chatActiveRoomId]);
 
   // 채팅방 활성화 시 메시지 히스토리 로드 및 실시간 구독
   useEffect(() => {
@@ -1590,9 +1666,27 @@ function App() {
                               {room.lastMessage || '대화를 시작해 보세요.'}
                             </span>
                           </div>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                            {room.updatedAt ? new Date(room.updatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : ''}
-                          </span>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                              {room.updatedAt ? new Date(room.updatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                            </span>
+                            {unreadCounts[room.id] > 0 && (
+                              <span style={{
+                                background: '#ef4444',
+                                color: '#fff',
+                                fontSize: '0.7rem',
+                                fontWeight: '800',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)',
+                                display: 'inline-block',
+                                minWidth: '16px',
+                                textAlign: 'center'
+                              }}>
+                                {unreadCounts[room.id]}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       ))
                     )}
@@ -1698,6 +1792,54 @@ function App() {
             </div>
           )}
 
+          {/* 실시간 새 메시지 토스트 미리보기 알림 팝업 */}
+          {chatNotification && (
+            <div 
+              onClick={() => {
+                setChatActiveRoomId(chatNotification.roomId);
+                const parts = chatNotification.roomId.replace('room-', '').split('-');
+                const other = parts[1] === userNickname ? parts[2] : parts[1];
+                setChatActiveRoomNickname(other || '상대방');
+                setChatWindowOpen(true);
+                setChatNotification(null);
+              }}
+              style={{
+                background: 'rgba(20, 16, 35, 0.95)',
+                border: '1.5px solid var(--primary-color)',
+                boxShadow: '0 8px 32px rgba(133, 195, 0, 0.25), 0 0 15px rgba(133, 195, 0, 0.15)',
+                borderRadius: '16px',
+                padding: '0.85rem 1.1rem',
+                width: '280px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                cursor: 'pointer',
+                backdropFilter: 'blur(15px)',
+                position: 'absolute',
+                bottom: '72px',
+                right: '0',
+                zIndex: 10001
+              }}
+              className="toast-slide-up"
+            >
+              <div style={{ background: 'rgba(133, 195, 0, 0.15)', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <MessageSquare size={18} color="var(--primary-color)" />
+              </div>
+              <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+                <div style={{ fontSize: '0.78rem', color: 'var(--primary-color)', fontWeight: '700', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>💬 새 메시지</span>
+                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>방금 전</span>
+                </div>
+                <div style={{ fontSize: '0.82rem', fontWeight: '800', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '2px' }}>
+                  {chatNotification.sender}
+                </div>
+                <div style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginTop: '1px' }}>
+                  {chatNotification.text}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 동그란 플로팅 말풍선 토글 버튼 */}
           <button
             onClick={() => setChatWindowOpen(prev => !prev)}
@@ -1720,9 +1862,28 @@ function App() {
             title="실시간 1:1 채팅방 열기"
           >
             <MessageSquare size={24} />
-            {/* 안 읽은 새 알림 표시 배지 (선택 사항) */}
-            {chatRooms.some(r => r.unread) && (
-              <span style={{ position: 'absolute', top: '2px', right: '2px', width: '12px', height: '12px', borderRadius: '50%', background: '#ef4444', border: '2px solid var(--primary-color)' }} />
+            {/* 안 읽은 새 알림 표시 배지 */}
+            {Object.values(unreadCounts).reduce((a, b) => a + b, 0) > 0 && (
+              <span style={{ 
+                position: 'absolute', 
+                top: '-5px', 
+                right: '-5px', 
+                background: '#ef4444', 
+                color: '#fff', 
+                fontSize: '0.75rem', 
+                fontWeight: '800', 
+                borderRadius: '12px', 
+                minWidth: '20px', 
+                height: '20px', 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                padding: '0 5px', 
+                border: '2px solid rgba(15, 12, 25, 0.95)',
+                boxShadow: '0 0 10px rgba(239, 68, 68, 0.7)'
+              }}>
+                {Object.values(unreadCounts).reduce((a, b) => a + b, 0)}
+              </span>
             )}
           </button>
         </div>

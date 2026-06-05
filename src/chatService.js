@@ -337,5 +337,84 @@ export const chatService = {
         } catch {}
       };
     }
+  },
+
+  // 7. 나에게 오는 모든 메시지 글로벌 실시간 구독 (알림음, 미리보기, 안읽은 개수 추적용)
+  subscribeAllMyMessages(myNickname, onNewMessage) {
+    if (!isMock) {
+      const channel = supabase
+        .channel('global-chat-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages'
+          },
+          (payload) => {
+            const msg = payload.new;
+            if (msg && msg.room_id && msg.room_id.includes(myNickname) && msg.sender !== myNickname) {
+              onNewMessage({
+                id: msg.id,
+                roomId: msg.room_id,
+                sender: msg.sender,
+                text: msg.text,
+                timestamp: msg.timestamp
+              });
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      const handleStorageChange = (e) => {
+        if (e.key === CHAT_MESSAGES_KEY) {
+          try {
+            const allMessages = JSON.parse(e.newValue) || [];
+            if (allMessages.length > 0) {
+              const lastMsg = allMessages[allMessages.length - 1];
+              if (lastMsg && lastMsg.roomId && lastMsg.roomId.includes(myNickname) && lastMsg.sender !== myNickname) {
+                onNewMessage({
+                  id: lastMsg.id || Date.now(),
+                  roomId: lastMsg.roomId,
+                  sender: lastMsg.sender,
+                  text: lastMsg.text,
+                  timestamp: lastMsg.timestamp
+                });
+              }
+            }
+          } catch (err) {
+            console.error(err);
+          }
+        }
+      };
+
+      const handleCustomEvent = () => {
+        const allMessages = getLocalMessages();
+        if (allMessages.length > 0) {
+          const lastMsg = allMessages[allMessages.length - 1];
+          if (lastMsg && lastMsg.roomId && lastMsg.roomId.includes(myNickname) && lastMsg.sender !== myNickname) {
+            onNewMessage({
+              id: lastMsg.id || Date.now(),
+              roomId: lastMsg.roomId,
+              sender: lastMsg.sender,
+              text: lastMsg.text,
+              timestamp: lastMsg.timestamp
+            });
+          }
+        }
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('dv3_chat_update', handleCustomEvent);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('dv3_chat_update', handleCustomEvent);
+      };
+    }
   }
 };
