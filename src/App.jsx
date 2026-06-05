@@ -228,6 +228,16 @@ function App() {
     return () => unsubscribe();
   }, [userNickname, chatWindowOpen, chatActiveRoomId]);
 
+  // 안 읽은 메시지 수에 따라 브라우저 탭 타이틀에 숫자 표시
+  useEffect(() => {
+    const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+    if (totalUnread > 0) {
+      document.title = `(${totalUnread}) 드래곤 빌리지 3 카드교환소`;
+    } else {
+      document.title = `드래곤 빌리지 3 카드교환소`;
+    }
+  }, [unreadCounts]);
+
   // 채팅방 활성화 시 메시지 히스토리 로드 및 실시간 구독
   useEffect(() => {
     if (!chatActiveRoomId) {
@@ -280,6 +290,8 @@ function App() {
         const otherUser = r.buyerNickname === userNickname ? r.sellerNickname : r.buyerNickname;
         return { ...r, otherUser };
       });
+      // 최신 업데이트된 채팅방을 맨 위로 정렬 (updatedAt 기준 내림차순)
+      formattedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
       setChatRooms(formattedRooms);
     } catch (err) {
       console.error("채팅방 로드 실패:", err);
