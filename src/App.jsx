@@ -115,6 +115,7 @@ function App() {
 
   // 글 올리기 폼 모달 열림 여부
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isMyInfoOpen, setIsMyInfoOpen] = useState(false);
 
   // --- 1:1 채팅 관련 상태 ---
   const [chatRooms, setChatRooms] = useState([]);
@@ -409,10 +410,6 @@ function App() {
       alert("로그인이 필요합니다!");
       return;
     }
-    if (!myContact.trim()) {
-      alert("연락처를 입력해 주세요!");
-      return;
-    }
     if (myHaves.length === 0 && myWants.length === 0) {
       alert("보유 중인 카드나 필요한 카드를 최소 한 개 이상 지정해 주세요!");
       return;
@@ -441,14 +438,6 @@ function App() {
 
   const handleDeletePost = async (id) => {
     if (!window.confirm("정말 이 교환 등록글을 삭제하시겠습니까?")) return;
-    
-    // 내가 작성한 글인지 닉네임으로 한 번 더 방어 검증
-    const targetPost = posts.find(p => p.id === id);
-    if (targetPost && targetPost.nickname !== userNickname) {
-      alert("본인의 교환 등록 글만 삭제할 수 있습니다!");
-      return;
-    }
-
     const { error } = await dbService.removePost(id);
     if (!error) {
       const updated = myPostIds.filter(postId => postId !== id);
@@ -556,9 +545,20 @@ function App() {
           {userNickname && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
               <User size={14} color="var(--primary-color)" />
-              <span style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff' }}>
+              <span 
+                style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff', cursor: 'pointer' }}
+                onClick={() => setIsMyInfoOpen(true)}
+                title="내 정보 열기"
+              >
                 {userNickname} {isGuest ? <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(게스트)</span> : null}
               </span>
+              <button
+                onClick={() => setIsMyInfoOpen(true)}
+                style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center' }}
+                title="내 정보 및 등록글 보기"
+              >
+                <Info size={14} />
+              </button>
               <button 
                 onClick={handleLogout} 
                 style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '0 0 0 4px', display: 'flex', alignItems: 'center' }}
@@ -667,6 +667,7 @@ function App() {
                           <img 
                             src={imgUrl} 
                             alt={cat.name} 
+                            title={cat.name}
                             style={{ 
                               width: '100%',
                               height: '100%',
@@ -884,34 +885,27 @@ function App() {
                   </div>
                 </div>
                 {getCategoryImage(currentCategory.id) && (
-                  <div 
-                    onClick={() => {
-                      window.open(`/sticker_images/KakaoTalk_20260604_202516419_${currentCategory.image || ''}.png`, '_blank');
-                    }}
-                    style={{ 
-                      width: '45px', 
-                      height: '45px', 
-                      borderRadius: '50%', 
-                      overflow: 'hidden', 
-                      border: '2px solid var(--primary-color)', 
-                      background: 'rgba(0,0,0,0.3)',
-                      boxShadow: '0 0 10px rgba(133, 195, 0, 0.4)',
-                      position: 'relative',
-                      cursor: 'pointer',
-                      flexShrink: 0
-                    }} 
-                    title="전체 원본 캡쳐본을 새 창으로 보려면 클릭"
-                  >
+                  <div style={{ 
+                    width: '45px', 
+                    height: '45px', 
+                    borderRadius: '50%', 
+                    overflow: 'hidden', 
+                    border: '2px solid var(--primary-color)', 
+                    background: 'rgba(0,0,0,0.3)',
+                    boxShadow: '0 0 10px rgba(133, 195, 0, 0.4)',
+                    position: 'relative',
+                    flexShrink: 0
+                  }}>
                     <img 
                       src={getCategoryImage(currentCategory.id)} 
                       alt="도감 대표" 
+                      title={currentCategory.name}
                       style={{ 
                         width: '100%',
                         height: '100%',
                         objectFit: 'cover',
                         display: 'block',
-                        borderRadius: '50%',
-                        pointerEvents: 'none'
+                        borderRadius: '50%'
                       }} 
                     />
                   </div>
@@ -1004,6 +998,7 @@ function App() {
                         <img 
                           src={imageUrl} 
                           alt={sticker.name} 
+                          title={sticker.name}
                           style={{ 
                             width: '88%', 
                             height: '64%', 
@@ -1206,7 +1201,7 @@ function App() {
         ) : (
           <div className="grid-container" style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
             {filteredPosts.map(post => {
-              const isMyPost = post.nickname === userNickname;
+              const isMyPost = userNickname && post.nickname === userNickname;
               
               // 내 Haves/Wants 리스트와 교차 대조
               const { isPerfectMatch, isPartialMatch, myWantsMatch, myHavesMatch } = checkMatching(post);
@@ -1374,15 +1369,17 @@ function App() {
                       </button>
                     )}
                     
-                    <a 
-                      href={post.contact.startsWith('http') ? post.contact : `https://${post.contact}`}
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="btn btn-secondary"
-                      style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
-                    >
-                      <MessageCircle size={14} /> 연락하기
-                    </a>
+                    {post.contact && post.contact.trim() && (
+                      <a 
+                        href={post.contact.startsWith('http') ? post.contact : `https://${post.contact}`}
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="btn btn-secondary"
+                        style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                      >
+                        <MessageCircle size={14} /> 연락하기
+                      </a>
+                    )}
                     
                     {isMyPost && (
                       <button 
@@ -1410,6 +1407,137 @@ function App() {
           <Info size={14} /> 본 사이트는 드빌 3 유저 간의 교환 편의 제공을 위해 개인 제작되었습니다.
         </p>
       </footer>
+
+      {/* 2. 내 정보 사이드 드로어 */}
+      <div 
+        className={`my-info-drawer-overlay ${isMyInfoOpen ? 'open' : ''}`} 
+        onClick={() => setIsMyInfoOpen(false)}
+      />
+      <div className={`my-info-drawer ${isMyInfoOpen ? 'open' : ''}`}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem' }}>
+          <h3 style={{ fontSize: '1.2rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+            <User size={18} color="var(--primary-color)" /> 내 정보 및 등록 내역
+          </h3>
+          <button 
+            onClick={() => setIsMyInfoOpen(false)} 
+            style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          {/* 유저 프로필 카드 */}
+          <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>로그인 계정</div>
+            <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {userNickname} 
+              {isGuest && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '400' }}>(임시 게스트)</span>}
+            </div>
+            
+            {/* 연락처 수정 폼 */}
+            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>내 기본 연락처</label>
+              <div style={{ display: 'flex', gap: '4px' }}>
+                <input 
+                  type="text" 
+                  value={myContact} 
+                  onChange={(e) => {
+                    setMyContact(e.target.value);
+                    localStorage.setItem('dv3_my_contact', e.target.value);
+                  }}
+                  placeholder="예: 카톡 오픈채팅 주소"
+                  style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.8rem', borderRadius: '6px', background: '#1d2025', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                />
+                <button 
+                  onClick={() => alert("내 연락처 정보가 수정되었습니다! 새로운 글 작성 시 자동으로 적용됩니다.")}
+                  className="btn btn-primary"
+                  style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem', borderRadius: '6px' }}
+                >
+                  저장
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 내 등록 내역 리스트 */}
+          <div>
+            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#fff', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
+              <span>내 교환 등록글</span>
+              <span style={{ color: 'var(--primary-color)' }}>
+                {posts.filter(p => p.nickname === userNickname).length}개
+              </span>
+            </div>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              {posts.filter(p => p.nickname === userNickname).map(post => {
+                const hasHaves = post.haves && post.haves.length > 0;
+                const hasWants = post.wants && post.wants.length > 0;
+                return (
+                  <div 
+                    key={post.id} 
+                    style={{ 
+                      background: 'rgba(255,255,255,0.02)', 
+                      border: '1px solid rgba(255,255,255,0.05)', 
+                      borderRadius: '10px', 
+                      padding: '0.75rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        {new Date(post.created_at).toLocaleDateString()}
+                      </span>
+                      <button 
+                        onClick={() => handleDeletePost(post.id)}
+                        style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                        title="삭제하기"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                      {hasHaves && (
+                        <div style={{ fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <span style={{ color: '#10b981', fontWeight: '700' }}>줄 수 있음:</span>{' '}
+                          <span style={{ color: 'var(--text-secondary)' }}>
+                            {post.haves.map(id => {
+                              const [catId, s] = id.split('-');
+                              const cat = categories.find(c => String(c.id) === catId);
+                              return (cat ? cat.name : `${catId}페이지`) + ` ${s}번`;
+                            }).join(', ')}
+                          </span>
+                        </div>
+                      )}
+                      {hasWants && (
+                        <div style={{ fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <span style={{ color: '#ef4444', fontWeight: '700' }}>받고 싶음:</span>{' '}
+                          <span style={{ color: 'var(--text-secondary)' }}>
+                            {post.wants.map(id => {
+                              const [catId, s] = id.split('-');
+                              const cat = categories.find(c => String(c.id) === catId);
+                              return (cat ? cat.name : `${catId}페이지`) + ` ${s}번`;
+                            }).join(', ')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+
+              {posts.filter(p => p.nickname === userNickname).length === 0 && (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.85rem', border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '10px' }}>
+                  등록된 교환 글이 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* 1. 로그인 전용 강제 모달창 */}
       {showLoginModal && (
@@ -1567,15 +1695,15 @@ function App() {
               </div>
 
               <div className="form-group">
-                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)', width: '100%' }}>
                   <MessageCircle size={14} color="var(--primary-color)" /> 연락처 (카카오톡 오픈채팅 주소 등)
+                  <span style={{ fontSize: '0.72rem', color: '#10b981', marginLeft: 'auto', fontWeight: 'bold' }}>(선택 사항)</span>
                 </label>
                 <input 
                   type="text" 
                   placeholder="예: open.kakao.com/o/xxxxxx" 
                   value={myContact}
                   onChange={(e) => setMyContact(e.target.value)}
-                  required
                 />
               </div>
 
