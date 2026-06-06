@@ -357,12 +357,40 @@ function App() {
     }
   }, [chatMessages]);
 
+  // 로그인한 유저의 교환글 카드를 내 상단 바구니에 자동 동기화하는 함수
+  const syncMyBasketFromPost = (nickname, currentPosts) => {
+    if (!nickname || !currentPosts || currentPosts.length === 0) return;
+    const myPost = [...currentPosts]
+      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+      .find(p => p.nickname === nickname);
+    
+    if (myPost) {
+      const haves = myPost.haves || [];
+      const wants = myPost.wants || [];
+      
+      const localHaves = JSON.parse(localStorage.getItem('dv3_my_haves')) || [];
+      const localWants = JSON.parse(localStorage.getItem('dv3_my_wants')) || [];
+      
+      const isHavesEqual = haves.length === localHaves.length && haves.every(v => localHaves.includes(v));
+      const isWantsEqual = wants.length === localWants.length && wants.every(v => localWants.includes(v));
+      
+      if (!isHavesEqual || !isWantsEqual) {
+        setMyHaves(haves);
+        setMyWants(wants);
+        localStorage.setItem('dv3_my_haves', JSON.stringify(haves));
+        localStorage.setItem('dv3_my_wants', JSON.stringify(wants));
+      }
+    }
+  };
+
   // --- 핵심 데이터 핸들러 ---
   const fetchData = async () => {
     setLoading(true);
     const { data, error } = await dbService.fetchPosts();
     if (!error) {
-      setPosts(data || []);
+      const postsList = data || [];
+      setPosts(postsList);
+      syncMyBasketFromPost(userNickname, postsList);
     }
     setLoading(false);
   };
@@ -370,7 +398,9 @@ function App() {
   const fetchDataSilent = async () => {
     const { data, error } = await dbService.fetchPosts();
     if (!error) {
-      setPosts(data || []);
+      const postsList = data || [];
+      setPosts(postsList);
+      syncMyBasketFromPost(userNickname, postsList);
     }
   };
 
@@ -688,6 +718,10 @@ function App() {
     const { error } = await dbService.updatePost(editingPost.id, editContact, editHaves, editWants);
     if (!error) {
       alert("성공적으로 글이 수정되었습니다!");
+      setMyHaves(editHaves);
+      setMyWants(editWants);
+      localStorage.setItem('dv3_my_haves', JSON.stringify(editHaves));
+      localStorage.setItem('dv3_my_wants', JSON.stringify(editWants));
       setIsEditModalOpen(false);
       setEditingPost(null);
       fetchData();
