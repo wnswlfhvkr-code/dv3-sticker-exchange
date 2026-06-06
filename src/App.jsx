@@ -160,6 +160,7 @@ function App() {
   const [chatInput, setChatInput] = useState('');
   const [chatWindowOpen, setChatWindowOpen] = useState(false);
   const chatScrollRef = useRef(null);
+  const lastBasketEditRef = useRef(0); // 바구니 수정 직후 폴링 덮어쓰기 방지용 쿨다운 타임스탬프
 
   // --- 글 수정 관련 상태 ---
   const [editingPost, setEditingPost] = useState(null);
@@ -413,6 +414,10 @@ function App() {
   // 로그인한 유저의 교환글 카드를 내 상단 바구니에 자동 동기화하는 함수
   const syncMyBasketFromPost = (nickname, currentPosts) => {
     if (!nickname || !currentPosts || currentPosts.length === 0) return;
+
+    // 사용자가 도감에서 직접 바구니를 수정한 직후(5초 이내)에는 폴링 데이터로 덮어쓰지 않음
+    if (Date.now() - lastBasketEditRef.current < 5000) return;
+
     const myPost = [...currentPosts]
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
       .find(p => p.nickname === nickname);
@@ -657,6 +662,14 @@ function App() {
     }
 
     const finalNickname = isGuestMode ? `${nickname} (게스트)` : nickname;
+
+    // 계정 전환 시 이전 계정의 바구니 데이터 초기화 (새 계정 데이터로 자동 동기화될 때까지 빈 상태)
+    localStorage.removeItem('dv3_my_haves');
+    localStorage.removeItem('dv3_my_wants');
+    setMyHaves([]);
+    setMyWants([]);
+    lastBasketEditRef.current = 0; // 쿨다운 해제하여 즉시 DB 동기화 허용
+
     setUserNickname(finalNickname);
     setShowLoginModal(false);
     setLoginPassword('');
@@ -667,6 +680,10 @@ function App() {
     sessionStorage.removeItem('dv3_is_guest');
     localStorage.removeItem('dv3_nickname');
     localStorage.removeItem('dv3_password');
+    localStorage.removeItem('dv3_my_haves');
+    localStorage.removeItem('dv3_my_wants');
+    setMyHaves([]);
+    setMyWants([]);
     setUserNickname('');
     setIsGuest(false);
     setShowLoginModal(true);
@@ -712,6 +729,7 @@ function App() {
     setMyWants(nextWants);
     localStorage.setItem('dv3_my_haves', JSON.stringify(nextHaves));
     localStorage.setItem('dv3_my_wants', JSON.stringify(nextWants));
+    lastBasketEditRef.current = Date.now(); // 폴링 덮어쓰기 방지 쿨다운 시작
 
     // 현재 내 글(닉네임 일치)이 존재하면 원격 DB 즉시 동기화
     const myPost = posts.find(p => p.nickname === userNickname);
@@ -1697,6 +1715,29 @@ function App() {
                   );
                 })}
               </div>
+            </div>
+
+            {/* 좌클릭 / 우클릭 안내 가이드 */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '1.2rem',
+              padding: '0.5rem 0.8rem',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid rgba(255, 255, 255, 0.06)',
+              borderRadius: '8px',
+              marginTop: '0.5rem',
+              width: '100%',
+              maxWidth: '800px'
+            }}>
+              <span style={{ fontSize: '0.76rem', color: '#86efac', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                🖱️ 좌클릭 → <span style={{ color: '#10b981' }}>줄 수 있는 카드</span>
+              </span>
+              <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
+              <span style={{ fontSize: '0.76rem', color: '#fca5a5', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                🖱️ 우클릭 → <span style={{ color: '#ef4444' }}>받고 싶은 카드</span>
+              </span>
             </div>
 
             {/* 하단 바구니 영역 (그리드 바로 밑에 배치) */}
@@ -2686,9 +2727,29 @@ function App() {
                       >
                         ◀ <span style={{ fontSize: '0.62rem', opacity: 0.6 }}>(4)</span>
                       </button>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>
-                        {currentEditCategory.name}
-                      </span>
+                      <select
+                        value={editCurrentCategoryId}
+                        onChange={(e) => setEditCurrentCategoryId(Number(e.target.value))}
+                        style={{
+                          fontSize: '0.82rem',
+                          fontWeight: 'bold',
+                          color: 'var(--primary-color)',
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: '6px',
+                          padding: '0.25rem 0.4rem',
+                          cursor: 'pointer',
+                          outline: 'none',
+                          textAlign: 'center',
+                          maxWidth: '140px'
+                        }}
+                      >
+                        {categories.map(cat => (
+                          <option key={cat.id} value={cat.id} style={{ background: '#1a1a2e', color: '#fff' }}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
                       <button 
                         type="button" 
                         onClick={handleEditNextCategory}
@@ -2809,8 +2870,8 @@ function App() {
                             ) : (
                               <div style={{ height: '62%' }} />
                             )}
-                            <span style={{ fontSize: '0.62rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '90%', textAlign: 'center', marginTop: '2px' }}>
-                              {sticker ? sticker.name.split(' ')[0] : `${slotNum}번`}
+                            <span style={{ fontSize: '0.58rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '90%', textAlign: 'center', marginTop: '2px' }}>
+                              {sticker ? sticker.name : `${slotNum}번`}
                             </span>
                           </div>
                         );
