@@ -232,6 +232,7 @@ function App() {
   // 로그인 상태일 때 3초마다 대화방 목록 리프레시 및 로컬 이벤트 동기화
   useEffect(() => {
     if (userNickname) {
+      runDatabaseMigration(userNickname);
       loadChatRooms();
       const timer = setInterval(() => {
         loadChatRooms();
@@ -370,6 +371,107 @@ function App() {
     const { data, error } = await dbService.fetchPosts();
     if (!error) {
       setPosts(data || []);
+    }
+  };
+
+  // 구버전 파편화 대화방 데이터를 최신 1:1 통합 방 체계로 마이그레이션하고 통합하는 함수
+  const runDatabaseMigration = async (myNickname) => {
+    if (!myNickname) return;
+    try {
+      let allRooms = [];
+      if (isMock) {
+        try {
+          allRooms = JSON.parse(localStorage.getItem('dv3_chat_rooms')) || [];
+        } catch (e) {
+          allRooms = [];
+        }
+      } else {
+        const { data, error } = await supabase
+          .from('chat_rooms')
+          .select('*')
+          .or(`buyer_nickname.eq.${myNickname},seller_nickname.eq.${myNickname}`);
+        if (!error && data) {
+          allRooms = data.map(r => ({
+            id: r.id,
+            postId: r.post_id,
+            buyerNickname: r.buyer_nickname,
+            sellerNickname: r.seller_nickname,
+            lastMessage: r.last_message,
+            updatedAt: r.updated_at
+          }));
+        }
+      }
+
+      const oldRooms = allRooms.filter(r => {
+        const parts = (r.id || '').split('-');
+        return parts.length !== 3;
+      });
+
+      if (oldRooms.length === 0) return;
+
+      console.log(`[Migration] 구버전 대화방 ${oldRooms.length}개 탐지됨. 통합 마이그레이션 진행...`);
+
+      for (const oldRoom of oldRooms) {
+        const buyer = oldRoom.buyerNickname;
+        const seller = oldRoom.sellerNickname;
+        if (!buyer || !seller) continue;
+
+        const sorted = [buyer, seller].sort();
+        const targetNewRoomId = `room-${sorted[0]}-${sorted[1]}`;
+
+        // 최신 통합 방 생성/조회 보장
+        await chatService.getOrCreateChatRoom(oldRoom.postId, buyer, seller);
+
+        if (isMock) {
+          const messagesRaw = localStorage.getItem('dv3_chat_messages');
+          if (messagesRaw) {
+            const msgs = JSON.parse(messagesRaw) || [];
+            let updated = false;
+            const migratedMsgs = msgs.map(m => {
+              if (m.roomId === oldRoom.id) {
+                updated = true;
+                return { ...m, roomId: targetNewRoomId };
+              }
+              return m;
+            });
+            if (updated) {
+              localStorage.setItem('dv3_chat_messages', JSON.stringify(migratedMsgs));
+            }
+          }
+
+          const roomsRaw = localStorage.getItem('dv3_chat_rooms');
+          if (roomsRaw) {
+            const localRooms = JSON.parse(roomsRaw) || [];
+            const filteredRooms = localRooms.filter(r => r.id !== oldRoom.id);
+            localStorage.setItem('dv3_chat_rooms', JSON.stringify(filteredRooms));
+          }
+        } else {
+          // Supabase 메시지 이관
+          const { error: msgUpdateError } = await supabase
+            .from('chat_messages')
+            .update({ room_id: targetNewRoomId })
+            .eq('room_id', oldRoom.id);
+
+          if (msgUpdateError) {
+            console.warn(`메시지 마이그레이션 실패 (방: ${oldRoom.id}):`, msgUpdateError);
+          }
+
+          // Supabase 구버전 방 레코드 삭제
+          const { error: roomDeleteError } = await supabase
+            .from('chat_rooms')
+            .delete()
+            .eq('id', oldRoom.id);
+
+          if (roomDeleteError) {
+            console.warn(`구버전 방 삭제 실패 (방: ${oldRoom.id}):`, roomDeleteError);
+          }
+        }
+      }
+
+      console.log(`[Migration] 구버전 대화방 및 메시지 통합 완료.`);
+      await loadChatRooms();
+    } catch (err) {
+      console.error("데이터 마이그레이션 실패:", err);
     }
   };
 

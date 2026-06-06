@@ -129,11 +129,15 @@ export const chatService = {
     }
   },
 
-  // 2. 내가 속한 채팅방 목록 가져오기
+  // 2. 내가 속한 채팅방 목록 가져오기 (최신 3세그먼트 1:1 통합 방 규격만 필터링)
   async getMyChatRooms(nickname) {
     if (isMock) {
       const rooms = getLocalRooms();
-      return rooms.filter(r => r.buyerNickname === nickname || r.sellerNickname === nickname);
+      return rooms.filter(r => {
+        const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
+        const isValidFormat = (r.id || '').split('-').length === 3;
+        return isMyRoom && isValidFormat;
+      });
     } else {
       try {
         const { data, error } = await supabase
@@ -141,11 +145,17 @@ export const chatService = {
           .select('*')
           .or(`buyer_nickname.eq.${nickname},seller_nickname.eq.${nickname}`);
         if (error) throw error;
-        return (data || []).map(formatDbRoom);
+        return (data || [])
+          .map(formatDbRoom)
+          .filter(r => (r.id || '').split('-').length === 3);
       } catch (e) {
         console.warn('Supabase chat rooms fetch failed:', e);
         const rooms = getLocalRooms();
-        return rooms.filter(r => r.buyerNickname === nickname || r.sellerNickname === nickname);
+        return rooms.filter(r => {
+          const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
+          const isValidFormat = (r.id || '').split('-').length === 3;
+          return isMyRoom && isValidFormat;
+        });
       }
     }
   },
