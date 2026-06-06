@@ -116,7 +116,7 @@ function App() {
     try {
       const parsed = JSON.parse(localStorage.getItem('dv3_my_haves'));
       if (Array.isArray(parsed)) {
-        return parsed.filter(item => typeof item === 'string' && !stickersData.find(st => st.id === item)?.isGolden);
+        return parsed.filter(item => typeof item === 'string');
       }
       return [];
     } catch {
@@ -127,7 +127,7 @@ function App() {
     try {
       const parsed = JSON.parse(localStorage.getItem('dv3_my_wants'));
       if (Array.isArray(parsed)) {
-        return parsed.filter(item => typeof item === 'string' && !stickersData.find(st => st.id === item)?.isGolden);
+        return parsed.filter(item => typeof item === 'string');
       }
       return [];
     } catch {
@@ -168,17 +168,6 @@ function App() {
   const [editHaves, setEditHaves] = useState([]);
   const [editWants, setEditWants] = useState([]);
   const [editBasketMode, setEditBasketMode] = useState('haves');
-  const [editCurrentCategoryId, setEditCurrentCategoryId] = useState(1);
-
-  // 피드 목록 상세 정보 아코디언 상태
-  const [expandedPostIds, setExpandedPostIds] = useState([]);
-  const togglePostExpand = (postId) => {
-    if (expandedPostIds.includes(postId)) {
-      setExpandedPostIds(expandedPostIds.filter(id => id !== postId));
-    } else {
-      setExpandedPostIds([...expandedPostIds, postId]);
-    }
-  };
 
   // --- 댓글 관련 상태 ---
   const [comments, setComments] = useState({}); // { [postId]: [comments...] }
@@ -340,48 +329,6 @@ function App() {
     }
   }, [unreadCounts]);
 
-  // 키보드 단축키 '4', '6' 바인딩
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      // 포커스가 input 또는 textarea에 가 있다면 작동 방지
-      const activeEl = document.activeElement;
-      if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
-        return;
-      }
-
-      if (e.key === '4') {
-        e.preventDefault();
-        // 수정 모달이 열려있는 상태라면 수정 모달 카테고리 전환
-        if (isEditModalOpen) {
-          setEditCurrentCategoryId(prev => prev > 1 ? prev - 1 : categories.length);
-        } else {
-          // 메인 화면 카테고리 전환
-          setSelectedCategoryId(prev => {
-            const currentId = prev || 1;
-            return currentId > 1 ? currentId - 1 : categories.length;
-          });
-        }
-      } else if (e.key === '6') {
-        e.preventDefault();
-        // 수정 모달이 열려있는 상태라면 수정 모달 카테고리 전환
-        if (isEditModalOpen) {
-          setEditCurrentCategoryId(prev => prev < categories.length ? prev + 1 : 1);
-        } else {
-          // 메인 화면 카테고리 전환
-          setSelectedCategoryId(prev => {
-            const currentId = prev || 1;
-            return currentId < categories.length ? currentId + 1 : 1;
-          });
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [isEditModalOpen, categories]);
-
   // 채팅방 활성화 시 메시지 히스토리 로드 및 실시간 구독
   useEffect(() => {
     if (!chatActiveRoomId) {
@@ -418,8 +365,8 @@ function App() {
       .find(p => p.nickname === nickname);
     
     if (myPost) {
-      const haves = (myPost.haves || []).filter(id => !stickersData.find(st => st.id === id)?.isGolden);
-      const wants = (myPost.wants || []).filter(id => !stickersData.find(st => st.id === id)?.isGolden);
+      const haves = myPost.haves || [];
+      const wants = myPost.wants || [];
       
       const localHaves = JSON.parse(localStorage.getItem('dv3_my_haves')) || [];
       const localWants = JSON.parse(localStorage.getItem('dv3_my_wants')) || [];
@@ -674,49 +621,22 @@ function App() {
     setChatActiveRoomId(null);
   };
 
-  const updatePostStickersDirectly = async (postId, updatedHaves, updatedWants) => {
-    const { error } = await dbService.updatePost(postId, {
-      haves: updatedHaves,
-      wants: updatedWants
-    });
-    if (!error) {
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, haves: updatedHaves, wants: updatedWants } : p));
-    }
-  };
-
   const toggleStickerSelection = (stickerId, targetMode) => {
-    const sticker = stickersData.find(s => s.id === stickerId);
-    if (sticker && sticker.isGolden) return; // 황금테두리는 교환불가이므로 등록 차단
-
     const mode = targetMode || basketMode;
-    let nextHaves = [...myHaves];
-    let nextWants = [...myWants];
-
     if (mode === 'haves') {
       if (myHaves.includes(stickerId)) {
-        nextHaves = myHaves.filter(id => id !== stickerId);
+        setMyHaves(myHaves.filter(id => id !== stickerId));
       } else {
-        nextHaves = [...myHaves, stickerId];
-        nextWants = myWants.filter(id => id !== stickerId);
+        setMyHaves([...myHaves, stickerId]);
+        setMyWants(myWants.filter(id => id !== stickerId));
       }
     } else {
       if (myWants.includes(stickerId)) {
-        nextWants = myWants.filter(id => id !== stickerId);
+        setMyWants(myWants.filter(id => id !== stickerId));
       } else {
-        nextWants = [...myWants, stickerId];
-        nextHaves = myHaves.filter(id => id !== stickerId);
+        setMyWants([...myWants, stickerId]);
+        setMyHaves(myHaves.filter(id => id !== stickerId));
       }
-    }
-
-    setMyHaves(nextHaves);
-    setMyWants(nextWants);
-    localStorage.setItem('dv3_my_haves', JSON.stringify(nextHaves));
-    localStorage.setItem('dv3_my_wants', JSON.stringify(nextWants));
-
-    // 현재 내 글(닉네임 일치)이 존재하면 원격 DB 즉시 동기화
-    const myPost = posts.find(p => p.nickname === userNickname);
-    if (myPost) {
-      updatePostStickersDirectly(myPost.id, nextHaves, nextWants);
     }
   };
 
@@ -812,9 +732,6 @@ function App() {
   };
 
   const toggleEditStickerSelection = (stickerId, targetMode) => {
-    const sticker = stickersData.find(s => s.id === stickerId);
-    if (sticker && sticker.isGolden) return; // 황금테두리는 교환불가이므로 등록 차단
-
     const mode = targetMode || editBasketMode;
     if (mode === 'haves') {
       if (editHaves.includes(stickerId)) {
@@ -1411,10 +1328,9 @@ function App() {
                         e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
                         e.currentTarget.style.color = '#fff';
                       }}
-                      title="이전 카테고리 (단축키: 4)"
+                      title="이전 카테고리"
                     >
                       <ChevronLeft size={16} />
-                      <span style={{ fontSize: '0.6rem', opacity: 0.65, marginLeft: '2px' }}>(4)</span>
                     </button>
 
                     <h2 style={{ fontSize: '1.15rem', margin: 0, fontWeight: '700', color: '#fff', minWidth: '100px', textAlign: 'center' }}>
@@ -1449,9 +1365,8 @@ function App() {
                         e.currentTarget.style.background = 'rgba(255,255,255,0.06)';
                         e.currentTarget.style.color = '#fff';
                       }}
-                      title="다음 카테고리 (단축키: 6)"
+                      title="다음 카테고리"
                     >
-                      <span style={{ fontSize: '0.6rem', opacity: 0.65, marginRight: '2px' }}>(6)</span>
                       <ChevronRight size={16} />
                     </button>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginLeft: '4px', whiteSpace: 'nowrap' }}>
@@ -1531,33 +1446,24 @@ function App() {
 
                   // 테두리 강조선 분기
                   const isGolden = sticker && sticker.isGolden;
-                  let borderStyle = isGolden ? '2px solid rgba(156, 163, 175, 0.3)' : '2px solid var(--border-color)';
-                  let backgroundStyle = isGolden ? 'rgba(0, 0, 0, 0.4)' : '#1d2025';
-                  let shadowStyle = 'none';
+                  let borderStyle = isGolden ? '2px solid rgba(245, 158, 11, 0.4)' : '2px solid var(--border-color)';
+                  let backgroundStyle = isGolden ? 'rgba(245, 158, 11, 0.02)' : '#1d2025';
+                  let shadowStyle = isGolden ? '0 0 10px rgba(245, 158, 11, 0.15)' : 'none';
 
                   if (isHave) {
-                    borderStyle = '3px solid #10b981';
-                    backgroundStyle = 'rgba(16, 185, 129, 0.08)';
-                    shadowStyle = '0 0 15px rgba(16, 185, 129, 0.3)';
+                    borderStyle = isGolden ? '3px solid #fbbf24' : '3px solid #10b981';
+                    backgroundStyle = isGolden ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)';
+                    shadowStyle = isGolden ? '0 0 20px rgba(245, 158, 11, 0.5)' : '0 0 15px rgba(16, 185, 129, 0.3)';
                   } else if (isWant) {
-                    borderStyle = '3px solid #ef4444';
-                    backgroundStyle = 'rgba(239, 68, 68, 0.08)';
-                    shadowStyle = '0 0 15px rgba(239, 68, 68, 0.3)';
+                    borderStyle = isGolden ? '3px solid #fbbf24' : '3px solid #ef4444';
+                    backgroundStyle = isGolden ? 'rgba(245, 158, 11, 0.08)' : 'rgba(239, 68, 68, 0.08)';
+                    shadowStyle = isGolden ? '0 0 20px rgba(245, 158, 11, 0.5)' : '0 0 15px rgba(239, 68, 68, 0.3)';
                   }
 
                   return (
                     <div 
                       key={stickerId}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        if (isGolden) return;
-                        toggleStickerSelection(stickerId, 'haves');
-                      }}
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        if (isGolden) return;
-                        toggleStickerSelection(stickerId, 'wants');
-                      }}
+                      onClick={() => toggleStickerSelection(stickerId)}
                       style={{ 
                         display: 'flex', 
                         flexDirection: 'column', 
@@ -1565,7 +1471,7 @@ function App() {
                         justifyContent: 'flex-start', 
                         border: borderStyle,
                         borderRadius: '16px', 
-                        cursor: isGolden ? 'not-allowed' : 'pointer',
+                        cursor: 'pointer',
                         background: backgroundStyle,
                         fontWeight: isSelected ? '700' : '500',
                         position: 'relative',
@@ -1573,46 +1479,30 @@ function App() {
                         aspectRatio: '0.78', // 인게임 비디오처럼 세로가 긴 직사각형 비율 사용
                         transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                         boxShadow: shadowStyle,
-                        opacity: isGolden ? 0.3 : (isSelected ? 1 : 0.65),
-                        filter: isGolden ? 'grayscale(100%) contrast(70%)' : (isSelected ? 'none' : 'grayscale(60%) brightness(70%)'),
+                        opacity: isSelected ? 1 : 0.65,
+                        filter: isSelected ? 'none' : 'grayscale(60%) brightness(70%)',
                         paddingTop: '0.5rem'
                       }}
                       className="slot-item"
                     >
                       {isGolden && (
-                        <>
-                          <div style={{
-                            position: 'absolute',
-                            top: '6px',
-                            right: '6px',
-                            fontSize: '0.65rem',
-                            background: 'rgba(107, 114, 128, 0.35)',
-                            border: '1px solid rgba(107, 114, 128, 0.5)',
-                            color: '#9ca3af',
-                            padding: '1px 3px',
-                            borderRadius: '4px',
-                            zIndex: 2,
-                            lineHeight: 1
-                          }}>
-                            🔒
-                          </div>
-                          <div style={{
-                            position: 'absolute',
-                            bottom: '0',
-                            left: '0',
-                            right: '0',
-                            background: 'rgba(239, 68, 68, 0.85)',
-                            color: '#fff',
-                            fontSize: '0.62rem',
-                            textAlign: 'center',
-                            padding: '2px 0',
-                            fontWeight: '800',
-                            zIndex: 2,
-                            letterSpacing: '-0.3px'
-                          }}>
-                            교환 불가
-                          </div>
-                        </>
+                        <div style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          fontSize: '0.75rem',
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          border: '1px solid rgba(245, 158, 11, 0.4)',
+                          color: '#fbbf24',
+                          padding: '1px 4px',
+                          borderRadius: '4px',
+                          fontWeight: '800',
+                          textShadow: '0 0 4px #fbbf24',
+                          zIndex: 2,
+                          lineHeight: 1
+                        }}>
+                          👑
+                        </div>
                       )}
                       {imageUrl ? (
                         <img 
@@ -1909,87 +1799,50 @@ function App() {
                       ) : null}
                     </div>
 
-                    {/* 아코디언 토글 헤더 */}
-                    {(() => {
-                      const isExpanded = expandedPostIds.includes(post.id);
-                      return (
-                        <>
-                          <div 
-                            onClick={() => togglePostExpand(post.id)}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              background: 'rgba(255, 255, 255, 0.02)',
-                              border: '1px solid rgba(255, 255, 255, 0.05)',
-                              borderRadius: '8px',
-                              padding: '0.45rem 0.75rem',
-                              cursor: 'pointer',
-                              fontSize: '0.78rem',
-                              color: 'var(--text-muted)',
-                              userSelect: 'none',
-                              transition: 'all 0.2s ease',
-                              marginBottom: '0.85rem'
-                            }}
-                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'}
-                          >
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#fff', fontWeight: '600' }}>
-                              📦 교환 카드 목록 ({post.haves.length + post.wants.length}개)
-                            </span>
-                            <span style={{ fontSize: '0.7rem', color: isExpanded ? '#fca5a5' : '#86efac' }}>
-                              {isExpanded ? '접기 ▲' : '자세히 보기 ▼'}
-                            </span>
+                    {/* 교환 상품 리스트 */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem' }}>
+                      {hasHaves && (
+                        <div>
+                          <div style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>🟢 줄 수 있는 카드</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+                            {post.haves.map(id => {
+                              const [catId, s] = id.split('-');
+                              const cat = categories.find(c => String(c.id) === catId);
+                              const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
+                              const tagStyle = isStickerGolden 
+                                ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
+                                : { background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#a7f3d0', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
+                              return (
+                                <span key={id} className="sticker-tag" style={tagStyle}>
+                                  {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
+                                </span>
+                              );
+                            })}
                           </div>
+                        </div>
+                      )}
 
-                          {isExpanded && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem', borderLeft: '2px solid rgba(255, 255, 255, 0.05)', paddingLeft: '0.75rem', marginLeft: '0.2rem' }}>
-                              {hasHaves && (
-                                <div>
-                                  <div style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>🟢 줄 수 있는 카드</div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                                    {post.haves.map(id => {
-                                      const [catId, s] = id.split('-');
-                                      const cat = categories.find(c => String(c.id) === catId);
-                                      const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
-                                      const tagStyle = isStickerGolden 
-                                        ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
-                                        : { background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#a7f3d0', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
-                                      return (
-                                        <span key={id} className="sticker-tag" style={tagStyle}>
-                                          {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
-                                        </span>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-
-                              {hasWants && (
-                                <div>
-                                  <div style={{ fontSize: '0.78rem', color: '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>🔴 받고 싶은 카드</div>
-                                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
-                                    {post.wants.map(id => {
-                                      const [catId, s] = id.split('-');
-                                      const cat = categories.find(c => String(c.id) === catId);
-                                      const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
-                                      const tagStyle = isStickerGolden 
-                                        ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
-                                        : { background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
-                                      return (
-                                        <span key={id} className="sticker-tag" style={tagStyle}>
-                                          {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
-                                        </span>
-                                      );
-                                    })}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </>
-                      );
-                    })()}
+                      {hasWants && (
+                        <div>
+                          <div style={{ fontSize: '0.78rem', color: '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>🔴 받고 싶은 카드</div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
+                            {post.wants.map(id => {
+                              const [catId, s] = id.split('-');
+                              const cat = categories.find(c => String(c.id) === catId);
+                              const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
+                              const tagStyle = isStickerGolden 
+                                ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
+                                : { background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
+                              return (
+                                <span key={id} className="sticker-tag" style={tagStyle}>
+                                  {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
+                                </span>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
 
                     {/* 매칭 상세 카드 매칭 요약 */}
                     {(isPerfectMatch || isPartialMatch) && (
@@ -2665,163 +2518,45 @@ function App() {
                 )}
               </div>
 
-              {/* [수정 모달 전용] 추가할 카드 선택 셀렉터 (3x3 격자도감화) */}
-              {(() => {
-                const currentEditCategory = categories.find(c => c.id === editCurrentCategoryId) || categories[0];
-                const handleEditPrevCategory = () => {
-                  setEditCurrentCategoryId(prev => prev > 1 ? prev - 1 : categories.length);
-                };
-                const handleEditNextCategory = () => {
-                  setEditCurrentCategoryId(prev => prev < categories.length ? prev + 1 : 1);
-                };
-
-                return (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', background: 'rgba(255,255,255,0.02)', padding: '0.8rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                      <button 
-                        type="button" 
-                        onClick={handleEditPrevCategory}
-                        className="btn btn-outline" 
-                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '2px' }}
+              {/* 추가할 카드 선택 셀렉터 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>👇 스티커 터치하여 추가하기</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', maxHeight: '180px', overflowY: 'auto', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  {stickersData.map(s => {
+                    const isSelected = editHaves.includes(s.id) || editWants.includes(s.id);
+                    let borderCol = 'rgba(255,255,255,0.08)';
+                    let bgCol = 'transparent';
+                    if (editHaves.includes(s.id)) {
+                      borderCol = '#10b981';
+                      bgCol = 'rgba(16, 185, 129, 0.15)';
+                    } else if (editWants.includes(s.id)) {
+                      borderCol = '#ef4444';
+                      bgCol = 'rgba(239, 68, 68, 0.15)';
+                    }
+                    return (
+                      <div 
+                        key={s.id} 
+                        onClick={() => toggleEditStickerSelection(s.id)}
+                        style={{ 
+                          border: `1px solid ${borderCol}`, 
+                          background: bgCol,
+                          borderRadius: '6px', 
+                          padding: '4px', 
+                          cursor: 'pointer', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          textAlign: 'center',
+                          opacity: isSelected ? 1 : 0.6
+                        }}
                       >
-                        ◀ <span style={{ fontSize: '0.62rem', opacity: 0.6 }}>(4)</span>
-                      </button>
-                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>
-                        {currentEditCategory.name}
-                      </span>
-                      <button 
-                        type="button" 
-                        onClick={handleEditNextCategory}
-                        className="btn btn-outline" 
-                        style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '2px' }}
-                      >
-                        <span style={{ fontSize: '0.62rem', opacity: 0.6 }}>(6)</span> ▶
-                      </button>
-                    </div>
-
-                    <div style={{ 
-                      display: 'grid', 
-                      gridTemplateColumns: 'repeat(3, 1fr)', 
-                      gap: '0.4rem', 
-                      marginBottom: '0.3rem' 
-                    }}>
-                      {Array.from({ length: 9 }).map((_, slotIdx) => {
-                        const slotNum = slotIdx + 1;
-                        const stickerId = `${currentEditCategory.id}-${slotNum}`;
-                        const isHave = editHaves.includes(stickerId);
-                        const isWant = editWants.includes(stickerId);
-                        const isSelected = isHave || isWant;
-
-                        const sticker = stickersData.find(s => s.id === stickerId);
-                        const imageUrl = sticker ? sticker.image : null;
-                        const isGolden = sticker && sticker.isGolden;
-
-                        let borderStyle = isGolden ? '2px solid rgba(156, 163, 175, 0.3)' : '1px solid rgba(255, 255, 255, 0.08)';
-                        let backgroundStyle = isGolden ? 'rgba(0, 0, 0, 0.4)' : 'transparent';
-                        let shadowStyle = 'none';
-
-                        if (isHave) {
-                          borderStyle = '2px solid #10b981';
-                          backgroundStyle = 'rgba(16, 185, 129, 0.08)';
-                          shadowStyle = '0 0 10px rgba(16, 185, 129, 0.2)';
-                        } else if (isWant) {
-                          borderStyle = '2px solid #ef4444';
-                          backgroundStyle = 'rgba(239, 68, 68, 0.08)';
-                          shadowStyle = '0 0 10px rgba(239, 68, 68, 0.2)';
-                        }
-
-                        return (
-                          <div 
-                            key={stickerId}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              if (isGolden) return;
-                              toggleEditStickerSelection(stickerId, 'haves');
-                            }}
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              if (isGolden) return;
-                              toggleEditStickerSelection(stickerId, 'wants');
-                            }}
-                            style={{ 
-                              border: borderStyle, 
-                              background: backgroundStyle,
-                              borderRadius: '10px', 
-                              padding: '0.4rem 0.2rem', 
-                              cursor: isGolden ? 'not-allowed' : 'pointer', 
-                              display: 'flex', 
-                              flexDirection: 'column', 
-                              alignItems: 'center', 
-                              position: 'relative',
-                              overflow: 'hidden',
-                              aspectRatio: '0.8',
-                              transition: 'all 0.2s ease',
-                              boxShadow: shadowStyle,
-                              opacity: isGolden ? 0.3 : (isSelected ? 1 : 0.6),
-                              filter: isGolden ? 'grayscale(100%) contrast(70%)' : 'none'
-                            }}
-                          >
-                            {isGolden && (
-                              <>
-                                <div style={{
-                                  position: 'absolute',
-                                  top: '4px',
-                                  right: '4px',
-                                  fontSize: '0.55rem',
-                                  background: 'rgba(107, 114, 128, 0.35)',
-                                  border: '1px solid rgba(107, 114, 128, 0.5)',
-                                  color: '#9ca3af',
-                                  padding: '1px 2px',
-                                  borderRadius: '3px',
-                                  zIndex: 2,
-                                  lineHeight: 1
-                                }}>
-                                  🔒
-                                </div>
-                                <div style={{
-                                  position: 'absolute',
-                                  bottom: '0',
-                                  left: '0',
-                                  right: '0',
-                                  background: 'rgba(239, 68, 68, 0.85)',
-                                  color: '#fff',
-                                  fontSize: '0.55rem',
-                                  textAlign: 'center',
-                                  padding: '1px 0',
-                                  fontWeight: '800',
-                                  zIndex: 2
-                                }}>
-                                  교환 불가
-                                </div>
-                              </>
-                            )}
-                            {imageUrl ? (
-                              <img 
-                                src={imageUrl} 
-                                alt={sticker.name} 
-                                style={{ 
-                                  width: '85%', 
-                                  height: '62%', 
-                                  objectFit: 'contain',
-                                  transform: isSelected ? 'scale(1.05)' : 'scale(1)'
-                                }} 
-                              />
-                            ) : (
-                              <div style={{ height: '62%' }} />
-                            )}
-                            <span style={{ fontSize: '0.62rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '90%', textAlign: 'center', marginTop: '2px' }}>
-                              {sticker ? sticker.name.split(' ')[0] : `${slotNum}번`}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '2px' }}>
-                      💡 좌클릭: 줄 수 있는 카드 담기 / 우클릭: 받고 싶은 카드 담기
-                    </div>
-                  </div>
-                );
-              })()}
+                        <img src={s.image} alt={s.name} style={{ width: '28px', height: '35px', objectFit: 'contain' }} />
+                        <span style={{ fontSize: '0.55rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>{s.name.split(' ')[0]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button 
