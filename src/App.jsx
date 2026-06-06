@@ -187,6 +187,24 @@ function App() {
 
   // --- 최초 로드 및 동기화 ---
   useEffect(() => {
+    // 구버전 채팅 데이터 정화 (수신/발신 통합 1:1 대화방 전환에 따른 충돌 방지)
+    try {
+      const localRoomsRaw = localStorage.getItem('dv3_chat_rooms');
+      if (localRoomsRaw) {
+        const rooms = JSON.parse(localRoomsRaw) || [];
+        const migratedRooms = rooms.filter(r => {
+          const parts = r.id.split('-');
+          // room-A-B 형태로 parts.length === 3 인 최신 규격만 보존
+          return parts.length === 3;
+        });
+        if (migratedRooms.length !== rooms.length) {
+          localStorage.setItem('dv3_chat_rooms', JSON.stringify(migratedRooms));
+          console.log(`[Migration] 구버전 대화방 ${rooms.length - migratedRooms.length}개 정화 완료.`);
+        }
+      }
+    } catch (e) {
+      console.error("로컬 대화방 데이터 마이그레이션 실패:", e);
+    }
     fetchData();
   }, []);
 
@@ -2800,7 +2818,7 @@ function App() {
               onClick={() => {
                 setChatActiveRoomId(chatNotification.roomId);
                 const parts = chatNotification.roomId.replace('room-', '').split('-');
-                const other = parts[1] === userNickname ? parts[2] : parts[1];
+                const other = parts[0] === userNickname ? parts[1] : parts[0];
                 setChatActiveRoomNickname(other || '상대방');
                 setChatWindowOpen(true);
                 setChatNotification(null);

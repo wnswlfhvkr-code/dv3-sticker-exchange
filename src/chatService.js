@@ -60,7 +60,9 @@ const formatDbMessage = (dbMsg) => {
 export const chatService = {
   // 1. 채팅방 만들기 또는 가져오기
   async getOrCreateChatRoom(postId, buyerNickname, sellerNickname) {
-    const roomId = `room-${postId}-${buyerNickname}-${sellerNickname}`;
+    // 수신/발신 통합을 위해 닉네임 쌍을 가나다순 정렬하여 단 하나의 고유 방 ID 생성 (postId 무관)
+    const sorted = [buyerNickname, sellerNickname].sort();
+    const roomId = `room-${sorted[0]}-${sorted[1]}`;
     
     if (isMock) {
       const rooms = getLocalRooms();
@@ -68,7 +70,7 @@ export const chatService = {
       if (!room) {
         room = {
           id: roomId,
-          postId,
+          postId, // 참고용 글 ID
           buyerNickname,
           sellerNickname,
           lastMessage: '',
@@ -80,20 +82,20 @@ export const chatService = {
       return room;
     } else {
       try {
-        // Supabase 연동 코드 (에러 대비 트라이-캐치)
+        // Supabase 연동 코드 (두 사람 간의 고유 방 ID로 조회)
         const { data, error } = await supabase
           .from('chat_rooms')
           .select('*')
-          .eq('post_id', postId)
-          .eq('buyer_nickname', buyerNickname)
-          .eq('seller_nickname', sellerNickname)
-          .single();
+          .eq('id', roomId)
+          .maybeSingle(); // single() 대신 안전한 maybeSingle() 사용
         
         if (data) return formatDbRoom(data);
 
+        // 방이 없으면 새로 생성 (방 ID를 정렬된 닉네임 조합인 roomId로 직접 명시)
         const { data: newRoom, error: createError } = await supabase
           .from('chat_rooms')
           .insert([{
+            id: roomId,
             post_id: postId,
             buyer_nickname: buyerNickname,
             seller_nickname: sellerNickname,
