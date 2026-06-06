@@ -184,6 +184,8 @@ function App() {
   const [isAdminTabOpen, setIsAdminTabOpen] = useState(false);
   const [reportsList, setReportsList] = useState([]);
   const [adminLoading, setAdminLoading] = useState(false);
+  const [adminLogs, setAdminLogs] = useState([]);
+  const [adminActiveTab, setAdminActiveTab] = useState("reports");
 
   // --- 최초 로드 및 동기화 ---
   useEffect(() => {
@@ -227,14 +229,23 @@ function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // 로그인 상태일 때 3초마다 대화방 목록 리프레시
+  // 로그인 상태일 때 3초마다 대화방 목록 리프레시 및 로컬 이벤트 동기화
   useEffect(() => {
     if (userNickname) {
       loadChatRooms();
       const timer = setInterval(() => {
         loadChatRooms();
       }, 3000);
-      return () => clearInterval(timer);
+
+      const handleChatUpdate = () => {
+        loadChatRooms();
+      };
+      window.addEventListener('dv3_chat_update', handleChatUpdate);
+
+      return () => {
+        clearInterval(timer);
+        window.removeEventListener('dv3_chat_update', handleChatUpdate);
+      };
     }
   }, [userNickname]);
 
@@ -276,6 +287,7 @@ function App() {
     if (!userNickname) return;
 
     const unsubscribe = chatService.subscribeAllMyMessages(userNickname, (msg) => {
+      loadChatRooms();
       // 현재 열려 있는 방이 아니거나 채팅방 창이 아예 닫혀있을 때만 알림 발생
       if (!chatWindowOpen || chatActiveRoomId !== msg.roomId) {
         // 1. 안 읽은 개수 증가
@@ -680,24 +692,61 @@ function App() {
   };
 
   // --- 관리자 핸들러 ---
+  const loadAdminLogs = () => {
+    try {
+      const logsRaw = localStorage.getItem('dv3_admin_resolved_logs');
+      setAdminLogs(logsRaw ? JSON.parse(logsRaw) : []);
+    } catch (e) {
+      console.error("관리자 로그 로드 실패:", e);
+    }
+  };
+
+  const addAdminLog = (reportId, actionName) => {
+    try {
+      const logsRaw = localStorage.getItem('dv3_admin_resolved_logs');
+      const logs = logsRaw ? JSON.parse(logsRaw) : [];
+      const targetReport = reportsList.find(r => r.id === reportId);
+      if (targetReport) {
+        const logEntry = {
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+          targetType: targetReport.target_type || targetReport.targetType,
+          targetId: targetReport.target_id || targetReport.targetId,
+          reporter: targetReport.reporter,
+          reason: targetReport.reason,
+          targetDetails: targetReport.target_details || targetReport.targetDetails,
+          action: actionName,
+          resolvedAt: new Date().toISOString()
+        };
+        logs.unshift(logEntry);
+        localStorage.setItem('dv3_admin_resolved_logs', JSON.stringify(logs));
+        loadAdminLogs();
+      }
+    } catch (e) {
+      console.error("관리자 로그 추가 실패:", e);
+    }
+  };
+
   const loadReports = async () => {
     setAdminLoading(true);
     const { data, error } = await dbService.fetchReports();
     if (!error) {
       setReportsList(data || []);
     }
+    loadAdminLogs();
     setAdminLoading(false);
   };
 
   const handleOpenAdminTab = async () => {
     setIsAdminTabOpen(true);
+    setAdminActiveTab("reports");
     await loadReports();
   };
 
   const handleResolveReport = async (reportId) => {
+    addAdminLog(reportId, "신고 반려 (무시)");
     const { error } = await dbService.resolveReport(reportId);
     if (!error) {
-      alert("신고 내역이 처리되었습니다.");
+      alert("신고 내역이 반려(무시) 처리되었습니다.");
       await loadReports();
     } else {
       alert("처리 실패: " + error.message);
@@ -706,6 +755,9 @@ function App() {
 
   const handleAdminDeletePost = async (postId, reportId) => {
     if (!window.confirm("관리자 권한으로 이 게시글을 강제 삭제하시겠습니까?")) return;
+    if (reportId) {
+      addAdminLog(reportId, "게시글 강제 삭제");
+    }
     const { error } = await dbService.removePost(postId);
     if (!error) {
       alert("게시글이 삭제되었습니다.");
@@ -721,6 +773,9 @@ function App() {
 
   const handleAdminDeleteComment = async (commentId, postId, reportId) => {
     if (!window.confirm("관리자 권한으로 이 댓글을 강제 삭제하시겠습니까?")) return;
+    if (reportId) {
+      addAdminLog(reportId, "댓글 강제 삭제");
+    }
     const { error } = await dbService.removeComment(commentId);
     if (!error) {
       alert("댓글이 삭제되었습니다.");
@@ -2521,65 +2576,155 @@ function App() {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>누적 신고 목록 ({reportsList.length}건)</span>
-                    <button onClick={loadReports} className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                      <RefreshCw size={12} /> 새로고침
+                  {/* 탭 버튼들 */}
+                  <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.6rem' }}>
+                    <button 
+                      onClick={() => setAdminActiveTab("reports")}
+                      style={{
+                        background: adminActiveTab === "reports" ? 'rgba(251, 191, 36, 0.12)' : 'none',
+                        border: adminActiveTab === "reports" ? '1px solid #fbbf24' : '1px solid rgba(255,255,255,0.08)',
+                        color: adminActiveTab === "reports" ? '#fbbf24' : 'var(--text-secondary)',
+                        padding: '0.45rem 0.9rem',
+                        borderRadius: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      🚨 신고 접수 ({reportsList.length}건)
+                    </button>
+                    <button 
+                      onClick={() => setAdminActiveTab("logs")}
+                      style={{
+                        background: adminActiveTab === "logs" ? 'rgba(251, 191, 36, 0.12)' : 'none',
+                        border: adminActiveTab === "logs" ? '1px solid #fbbf24' : '1px solid rgba(255,255,255,0.08)',
+                        color: adminActiveTab === "logs" ? '#fbbf24' : 'var(--text-secondary)',
+                        padding: '0.45rem 0.9rem',
+                        borderRadius: '8px',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      📋 조치 완료 로그 ({adminLogs.length}건)
                     </button>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '350px', overflowY: 'auto' }}>
-                    {reportsList.map(report => (
-                      <div key={report.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{
-                            background: report.target_type === 'post' ? 'rgba(96, 165, 250, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                            color: report.target_type === 'post' ? '#60a5fa' : '#f59e0b',
-                            fontSize: '0.68rem',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold'
-                          }}>
-                            {report.target_type === 'post' ? '교환글 신고' : '댓글 신고'}
-                          </span>
-                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                            신고일: {new Date(report.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                          <div><span style={{ color: 'var(--text-muted)' }}>대상정보:</span> <strong>{report.target_details}</strong> (ID: {report.target_id})</div>
-                          <div><span style={{ color: 'var(--text-muted)' }}>신고자:</span> {report.reporter}</div>
-                          <div><span style={{ color: '#f87171', fontWeight: '700' }}>사유:</span> {report.reason}</div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '6px' }}>
-                          <button 
-                            onClick={() => handleResolveReport(report.id)}
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer' }}
-                          >
-                            신고 반려 (무시)
-                          </button>
-                          <button 
-                            onClick={() => {
-                              if (report.target_type === 'post') {
-                                handleAdminDeletePost(report.target_id, report.id);
-                              } else {
-                                handleAdminDeleteComment(report.target_id, null, report.id);
-                              }
-                            }}
-                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
-                          >
-                            대상 강제 삭제 & 종결
-                          </button>
-                        </div>
+                  {adminActiveTab === "reports" ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* 신고 내역을 확인하고 처리해 주세요.</span>
+                        <button onClick={loadReports} className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                          <RefreshCw size={12} /> 새로고침
+                        </button>
                       </div>
-                    ))}
 
-                    {reportsList.length === 0 && (
-                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2rem 0' }}>깨끗합니다! 접수된 신고가 없습니다.</div>
-                    )}
-                  </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '320px', overflowY: 'auto' }}>
+                        {reportsList.map(report => (
+                          <div key={report.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{
+                                background: report.target_type === 'post' ? 'rgba(96, 165, 250, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                                color: report.target_type === 'post' ? '#60a5fa' : '#f59e0b',
+                                fontSize: '0.68rem',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold'
+                              }}>
+                                {report.target_type === 'post' ? '교환글 신고' : '댓글 신고'}
+                              </span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                신고일: {new Date(report.created_at || report.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <div><span style={{ color: 'var(--text-muted)' }}>대상정보:</span> <strong>{report.target_details}</strong> (ID: {report.target_id})</div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>신고자:</span> {report.reporter}</div>
+                              <div><span style={{ color: '#f87171', fontWeight: '700' }}>사유:</span> {report.reason}</div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '6px' }}>
+                              <button 
+                                onClick={() => handleResolveReport(report.id)}
+                                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer' }}
+                              >
+                                신고 반려 (무시)
+                              </button>
+                              <button 
+                                onClick={() => {
+                                  if (report.target_type === 'post') {
+                                    handleAdminDeletePost(report.target_id, report.id);
+                                  } else {
+                                    handleAdminDeleteComment(report.target_id, null, report.id);
+                                  }
+                                }}
+                                style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                              >
+                                대상 강제 삭제 & 종결
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+
+                        {reportsList.length === 0 && (
+                          <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2rem 0' }}>깨끗합니다! 접수된 신고가 없습니다.</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* 처리 완료된 신고 로그 기록입니다.</span>
+                        <button 
+                          onClick={() => {
+                            if (window.confirm("모든 처리 로그를 지우시겠습니까?")) {
+                              localStorage.removeItem('dv3_admin_resolved_logs');
+                              loadAdminLogs();
+                            }
+                          }}
+                          className="btn btn-outline" 
+                          style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderColor: '#f87171', color: '#f87171' }}
+                        >
+                          로그 전체 비우기
+                        </button>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '320px', overflowY: 'auto' }}>
+                        {adminLogs.map(log => (
+                          <div key={log.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{
+                                background: log.action.includes('삭제') ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                color: log.action.includes('삭제') ? '#f87171' : '#10b981',
+                                fontSize: '0.68rem',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold'
+                              }}>
+                                {log.action}
+                              </span>
+                              <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                                {new Date(log.resolvedAt).toLocaleString('ko-KR')}
+                              </span>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', color: 'var(--text-secondary)' }}>
+                              <div><span style={{ color: 'var(--text-muted)' }}>구분:</span> {log.targetType === 'post' ? '교환글' : '댓글'} (ID: {log.targetId})</div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>신고자:</span> {log.reporter}</div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>사유:</span> {log.reason}</div>
+                              <div><span style={{ color: 'var(--text-muted)' }}>상세내용:</span> {log.targetDetails}</div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {adminLogs.length === 0 && (
+                          <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2rem 0' }}>처리 완료된 로그가 없습니다.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2658,17 +2803,18 @@ function App() {
                             setChatActiveRoomNickname(room.otherUser);
                           }}
                           style={{
-                            background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.06)',
+                            background: room.id === chatActiveRoomId ? 'rgba(133, 195, 0, 0.12)' : 'rgba(255,255,255,0.03)',
+                            border: room.id === chatActiveRoomId ? '1px solid var(--primary-color)' : '1px solid rgba(255,255,255,0.06)',
+                            boxShadow: room.id === chatActiveRoomId ? '0 0 8px rgba(133, 195, 0, 0.2)' : 'none',
                             borderRadius: '12px',
                             padding: '0.85rem 1rem',
                             cursor: 'pointer',
-                            transition: 'background 0.2s',
+                            transition: 'all 0.2s',
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center'
                           }}
-                          className="chat-room-item"
+                          className={`chat-room-item ${room.id === chatActiveRoomId ? 'active' : ''}`}
                         >
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
