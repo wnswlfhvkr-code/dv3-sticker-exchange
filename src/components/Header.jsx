@@ -1,0 +1,67 @@
+import React from 'react';
+import { User, Info, LogOut } from 'lucide-react';
+
+export function Header({ 
+  userNickname, 
+  isGuest, 
+  dbMode, 
+  setIsMyInfoOpen, 
+  handleOpenAdminTab, 
+  handleLogout, 
+  setSelectedCategoryId 
+}) {
+  return (
+    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto', flexWrap: 'wrap', gap: '1rem' }}>
+      <div 
+        className="logo-container" 
+        onClick={() => setSelectedCategoryId(null)}
+        style={{ cursor: 'pointer', userSelect: 'none' }}
+        title="카테고리 홈으로 이동"
+      >
+        <h1 className="logo-text">DRAGON VILLAGE 3</h1>
+        <div className="sub-logo-text">STICKER BOOK MATCHING CENTER</div>
+      </div>
+      
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {userNickname && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <User size={14} color="var(--primary-color)" />
+            <span 
+              style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff', cursor: 'pointer' }}
+              onClick={() => setIsMyInfoOpen(true)}
+              title="내 정보 열기"
+            >
+              {userNickname} {isGuest ? <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(게스트)</span> : null}
+            </span>
+            <button
+              onClick={() => setIsMyInfoOpen(true)}
+              style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center' }}
+              title="내 정보 및 등록글 보기"
+            >
+              <Info size={14} />
+            </button>
+            {userNickname === '간장' && (
+              <button 
+                onClick={handleOpenAdminTab} 
+                style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', gap: '2px' }}
+                title="관리자 메뉴 열기"
+              >
+                <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>👑 관리자</span>
+              </button>
+            )}
+            <button 
+              onClick={handleLogout} 
+              style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '0 0 0 4px', display: 'flex', alignItems: 'center' }}
+              title="로그아웃"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        )}
+        <div className="badge badge-have" style={{ textTransform: 'none', margin: 0 }}>
+          {dbMode}
+        </div>
+      </div>
+    </header>
+  );
+}

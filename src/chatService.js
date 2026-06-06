@@ -466,5 +466,45 @@ export const chatService = {
         window.removeEventListener('dv3_chat_update', handleCustomEvent);
       };
     }
+  },
+
+  // 8. 나에게 개설되는 1:1 대화방 실시간 감지 구독
+  subscribeMyRooms(myNickname, onRoomUpdate) {
+    if (!isMock) {
+      const channel = supabase
+        .channel('realtime-my-chat-rooms')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'chat_rooms'
+          },
+          (payload) => {
+            const room = payload.new || payload.old;
+            if (room && (room.buyer_nickname === myNickname || room.seller_nickname === myNickname)) {
+              onRoomUpdate();
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      const handleStorageChange = (e) => {
+        if (e.key === CHAT_ROOMS_KEY) {
+          onRoomUpdate();
+        }
+      };
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('dv3_chat_update', onRoomUpdate);
+      
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('dv3_chat_update', onRoomUpdate);
+      };
+    }
   }
 };
