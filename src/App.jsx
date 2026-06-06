@@ -25,6 +25,41 @@ import {
   ChevronRight
 } from 'lucide-react';
 
+const formatChatTime = (isoString) => {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  const now = new Date();
+  
+  const isToday = d.getDate() === now.getDate() && 
+                  d.getMonth() === now.getMonth() && 
+                  d.getFullYear() === now.getFullYear();
+                  
+  if (isToday) {
+    return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+  }
+  
+  // 어제인지 체크
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = d.getDate() === yesterday.getDate() && 
+                      d.getMonth() === yesterday.getMonth() && 
+                      d.getFullYear() === yesterday.getFullYear();
+                      
+  if (isYesterday) {
+    return '어제';
+  }
+  
+  // 7일 이내인지 체크
+  const diffTime = Math.abs(now - d);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays < 7) {
+    const week = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    return week[d.getDay()];
+  }
+  
+  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+};
+
 function App() {
   // --- 상태 관리 ---
   const [posts, setPosts] = useState([]);
@@ -254,6 +289,7 @@ function App() {
 
     const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (msgs) => {
       setChatMessages(msgs || []);
+      loadChatRooms();
     });
 
     return () => unsubscribe();
@@ -449,6 +485,16 @@ function App() {
     }
   };
 
+  const handleBumpPost = async (id) => {
+    const { error } = await dbService.bumpPost(id);
+    if (!error) {
+      alert("글을 맨 위로 끌어올렸습니다!");
+      fetchData();
+    } else {
+      alert("끌어올리기 실패: " + error.message);
+    }
+  };
+
   // 1:1 채팅 시작하기
   const handleStartChat = async (post) => {
     if (post.nickname === userNickname) {
@@ -473,6 +519,7 @@ function App() {
     try {
       await chatService.sendMessage(chatActiveRoomId, userNickname, chatInput.trim());
       setChatInput('');
+      loadChatRooms();
     } catch (err) {
       alert("메시지 전송에 실패했습니다: " + err.message);
     }
@@ -1382,14 +1429,24 @@ function App() {
                     )}
                     
                     {isMyPost && (
-                      <button 
-                        className="btn btn-outline" 
-                        onClick={() => handleDeletePost(post.id)}
-                        style={{ padding: '0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                        title="내 글 삭제"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        <button 
+                          className="btn btn-outline" 
+                          onClick={() => handleBumpPost(post.id)}
+                          style={{ padding: '0.5rem 0.85rem', fontSize: '0.82rem', color: 'var(--primary-color)', borderColor: 'rgba(133, 195, 0, 0.3)', fontWeight: 'bold' }}
+                          title="글 맨 위로 끌어올리기"
+                        >
+                          끌올
+                        </button>
+                        <button 
+                          className="btn btn-outline" 
+                          onClick={() => handleDeletePost(post.id)}
+                          style={{ padding: '0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                          title="내 글 삭제"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     )}
                   </div>
 
@@ -1490,13 +1547,22 @@ function App() {
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                         {new Date(post.created_at).toLocaleDateString()}
                       </span>
-                      <button 
-                        onClick={() => handleDeletePost(post.id)}
-                        style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
-                        title="삭제하기"
-                      >
-                        <Trash2 size={13} />
-                      </button>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => handleBumpPost(post.id)}
+                          style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}
+                          title="글 맨 위로 끌어올리기"
+                        >
+                          끌올
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePost(post.id)}
+                          style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center' }}
+                          title="삭제하기"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -1820,7 +1886,7 @@ function App() {
                           </div>
                           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
                             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                              {room.updatedAt ? new Date(room.updatedAt).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }) : ''}
+                              {room.updatedAt ? formatChatTime(room.updatedAt) : ''}
                             </span>
                             {unreadCounts[room.id] > 0 && (
                               <span style={{

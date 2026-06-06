@@ -33,6 +33,30 @@ const saveLocalMessages = (messages) => {
   window.dispatchEvent(new Event('dv3_chat_update'));
 };
 
+// Supabase의 snake_case 응답을 로컬 camelCase 형태로 파싱해주는 포맷터
+const formatDbRoom = (dbRoom) => {
+  if (!dbRoom) return null;
+  return {
+    id: dbRoom.id,
+    postId: dbRoom.post_id !== undefined ? dbRoom.post_id : dbRoom.postId,
+    buyerNickname: dbRoom.buyer_nickname !== undefined ? dbRoom.buyer_nickname : dbRoom.buyerNickname,
+    sellerNickname: dbRoom.seller_nickname !== undefined ? dbRoom.seller_nickname : dbRoom.sellerNickname,
+    lastMessage: dbRoom.last_message !== undefined ? dbRoom.last_message : dbRoom.lastMessage,
+    updatedAt: dbRoom.updated_at !== undefined ? dbRoom.updated_at : dbRoom.updatedAt
+  };
+};
+
+const formatDbMessage = (dbMsg) => {
+  if (!dbMsg) return null;
+  return {
+    id: dbMsg.id,
+    roomId: dbMsg.room_id !== undefined ? dbMsg.room_id : dbMsg.roomId,
+    sender: dbMsg.sender,
+    text: dbMsg.text,
+    timestamp: dbMsg.timestamp
+  };
+};
+
 export const chatService = {
   // 1. 채팅방 만들기 또는 가져오기
   async getOrCreateChatRoom(postId, buyerNickname, sellerNickname) {
@@ -65,7 +89,7 @@ export const chatService = {
           .eq('seller_nickname', sellerNickname)
           .single();
         
-        if (data) return data;
+        if (data) return formatDbRoom(data);
 
         const { data: newRoom, error: createError } = await supabase
           .from('chat_rooms')
@@ -80,7 +104,7 @@ export const chatService = {
           .single();
         
         if (createError) throw createError;
-        return newRoom;
+        return formatDbRoom(newRoom);
       } catch (e) {
         console.warn('Supabase chat room error, falling back to local:', e);
         // Supabase 에러 시 로컬 저장소로 폴백 작동
@@ -115,7 +139,7 @@ export const chatService = {
           .select('*')
           .or(`buyer_nickname.eq.${nickname},seller_nickname.eq.${nickname}`);
         if (error) throw error;
-        return data || [];
+        return (data || []).map(formatDbRoom);
       } catch (e) {
         console.warn('Supabase chat rooms fetch failed:', e);
         const rooms = getLocalRooms();
@@ -163,7 +187,21 @@ export const chatService = {
           .single();
         
         if (error) throw error;
-        return data;
+        
+        // 채팅방 정보(마지막 메시지 및 갱신 시간) 업데이트
+        try {
+          await supabase
+            .from('chat_rooms')
+            .update({
+              last_message: text,
+              updated_at: newMessage.timestamp
+            })
+            .eq('id', roomId);
+        } catch (updateErr) {
+          console.warn('Failed to update last message on chat room:', updateErr);
+        }
+
+        return formatDbMessage(data);
       } catch (e) {
         console.warn('Supabase send message failed, saving locally:', e);
         // 폴백 저장
@@ -196,7 +234,7 @@ export const chatService = {
           .eq('room_id', roomId)
           .order('timestamp', { ascending: true });
         if (error) throw error;
-        return data || [];
+        return (data || []).map(formatDbMessage);
       } catch (e) {
         console.warn('Supabase fetch messages failed:', e);
         const messages = getLocalMessages();

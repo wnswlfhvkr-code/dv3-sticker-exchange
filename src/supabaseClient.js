@@ -45,6 +45,16 @@ const mockDB = {
     posts = posts.filter(post => post.id !== id);
     localStorage.setItem('dv3_exchange_posts', JSON.stringify(posts));
     return { error: null };
+  },
+  bumpPost: async (id) => {
+    const data = localStorage.getItem('dv3_exchange_posts');
+    let posts = data ? JSON.parse(data) : [];
+    const idx = posts.findIndex(post => post.id === id);
+    if (idx !== -1) {
+      posts[idx].created_at = new Date().toISOString();
+      localStorage.setItem('dv3_exchange_posts', JSON.stringify(posts));
+    }
+    return { error: null };
   }
 };
 
@@ -83,6 +93,17 @@ export const dbService = {
       return { error };
     } else {
       return mockDB.deletePost(id);
+    }
+  },
+  bumpPost: async (id) => {
+    if (!isMock) {
+      const { error } = await supabase
+        .from('posts')
+        .update({ created_at: new Date().toISOString() })
+        .eq('id', id);
+      return { error };
+    } else {
+      return mockDB.bumpPost(id);
     }
   },
   verifyUser: async (nickname, password) => {
