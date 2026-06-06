@@ -621,8 +621,9 @@ function App() {
     setChatActiveRoomId(null);
   };
 
-  const toggleStickerSelection = (stickerId) => {
-    if (basketMode === 'haves') {
+  const toggleStickerSelection = (stickerId, targetMode) => {
+    const mode = targetMode || basketMode;
+    if (mode === 'haves') {
       if (myHaves.includes(stickerId)) {
         setMyHaves(myHaves.filter(id => id !== stickerId));
       } else {
@@ -730,8 +731,9 @@ function App() {
     }
   };
 
-  const toggleEditStickerSelection = (stickerId) => {
-    if (editBasketMode === 'haves') {
+  const toggleEditStickerSelection = (stickerId, targetMode) => {
+    const mode = targetMode || editBasketMode;
+    if (mode === 'haves') {
       if (editHaves.includes(stickerId)) {
         setEditHaves(editHaves.filter(id => id !== stickerId));
       } else {
@@ -1222,7 +1224,7 @@ function App() {
                         return (
                           <span key={id} className="sticker-tag" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#a7f3d0', padding: '0.35rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
                             {cat ? cat.name : `${catId}페이지`} {s}번
-                            <button type="button" onClick={() => toggleStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#a7f3d0', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                            <button type="button" onClick={() => toggleStickerSelection(id, 'haves')} style={{ background: 'none', border: 'none', color: '#a7f3d0', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
                           </span>
                         );
                       })}
@@ -1246,7 +1248,7 @@ function App() {
                         return (
                           <span key={id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '0.35rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
                             {cat ? cat.name : `${catId}페이지`} {s}번
-                            <button type="button" onClick={() => toggleStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                            <button type="button" onClick={() => toggleStickerSelection(id, 'wants')} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
                           </span>
                         );
                       })}
@@ -1443,18 +1445,19 @@ function App() {
                   const imageUrl = sticker ? sticker.image : null;
 
                   // 테두리 강조선 분기
-                  let borderStyle = '2px solid var(--border-color)';
-                  let backgroundStyle = '#1d2025';
-                  let shadowStyle = 'none';
+                  const isGolden = sticker && sticker.isGolden;
+                  let borderStyle = isGolden ? '2px solid rgba(245, 158, 11, 0.4)' : '2px solid var(--border-color)';
+                  let backgroundStyle = isGolden ? 'rgba(245, 158, 11, 0.02)' : '#1d2025';
+                  let shadowStyle = isGolden ? '0 0 10px rgba(245, 158, 11, 0.15)' : 'none';
 
                   if (isHave) {
-                    borderStyle = '3px solid #10b981';
-                    backgroundStyle = 'rgba(16, 185, 129, 0.08)';
-                    shadowStyle = '0 0 15px rgba(16, 185, 129, 0.3)';
+                    borderStyle = isGolden ? '3px solid #fbbf24' : '3px solid #10b981';
+                    backgroundStyle = isGolden ? 'rgba(245, 158, 11, 0.08)' : 'rgba(16, 185, 129, 0.08)';
+                    shadowStyle = isGolden ? '0 0 20px rgba(245, 158, 11, 0.5)' : '0 0 15px rgba(16, 185, 129, 0.3)';
                   } else if (isWant) {
-                    borderStyle = '3px solid #ef4444';
-                    backgroundStyle = 'rgba(239, 68, 68, 0.08)';
-                    shadowStyle = '0 0 15px rgba(239, 68, 68, 0.3)';
+                    borderStyle = isGolden ? '3px solid #fbbf24' : '3px solid #ef4444';
+                    backgroundStyle = isGolden ? 'rgba(245, 158, 11, 0.08)' : 'rgba(239, 68, 68, 0.08)';
+                    shadowStyle = isGolden ? '0 0 20px rgba(245, 158, 11, 0.5)' : '0 0 15px rgba(239, 68, 68, 0.3)';
                   }
 
                   return (
@@ -1482,6 +1485,25 @@ function App() {
                       }}
                       className="slot-item"
                     >
+                      {isGolden && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '6px',
+                          right: '6px',
+                          fontSize: '0.75rem',
+                          background: 'rgba(245, 158, 11, 0.15)',
+                          border: '1px solid rgba(245, 158, 11, 0.4)',
+                          color: '#fbbf24',
+                          padding: '1px 4px',
+                          borderRadius: '4px',
+                          fontWeight: '800',
+                          textShadow: '0 0 4px #fbbf24',
+                          zIndex: 2,
+                          lineHeight: 1
+                        }}>
+                          👑
+                        </div>
+                      )}
                       {imageUrl ? (
                         <img 
                           src={imageUrl} 
@@ -1586,7 +1608,7 @@ function App() {
                         return (
                           <span key={id} className="sticker-tag" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#a7f3d0', padding: '0.35rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
                             {cat ? cat.name : `${catId}페이지`} {s}번
-                            <button type="button" onClick={() => toggleStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#a7f3d0', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                            <button type="button" onClick={() => toggleStickerSelection(id, 'haves')} style={{ background: 'none', border: 'none', color: '#a7f3d0', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
                           </span>
                         );
                       })}
@@ -1604,7 +1626,7 @@ function App() {
                         return (
                           <span key={id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '0.35rem 0.55rem', borderRadius: '6px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
                             {cat ? cat.name : `${catId}페이지`} {s}번
-                            <button type="button" onClick={() => toggleStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                            <button type="button" onClick={() => toggleStickerSelection(id, 'wants')} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
                           </span>
                         );
                       })}
@@ -1786,9 +1808,13 @@ function App() {
                             {post.haves.map(id => {
                               const [catId, s] = id.split('-');
                               const cat = categories.find(c => String(c.id) === catId);
+                              const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
+                              const tagStyle = isStickerGolden 
+                                ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
+                                : { background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#a7f3d0', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
                               return (
-                                <span key={id} className="sticker-tag" style={{ background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#a7f3d0', fontSize: '0.72rem', padding: '0.25rem 0.45rem' }}>
-                                  {cat ? cat.name : `${catId}페이지`} {s}번
+                                <span key={id} className="sticker-tag" style={tagStyle}>
+                                  {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
                                 </span>
                               );
                             })}
@@ -1803,9 +1829,13 @@ function App() {
                             {post.wants.map(id => {
                               const [catId, s] = id.split('-');
                               const cat = categories.find(c => String(c.id) === catId);
+                              const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
+                              const tagStyle = isStickerGolden 
+                                ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
+                                : { background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
                               return (
-                                <span key={id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', fontSize: '0.72rem', padding: '0.25rem 0.45rem' }}>
-                                  {cat ? cat.name : `${catId}페이지`} {s}번
+                                <span key={id} className="sticker-tag" style={tagStyle}>
+                                  {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
                                 </span>
                               );
                             })}
@@ -2467,7 +2497,7 @@ function App() {
                     return (
                       <span key={id} className="sticker-tag" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#a7f3d0', padding: '0.25rem 0.45rem', borderRadius: '6px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
                         {cat ? cat.name : `${catId}페이지`} {s}번
-                        <button type="button" onClick={() => toggleEditStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#a7f3d0', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                        <button type="button" onClick={() => toggleEditStickerSelection(id, 'haves')} style={{ background: 'none', border: 'none', color: '#a7f3d0', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
                       </span>
                     );
                   })
@@ -2478,7 +2508,7 @@ function App() {
                     return (
                       <span key={id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '0.25rem 0.45rem', borderRadius: '6px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
                         {cat ? cat.name : `${catId}페이지`} {s}번
-                        <button type="button" onClick={() => toggleEditStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                        <button type="button" onClick={() => toggleEditStickerSelection(id, 'wants')} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
                       </span>
                     );
                   })
