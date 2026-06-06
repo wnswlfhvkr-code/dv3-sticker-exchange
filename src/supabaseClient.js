@@ -188,73 +188,151 @@ export const dbService = {
   },
   fetchComments: async (postId) => {
     if (!isMock) {
-      const { data, error } = await supabase
-        .from('post_comments')
-        .select('*')
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true });
-      return { data, error };
+      try {
+        const { data, error } = await supabase
+          .from('post_comments')
+          .select('*')
+          .eq('post_id', postId)
+          .order('created_at', { ascending: true });
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            console.warn("post_comments 테이블이 존재하지 않아 로컬스토리지를 사용합니다.");
+            return mockDB.getComments(postId);
+          }
+          return { data, error };
+        }
+        return { data, error };
+      } catch (err) {
+        console.warn("fetchComments 실패, 로컬 폴백:", err);
+        return mockDB.getComments(postId);
+      }
     } else {
       return mockDB.getComments(postId);
     }
   },
   addComment: async (postId, nickname, text) => {
     if (!isMock) {
-      const { data, error } = await supabase
-        .from('post_comments')
-        .insert([{ post_id: postId, nickname, text }])
-        .select();
-      return { data, error };
+      try {
+        const { data, error } = await supabase
+          .from('post_comments')
+          .insert([{ post_id: postId, nickname, text }])
+          .select();
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            console.warn("post_comments 테이블이 존재하지 않아 로컬스토리지를 사용합니다.");
+            return mockDB.insertComment(postId, nickname, text);
+          }
+          return { data, error };
+        }
+        return { data, error };
+      } catch (err) {
+        console.warn("addComment 실패, 로컬 폴백:", err);
+        return mockDB.insertComment(postId, nickname, text);
+      }
     } else {
       return mockDB.insertComment(postId, nickname, text);
     }
   },
   removeComment: async (commentId) => {
     if (!isMock) {
-      const { error } = await supabase
-        .from('post_comments')
-        .delete()
-        .eq('id', commentId);
-      return { error };
+      try {
+        const { error } = await supabase
+          .from('post_comments')
+          .delete()
+          .eq('id', commentId);
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            console.warn("post_comments 테이블이 존재하지 않아 로컬스토리지를 사용합니다.");
+            return mockDB.deleteComment(commentId);
+          }
+          return { error };
+        }
+        return { error };
+      } catch (err) {
+        console.warn("removeComment 실패, 로컬 폴백:", err);
+        return mockDB.deleteComment(commentId);
+      }
     } else {
       return mockDB.deleteComment(commentId);
     }
   },
   addReport: async (targetType, targetId, reporter, reason, targetDetails) => {
     if (!isMock) {
-      const { data, error } = await supabase
-        .from('reports')
-        .insert([{
-          target_type: targetType,
-          target_id: String(targetId),
-          reporter,
-          reason,
-          target_details: targetDetails
-        }])
-        .select();
-      return { data, error };
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .insert([{
+            target_type: targetType,
+            target_id: String(targetId),
+            reporter,
+            reason,
+            target_details: targetDetails
+          }])
+          .select();
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            console.warn("reports 테이블이 존재하지 않아 로컬스토리지를 사용합니다.");
+            return mockDB.insertReport(targetType, targetId, reporter, reason, targetDetails);
+          }
+          return { data, error };
+        }
+        return { data, error };
+      } catch (err) {
+        console.warn("addReport 실패, 로컬 폴백:", err);
+        return mockDB.insertReport(targetType, targetId, reporter, reason, targetDetails);
+      }
     } else {
       return mockDB.insertReport(targetType, targetId, reporter, reason, targetDetails);
     }
   },
   fetchReports: async () => {
     if (!isMock) {
-      const { data, error } = await supabase
-        .from('reports')
-        .select('*')
-        .order('created_at', { ascending: false });
-      return { data, error };
+      try {
+        const { data, error } = await supabase
+          .from('reports')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            console.warn("reports 테이블이 존재하지 않아 로컬스토리지를 사용합니다.");
+            return mockDB.getReports();
+          }
+          return { data, error };
+        }
+        return { data, error };
+      } catch (err) {
+        console.warn("fetchReports 실패, 로컬 폴백:", err);
+        return mockDB.getReports();
+      }
     } else {
       return mockDB.getReports();
     }
   },
   resolveReport: async (reportId) => {
     if (!isMock) {
-      const { error } = await supabase
-        .from('reports')
-        .delete()
-        .eq('id', reportId);
-      return { error };
+      try {
+        const { error } = await supabase
+          .from('reports')
+          .delete()
+          .eq('id', reportId);
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            console.warn("reports 테이블이 존재하지 않아 로컬스토리지를 사용합니다.");
+            return mockDB.deleteReport(reportId);
+          }
+          return { error };
+        }
+        return { error };
+      } catch (err) {
+        console.warn("resolveReport 실패, 로컬 폴백:", err);
+        return mockDB.deleteReport(reportId);
+      }
     } else {
       return mockDB.deleteReport(reportId);
     }
