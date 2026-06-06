@@ -412,7 +412,8 @@ function App() {
       sessionStorage.setItem('dv3_is_guest', 'false');
       setIsGuest(false);
     } else {
-      // 게스트 로그인 (보안 및 중복 방지 강화)
+      // 게스트 로그인 (보안 및 중복 방지 강화 + 게스트 표시 추가)
+      const guestDisplayName = `${nickname} (게스트)`;
       try {
         // 1. 기존 가입 유저 확인
         const { exists, error } = await dbService.verifyUser(nickname, "");
@@ -425,7 +426,7 @@ function App() {
         }
 
         // 2. 현재 온라인 중복 유저 확인
-        if (onlineUsers.includes(nickname)) {
+        if (onlineUsers.includes(guestDisplayName) || onlineUsers.includes(nickname)) {
           alert(`현재 "${nickname}" 닉네임으로 접속 중인 사용자가 있습니다.\n겹치지 않는 다른 닉네임으로 접속해 주세요.`);
           return;
         }
@@ -434,13 +435,14 @@ function App() {
       }
 
       setIsGuest(true);
-      sessionStorage.setItem('dv3_nickname', nickname);
+      sessionStorage.setItem('dv3_nickname', guestDisplayName);
       sessionStorage.setItem('dv3_is_guest', 'true');
       localStorage.removeItem('dv3_nickname');
       localStorage.removeItem('dv3_password');
     }
 
-    setUserNickname(nickname);
+    const finalNickname = isGuestMode ? `${nickname} (게스트)` : nickname;
+    setUserNickname(finalNickname);
     setShowLoginModal(false);
     setLoginPassword('');
   };
