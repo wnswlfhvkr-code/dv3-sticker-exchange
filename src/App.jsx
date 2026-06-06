@@ -412,8 +412,27 @@ function App() {
       sessionStorage.setItem('dv3_is_guest', 'false');
       setIsGuest(false);
     } else {
-      // 게스트 로그인
-      setUserNickname(nickname);
+      // 게스트 로그인 (보안 및 중복 방지 강화)
+      try {
+        // 1. 기존 가입 유저 확인
+        const { exists, error } = await dbService.verifyUser(nickname, "");
+        if (error) {
+          console.error("게스트 로그인 검증 오류:", error);
+        }
+        if (exists) {
+          alert(`"${nickname}"은(는) 이미 등록된 정식 회원 닉네임입니다.\n비밀번호를 입력하여 정식으로 로그인하거나, 다른 닉네임을 입력해 주세요.`);
+          return;
+        }
+
+        // 2. 현재 온라인 중복 유저 확인
+        if (onlineUsers.includes(nickname)) {
+          alert(`현재 "${nickname}" 닉네임으로 접속 중인 사용자가 있습니다.\n겹치지 않는 다른 닉네임으로 접속해 주세요.`);
+          return;
+        }
+      } catch (err) {
+        console.error("게스트 로그인 검증 중 예외:", err);
+      }
+
       setIsGuest(true);
       sessionStorage.setItem('dv3_nickname', nickname);
       sessionStorage.setItem('dv3_is_guest', 'true');
