@@ -161,6 +161,30 @@ function App() {
   const [chatWindowOpen, setChatWindowOpen] = useState(false);
   const chatScrollRef = useRef(null);
 
+  // --- 글 수정 관련 상태 ---
+  const [editingPost, setEditingPost] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editContact, setEditContact] = useState('');
+  const [editHaves, setEditHaves] = useState([]);
+  const [editWants, setEditWants] = useState([]);
+  const [editBasketMode, setEditBasketMode] = useState('haves');
+
+  // --- 댓글 관련 상태 ---
+  const [comments, setComments] = useState({}); // { [postId]: [comments...] }
+  const [commentInputs, setCommentInputs] = useState({}); // { [postId]: '댓글텍스트' }
+  const [expandedComments, setExpandedComments] = useState({}); // { [postId]: true/false }
+
+  // --- 신고 관련 상태 ---
+  const [reportingTarget, setReportingTarget] = useState(null); // { type, id, details }
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [reportReason, setReportReason] = useState('허위 정보 / 거짓 매칭');
+  const [reportCustomReason, setReportCustomReason] = useState('');
+
+  // --- 관리자 관련 상태 ---
+  const [isAdminTabOpen, setIsAdminTabOpen] = useState(false);
+  const [reportsList, setReportsList] = useState([]);
+  const [adminLoading, setAdminLoading] = useState(false);
+
   // --- 최초 로드 및 동기화 ---
   useEffect(() => {
     fetchData();
@@ -495,6 +519,184 @@ function App() {
     }
   };
 
+  // --- 글 수정 핸들러 ---
+  const handleOpenEditModal = (post) => {
+    setEditingPost(post);
+    setEditContact(post.contact || '');
+    setEditHaves(post.haves || []);
+    setEditWants(post.wants || []);
+    setEditBasketMode('haves');
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdatePost = async (e) => {
+    e.preventDefault();
+    if (!editingPost) return;
+    const { error } = await dbService.updatePost(editingPost.id, editContact, editHaves, editWants);
+    if (!error) {
+      alert("성공적으로 글이 수정되었습니다!");
+      setIsEditModalOpen(false);
+      setEditingPost(null);
+      fetchData();
+    } else {
+      alert("글 수정 실패: " + error.message);
+    }
+  };
+
+  const toggleEditStickerSelection = (stickerId) => {
+    if (editBasketMode === 'haves') {
+      if (editHaves.includes(stickerId)) {
+        setEditHaves(editHaves.filter(id => id !== stickerId));
+      } else {
+        setEditHaves([...editHaves, stickerId]);
+        setEditWants(editWants.filter(id => id !== stickerId));
+      }
+    } else {
+      if (editWants.includes(stickerId)) {
+        setEditWants(editWants.filter(id => id !== stickerId));
+      } else {
+        setEditWants([...editWants, stickerId]);
+        setEditHaves(editHaves.filter(id => id !== stickerId));
+      }
+    }
+  };
+
+  // --- 댓글 핸들러 ---
+  const loadComments = async (postId) => {
+    const { data, error } = await dbService.fetchComments(postId);
+    if (!error) {
+      setComments(prev => ({ ...prev, [postId]: data || [] }));
+    }
+  };
+
+  const toggleComments = async (postId) => {
+    const isExpanded = !expandedComments[postId];
+    setExpandedComments(prev => ({ ...prev, [postId]: isExpanded }));
+    if (isExpanded) {
+      await loadComments(postId);
+    }
+  };
+
+  const handleAddComment = async (e, postId) => {
+    e.preventDefault();
+    const commentText = commentInputs[postId] || '';
+    if (!commentText.trim()) return;
+    if (!userNickname) {
+      alert("로그인 후 댓글을 작성할 수 있습니다.");
+      return;
+    }
+    const { error } = await dbService.addComment(postId, userNickname, commentText.trim());
+    if (!error) {
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+      await loadComments(postId);
+    } else {
+      alert("댓글 등록 실패: " + error.message);
+    }
+  };
+
+  const handleDeleteComment = async (commentId, postId) => {
+    if (!window.confirm("정말 이 댓글을 삭제하시겠습니까?")) return;
+    const { error } = await dbService.removeComment(commentId);
+    if (!error) {
+      await loadComments(postId);
+    } else {
+      alert("댓글 삭제 실패: " + error.message);
+    }
+  };
+
+  // --- 신고 핸들러 ---
+  const handleOpenReportModal = (targetType, targetId, targetDetails) => {
+    if (!userNickname) {
+      alert("로그인 후 신고 기능을 이용할 수 있습니다.");
+      return;
+    }
+    setReportingTarget({ type: targetType, id: targetId, details: targetDetails });
+    setReportReason('허위 정보 / 거짓 매칭');
+    setReportCustomReason('');
+    setIsReportModalOpen(true);
+  };
+
+  const handleSubmitReport = async (e) => {
+    e.preventDefault();
+    if (!reportingTarget) return;
+    const finalReason = reportReason === '기타' ? reportCustomReason : reportReason;
+    if (reportReason === '기타' && !reportCustomReason.trim()) {
+      alert("신고 사유를 작성해주세요.");
+      return;
+    }
+    const { error } = await dbService.addReport(
+      reportingTarget.type,
+      reportingTarget.id,
+      userNickname,
+      finalReason,
+      reportingTarget.details
+    );
+    if (!error) {
+      alert("신고가 정상적으로 접수되었습니다. 관리자 확인 후 조치됩니다.");
+      setIsReportModalOpen(false);
+      setReportingTarget(null);
+    } else {
+      alert("신고 접수 실패: " + error.message);
+    }
+  };
+
+  // --- 관리자 핸들러 ---
+  const loadReports = async () => {
+    setAdminLoading(true);
+    const { data, error } = await dbService.fetchReports();
+    if (!error) {
+      setReportsList(data || []);
+    }
+    setAdminLoading(false);
+  };
+
+  const handleOpenAdminTab = async () => {
+    setIsAdminTabOpen(true);
+    await loadReports();
+  };
+
+  const handleResolveReport = async (reportId) => {
+    const { error } = await dbService.resolveReport(reportId);
+    if (!error) {
+      alert("신고 내역이 처리되었습니다.");
+      await loadReports();
+    } else {
+      alert("처리 실패: " + error.message);
+    }
+  };
+
+  const handleAdminDeletePost = async (postId, reportId) => {
+    if (!window.confirm("관리자 권한으로 이 게시글을 강제 삭제하시겠습니까?")) return;
+    const { error } = await dbService.removePost(postId);
+    if (!error) {
+      alert("게시글이 삭제되었습니다.");
+      if (reportId) {
+        await dbService.resolveReport(reportId);
+      }
+      await loadReports();
+      fetchData();
+    } else {
+      alert("게시글 삭제 실패: " + error.message);
+    }
+  };
+
+  const handleAdminDeleteComment = async (commentId, postId, reportId) => {
+    if (!window.confirm("관리자 권한으로 이 댓글을 강제 삭제하시겠습니까?")) return;
+    const { error } = await dbService.removeComment(commentId);
+    if (!error) {
+      alert("댓글이 삭제되었습니다.");
+      if (reportId) {
+        await dbService.resolveReport(reportId);
+      }
+      await loadReports();
+      if (postId) {
+        await loadComments(postId);
+      }
+    } else {
+      alert("댓글 삭제 실패: " + error.message);
+    }
+  };
+
   // 1:1 채팅 시작하기
   const handleStartChat = async (post) => {
     if (post.nickname === userNickname) {
@@ -606,6 +808,15 @@ function App() {
               >
                 <Info size={14} />
               </button>
+              {userNickname === '간장' && (
+                <button 
+                  onClick={handleOpenAdminTab} 
+                  style={{ background: 'none', border: 'none', color: '#fbbf24', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', gap: '2px' }}
+                  title="관리자 메뉴 열기"
+                >
+                  <span style={{ fontSize: '0.75rem', fontWeight: 'bold' }}>👑 관리자</span>
+                </button>
+              )}
               <button 
                 onClick={handleLogout} 
                 style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '0 0 0 4px', display: 'flex', alignItems: 'center' }}
@@ -1405,7 +1616,7 @@ function App() {
                   </div>
 
                   {/* 액션 버튼 */}
-                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
                     {!isMyPost && (
                       <button 
                         onClick={() => handleStartChat(post)}
@@ -1428,8 +1639,38 @@ function App() {
                       </a>
                     )}
                     
+                    {!isMyPost && (
+                      <button
+                        className="btn btn-outline"
+                        onClick={() => handleOpenReportModal('post', post.id, `${post.nickname}의 교환글`)}
+                        style={{ padding: '0.5rem 0.6rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.2)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        title="게시글 신고하기"
+                      >
+                        🚨
+                      </button>
+                    )}
+
+                    {!isMyPost && userNickname === '간장' && (
+                      <button 
+                        className="btn btn-outline" 
+                        onClick={() => handleAdminDeletePost(post.id)}
+                        style={{ padding: '0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)', flexShrink: 0 }}
+                        title="관리자 강제 삭제"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
+                    
                     {isMyPost && (
-                      <div style={{ display: 'flex', gap: '4px' }}>
+                      <div style={{ display: 'flex', gap: '4px', width: '100%', justifyContent: 'flex-end' }}>
+                        <button 
+                          className="btn btn-outline" 
+                          onClick={() => handleOpenEditModal(post)}
+                          style={{ padding: '0.5rem 0.85rem', fontSize: '0.82rem', color: '#60a5fa', borderColor: 'rgba(96, 165, 250, 0.3)', fontWeight: 'bold' }}
+                          title="글 수정하기"
+                        >
+                          수정
+                        </button>
                         <button 
                           className="btn btn-outline" 
                           onClick={() => handleBumpPost(post.id)}
@@ -1446,6 +1687,83 @@ function App() {
                         >
                           <Trash2 size={14} />
                         </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 댓글 영역 */}
+                  <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <button 
+                      onClick={() => toggleComments(post.id)}
+                      style={{ background: 'none', border: 'none', color: expandedComments[post.id] ? 'var(--primary-color)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', padding: '0 2px' }}
+                    >
+                      💬 댓글 {comments[post.id] ? `(${comments[post.id].length})` : '(보기)'}
+                    </button>
+
+                    {expandedComments[post.id] && (
+                      <div style={{ marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        {/* 댓글 리스트 */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', maxHeight: '150px', overflowY: 'auto', paddingRight: '2px' }}>
+                          {comments[post.id]?.map(comment => {
+                            const isCommentOwner = userNickname && comment.nickname === userNickname;
+                            return (
+                              <div key={comment.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.5rem', borderRadius: '6px', fontSize: '0.78rem' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                    <span style={{ fontWeight: '700', color: comment.nickname === post.nickname ? 'var(--primary-color)' : '#fff' }}>{comment.nickname}</span>
+                                    <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                      {new Date(comment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                  </div>
+                                  <span style={{ color: 'rgba(255,255,255,0.85)', wordBreak: 'break-all' }}>{comment.text}</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                  {!isCommentOwner && (
+                                    <button 
+                                      onClick={() => handleOpenReportModal('comment', comment.id, `${comment.nickname}의 댓글: ${comment.text.slice(0, 10)}...`)}
+                                      style={{ background: 'none', border: 'none', color: '#f87171', fontSize: '0.68rem', cursor: 'pointer', opacity: 0.6 }}
+                                      title="댓글 신고"
+                                    >
+                                      신고
+                                    </button>
+                                  )}
+                                  {(isCommentOwner || userNickname === '간장') && (
+                                    <button 
+                                      onClick={() => handleDeleteComment(comment.id, post.id)}
+                                      style={{ background: 'none', border: 'none', color: '#f87171', fontSize: '0.68rem', cursor: 'pointer' }}
+                                      title="댓글 삭제"
+                                    >
+                                      삭제
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {(!comments[post.id] || comments[post.id].length === 0) && (
+                            <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', padding: '0.3rem 0.2rem' }}>아직 등록된 댓글이 없습니다.</div>
+                          )}
+                        </div>
+
+                        {/* 댓글 작성 폼 */}
+                        <form onSubmit={(e) => handleAddComment(e, post.id)} style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
+                          <input 
+                            type="text" 
+                            placeholder={userNickname ? "댓글을 작성하세요..." : "로그인 후 댓글을 작성할 수 있습니다."}
+                            disabled={!userNickname}
+                            value={commentInputs[post.id] || ''}
+                            onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                            style={{ flex: 1, padding: '0.35rem 0.65rem', fontSize: '0.78rem', height: '32px' }}
+                          />
+                          <button 
+                            type="submit" 
+                            disabled={!userNickname}
+                            className="btn btn-primary" 
+                            style={{ padding: '0 0.75rem', fontSize: '0.78rem', height: '32px', display: 'flex', alignItems: 'center' }}
+                          >
+                            등록
+                          </button>
+                        </form>
                       </div>
                     )}
                   </div>
@@ -1548,6 +1866,16 @@ function App() {
                         {new Date(post.created_at).toLocaleDateString()}
                       </span>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        <button 
+                          onClick={() => {
+                            setIsMyInfoOpen(false);
+                            handleOpenEditModal(post);
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}
+                          title="수정하기"
+                        >
+                          수정
+                        </button>
                         <button 
                           onClick={() => handleBumpPost(post.id)}
                           style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}
@@ -1791,6 +2119,441 @@ function App() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2-2. 글 수정 모달창 */}
+      {isEditModalOpen && editingPost && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(5, 3, 10, 0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div className="glass-card" style={{
+            width: '100%',
+            maxWidth: '520px',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '1.8rem',
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            animation: 'fadeIn 0.2s ease-out'
+          }}>
+            <button 
+              onClick={() => {
+                setIsEditModalOpen(false);
+                setEditingPost(null);
+              }}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <form onSubmit={handleUpdatePost} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <Sparkles color="var(--primary-color)" size={20} />
+                  내 교환글 수정하기
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+                  줄 수 있는 카드와 받고 싶은 카드를 자유롭게 수정하고 완료 버튼을 눌러주세요.
+                </p>
+              </div>
+
+              {/* 연락처 수정 */}
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '0.4rem', fontSize: '0.85rem', color: 'var(--text-secondary)', width: '100%' }}>
+                  <MessageCircle size={14} color="var(--primary-color)" /> 연락처 (선택 사항)
+                </label>
+                <input 
+                  type="text" 
+                  placeholder="예: open.kakao.com/o/xxxxxx" 
+                  value={editContact}
+                  onChange={(e) => setEditContact(e.target.value)}
+                />
+              </div>
+
+              {/* 탭 제어 */}
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', marginBottom: '0.5rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setEditBasketMode('haves')}
+                  style={{
+                    flex: 1,
+                    padding: '0.6rem',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: editBasketMode === 'haves' ? '2px solid #10b981' : 'none',
+                    color: editBasketMode === 'haves' ? '#10b981' : 'var(--text-muted)',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  🟢 줄 수 있는 카드 수정 ({editHaves.length}개)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditBasketMode('wants')}
+                  style={{
+                    flex: 1,
+                    padding: '0.6rem',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: editBasketMode === 'wants' ? '2px solid #ef4444' : 'none',
+                    color: editBasketMode === 'wants' ? '#ef4444' : 'var(--text-muted)',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  🔴 받고 싶은 카드 수정 ({editWants.length}개)
+                </button>
+              </div>
+
+              {/* 현재 선택된 리스트 & 간이 제거 기능 */}
+              <div style={{ maxHeight: '120px', overflowY: 'auto', background: 'rgba(0,0,0,0.2)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                {editBasketMode === 'haves' ? (
+                  editHaves.map(id => {
+                    const [catId, s] = id.split('-');
+                    const cat = categories.find(c => String(c.id) === catId);
+                    return (
+                      <span key={id} className="sticker-tag" style={{ background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#a7f3d0', padding: '0.25rem 0.45rem', borderRadius: '6px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
+                        {cat ? cat.name : `${catId}페이지`} {s}번
+                        <button type="button" onClick={() => toggleEditStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#a7f3d0', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                      </span>
+                    );
+                  })
+                ) : (
+                  editWants.map(id => {
+                    const [catId, s] = id.split('-');
+                    const cat = categories.find(c => String(c.id) === catId);
+                    return (
+                      <span key={id} className="sticker-tag" style={{ background: 'rgba(239, 68, 68, 0.15)', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#fca5a5', padding: '0.25rem 0.45rem', borderRadius: '6px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '3px', margin: '2px' }}>
+                        {cat ? cat.name : `${catId}페이지`} {s}번
+                        <button type="button" onClick={() => toggleEditStickerSelection(id)} style={{ background: 'none', border: 'none', color: '#fca5a5', cursor: 'pointer', padding: '1px', display: 'flex', alignItems: 'center' }}><X size={10} /></button>
+                      </span>
+                    );
+                  })
+                )}
+                {((editBasketMode === 'haves' ? editHaves.length : editWants.length) === 0) && (
+                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem', padding: '1rem 0' }}>비어 있음 (아래에서 카테고리를 골라 추가하세요)</div>
+                )}
+              </div>
+
+              {/* 추가할 카드 선택 셀렉터 */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <label style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>👇 스티커 터치하여 추가하기</label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', maxHeight: '180px', overflowY: 'auto', background: 'rgba(255,255,255,0.02)', padding: '0.5rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  {stickersData.map(s => {
+                    const isSelected = editHaves.includes(s.id) || editWants.includes(s.id);
+                    let borderCol = 'rgba(255,255,255,0.08)';
+                    let bgCol = 'transparent';
+                    if (editHaves.includes(s.id)) {
+                      borderCol = '#10b981';
+                      bgCol = 'rgba(16, 185, 129, 0.15)';
+                    } else if (editWants.includes(s.id)) {
+                      borderCol = '#ef4444';
+                      bgCol = 'rgba(239, 68, 68, 0.15)';
+                    }
+                    return (
+                      <div 
+                        key={s.id} 
+                        onClick={() => toggleEditStickerSelection(s.id)}
+                        style={{ 
+                          border: `1px solid ${borderCol}`, 
+                          background: bgCol,
+                          borderRadius: '6px', 
+                          padding: '4px', 
+                          cursor: 'pointer', 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          textAlign: 'center',
+                          opacity: isSelected ? 1 : 0.6
+                        }}
+                      >
+                        <img src={s.image} alt={s.name} style={{ width: '28px', height: '35px', objectFit: 'contain' }} />
+                        <span style={{ fontSize: '0.55rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100%' }}>{s.name.split(' ')[0]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-outline" 
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingPost(null);
+                  }}
+                  style={{ flex: 1, padding: '0.75rem' }}
+                >
+                  취소
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ flex: 2, padding: '0.75rem', fontWeight: 'bold' }}
+                >
+                  수정 완료
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2-3. 신고 모달창 */}
+      {isReportModalOpen && reportingTarget && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(5, 3, 10, 0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div className="glass-card" style={{
+            width: '100%',
+            maxWidth: '380px',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            padding: '1.8rem',
+            borderRadius: '16px',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+            position: 'relative',
+            animation: 'fadeIn 0.2s ease-out'
+          }}>
+            <button 
+              onClick={() => {
+                setIsReportModalOpen(false);
+                setReportingTarget(null);
+              }}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <form onSubmit={handleSubmitReport} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.2rem', color: '#f87171', display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+                  🚨 신고 접수
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.78rem' }}>
+                  대상: <strong>{reportingTarget.details}</strong>
+                </p>
+              </div>
+
+              <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>신고 사유 선택</label>
+                <select 
+                  value={reportReason} 
+                  onChange={(e) => setReportReason(e.target.value)}
+                  style={{ width: '100%', padding: '0.5rem', background: '#181524', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff' }}
+                >
+                  <option value="허위 정보 / 거짓 매칭">허위 정보 / 거짓 매칭</option>
+                  <option value="부적절한 연락처 / 사기 의심">부적절한 연락처 / 사기 의심</option>
+                  <option value="욕설 / 비방 / 불쾌한 언행">욕설 / 비방 / 불쾌한 언행</option>
+                  <option value="도배 / 중복 게시물">도배 / 중복 게시물</option>
+                  <option value="기타">기타 (직접 작성)</option>
+                </select>
+              </div>
+
+              {reportReason === '기타' && (
+                <div className="form-group">
+                  <textarea 
+                    placeholder="신고 사유를 구체적으로 적어주세요 (최대 100자)" 
+                    maxLength={100}
+                    value={reportCustomReason}
+                    onChange={(e) => setReportCustomReason(e.target.value)}
+                    style={{ width: '100%', height: '80px', padding: '0.5rem', background: '#181524', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#fff', fontSize: '0.8rem', resize: 'none' }}
+                  />
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="button" 
+                  className="btn btn-outline" 
+                  onClick={() => {
+                    setIsReportModalOpen(false);
+                    setReportingTarget(null);
+                  }}
+                  style={{ flex: 1, padding: '0.6rem', fontSize: '0.85rem' }}
+                >
+                  취소
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary" 
+                  style={{ flex: 1.5, padding: '0.6rem', background: '#ef4444', borderColor: '#ef4444', color: '#fff', fontWeight: 'bold', fontSize: '0.85rem' }}
+                >
+                  신고 제출
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 2-4. 관리자 전용 대시보드 모달 */}
+      {isAdminTabOpen && userNickname === '간장' && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(5, 3, 10, 0.85)',
+          backdropFilter: 'blur(10px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1.5rem'
+        }}>
+          <div className="glass-card" style={{
+            width: '100%',
+            maxWidth: '600px',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            border: '2px solid #fbbf24',
+            padding: '2rem',
+            borderRadius: '20px',
+            boxShadow: '0 0 25px rgba(251, 191, 36, 0.25)',
+            position: 'relative',
+            animation: 'fadeIn 0.2s ease-out'
+          }}>
+            <button 
+              onClick={() => setIsAdminTabOpen(false)}
+              style={{
+                position: 'absolute',
+                top: '1rem',
+                right: '1rem',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer'
+              }}
+            >
+              <X size={20} />
+            </button>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+              <div>
+                <h2 style={{ fontSize: '1.4rem', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+                  👑 관리자 전용 대시보드
+                </h2>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                  신고된 교환글 및 댓글 내역을 통합 모니터링하고 원클릭 제재 처리를 집행합니다.
+                </p>
+              </div>
+
+              {adminLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '3rem 0' }}>
+                  <RefreshCw size={24} className="spin-anim" />
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 'bold' }}>누적 신고 목록 ({reportsList.length}건)</span>
+                    <button onClick={loadReports} className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <RefreshCw size={12} /> 새로고침
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '350px', overflowY: 'auto' }}>
+                    {reportsList.map(report => (
+                      <div key={report.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{
+                            background: report.target_type === 'post' ? 'rgba(96, 165, 250, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                            color: report.target_type === 'post' ? '#60a5fa' : '#f59e0b',
+                            fontSize: '0.68rem',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 'bold'
+                          }}>
+                            {report.target_type === 'post' ? '교환글 신고' : '댓글 신고'}
+                          </span>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                            신고일: {new Date(report.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                          <div><span style={{ color: 'var(--text-muted)' }}>대상정보:</span> <strong>{report.target_details}</strong> (ID: {report.target_id})</div>
+                          <div><span style={{ color: 'var(--text-muted)' }}>신고자:</span> {report.reporter}</div>
+                          <div><span style={{ color: '#f87171', fontWeight: '700' }}>사유:</span> {report.reason}</div>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '6px' }}>
+                          <button 
+                            onClick={() => handleResolveReport(report.id)}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', cursor: 'pointer' }}
+                          >
+                            신고 반려 (무시)
+                          </button>
+                          <button 
+                            onClick={() => {
+                              if (report.target_type === 'post') {
+                                handleAdminDeletePost(report.target_id, report.id);
+                              } else {
+                                handleAdminDeleteComment(report.target_id, null, report.id);
+                              }
+                            }}
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                          >
+                            대상 강제 삭제 & 종결
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+
+                    {reportsList.length === 0 && (
+                      <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2rem 0' }}>깨끗합니다! 접수된 신고가 없습니다.</div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                <button 
+                  onClick={() => setIsAdminTabOpen(false)}
+                  className="btn btn-outline" 
+                  style={{ padding: '0.6rem 1.2rem', fontSize: '0.85rem' }}
+                >
+                  닫기
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
