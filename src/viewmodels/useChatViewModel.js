@@ -273,16 +273,9 @@ export function useChatViewModel({ userNickname }) {
 
     const unsubscribe = chatService.subscribeAllMyMessages(userNickname, (msg) => {
       loadChatRooms();
-      // 현재 열려 있는 방이 아니거나 채팅방 창이 아예 닫혀있을 때만 알림 발생
-      if (!chatWindowOpen || chatActiveRoomId !== msg.roomId) {
-        // 1. 안 읽은 개수 증가
-        setUnreadCounts(prev => {
-          const newCount = (prev[msg.roomId] || 0) + 1;
-          localStorage.setItem(`dv3_unread_${msg.roomId}`, String(newCount));
-          return { ...prev, [msg.roomId]: newCount };
-        });
-
-        // 2. 청아한 띵동 알림음 재생
+      
+      // 1. 상대방이 보낸 메시지인 경우, 활성화된 대화방 여부와 상관없이 무조건 알림음 재생
+      if (msg.sender !== userNickname) {
         try {
           const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav");
           audio.volume = 0.55;
@@ -291,12 +284,22 @@ export function useChatViewModel({ userNickname }) {
           console.error("오디오 로드 에러:", e);
         }
 
-        // 3. 토스트 팝업 알림 설정
-        setChatNotification({
-          sender: msg.sender,
-          text: msg.text,
-          roomId: msg.roomId
-        });
+        // 2. 현재 열려 있는 방이 아니거나 채팅방 창이 아예 닫혀있을 때만 안 읽은 카운트 및 토스트 팝업 알림 적용
+        if (!chatWindowOpen || chatActiveRoomId !== msg.roomId) {
+          // 안 읽은 개수 증가
+          setUnreadCounts(prev => {
+            const newCount = (prev[msg.roomId] || 0) + 1;
+            localStorage.setItem(`dv3_unread_${msg.roomId}`, String(newCount));
+            return { ...prev, [msg.roomId]: newCount };
+          });
+
+          // 토스트 팝업 알림 설정
+          setChatNotification({
+            sender: msg.sender,
+            text: msg.text,
+            roomId: msg.roomId
+          });
+        }
       }
     });
 
