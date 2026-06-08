@@ -31,15 +31,41 @@ export function useChatViewModel({ userNickname }) {
   const [chatNotification, setChatNotification] = useState(null);
   const chatScrollRef = useRef(null);
 
-  // 대화방 목록 조회 (otherUser 닉네임 매핑 처리 추가)
+  // 대화방 목록 조회 (otherUser 닉네임 매핑 및 실제 마지막 메시지 강제 보정 처리 추가)
   const loadChatRooms = async () => {
     if (!userNickname) return;
     try {
       const rooms = await chatService.getMyChatRooms(userNickname);
-      const mappedRooms = (rooms || []).map(r => {
+      
+      // 각 방의 최신 메시지를 직접 쿼리하여 보정 (Supabase RLS/동기화 딜레이 해결)
+      const mappedRooms = await Promise.all((rooms || []).map(async (r) => {
         const otherUser = r.buyerNickname === userNickname ? r.sellerNickname : r.buyerNickname;
-        return { ...r, otherUser };
-      });
+        
+        let lastMsgText = r.lastMessage;
+        let lastMsgTime = r.updatedAt;
+        
+        try {
+          const msgs = await chatService.getMessages(r.id);
+          if (msgs && msgs.length > 0) {
+            const lastMsg = msgs[msgs.length - 1];
+            lastMsgText = lastMsg.text;
+            lastMsgTime = lastMsg.timestamp;
+          }
+        } catch (e) {
+          console.warn(`방 ${r.id}의 마지막 메시지 조회 실패:`, e);
+        }
+
+        return { 
+          ...r, 
+          otherUser,
+          lastMessage: lastMsgText,
+          updatedAt: lastMsgTime
+        };
+      }));
+
+      // 업데이트 시간 순으로 정렬 (최신 대화방이 위로 오도록)
+      mappedRooms.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
       setChatRooms(mappedRooms);
     } catch (err) {
       console.error("대화방 목록 로드 실패:", err);
