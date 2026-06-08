@@ -31,12 +31,16 @@ export function useChatViewModel({ userNickname }) {
   const [chatNotification, setChatNotification] = useState(null);
   const chatScrollRef = useRef(null);
 
-  // 대화방 목록 조회
+  // 대화방 목록 조회 (otherUser 닉네임 매핑 처리 추가)
   const loadChatRooms = async () => {
     if (!userNickname) return;
     try {
       const rooms = await chatService.getMyChatRooms(userNickname);
-      setChatRooms(rooms || []);
+      const mappedRooms = (rooms || []).map(r => {
+        const otherUser = r.buyerNickname === userNickname ? r.sellerNickname : r.buyerNickname;
+        return { ...r, otherUser };
+      });
+      setChatRooms(mappedRooms);
     } catch (err) {
       console.error("대화방 목록 로드 실패:", err);
     }

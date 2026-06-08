@@ -392,8 +392,9 @@ export const chatService = {
   // 7. 나에게 오는 모든 메시지 글로벌 실시간 구독 (알림음, 미리보기, 안읽은 개수 추적용)
   subscribeAllMyMessages(myNickname, onNewMessage) {
     if (!isMock) {
+      // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
       const channel = supabase
-        .channel('global-chat-notifications')
+        .channel(`global-chat-notifications-${myNickname}`)
         .on(
           'postgres_changes',
           {
@@ -471,8 +472,9 @@ export const chatService = {
   // 8. 나에게 개설되는 1:1 대화방 실시간 감지 구독
   subscribeMyRooms(myNickname, onRoomUpdate) {
     if (!isMock) {
+      // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
       const channel = supabase
-        .channel('realtime-my-chat-rooms')
+        .channel(`realtime-my-chat-rooms-${myNickname}`)
         .on(
           'postgres_changes',
           {
