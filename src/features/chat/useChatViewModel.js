@@ -1,7 +1,9 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect, useRef } from 'react';
 import { chatService } from '../../chatService';
 import { supabase, isMock } from '../../supabaseClient';
 import { sanitizeInput } from '../../utils/security';
+import { installChatSoundUnlock, playChatNotificationSound } from './chatSound';
 
 export function useChatViewModel({ userNickname }) {
   const [chatRooms, setChatRooms] = useState([]);
@@ -39,6 +41,10 @@ export function useChatViewModel({ userNickname }) {
   useEffect(() => {
     chatWindowOpenRef.current = chatWindowOpen;
   }, [chatWindowOpen]);
+
+  useEffect(() => {
+    installChatSoundUnlock();
+  }, []);
 
   useEffect(() => {
     chatActiveRoomIdRef.current = chatActiveRoomId;
@@ -130,7 +136,7 @@ export function useChatViewModel({ userNickname }) {
       if (isMock) {
         try {
           allRooms = JSON.parse(localStorage.getItem('dv3_chat_rooms')) || [];
-        } catch (e) {
+        } catch {
           allRooms = [];
         }
       } else {
@@ -273,6 +279,30 @@ export function useChatViewModel({ userNickname }) {
     } catch (err) {
       alert("메시지 전송에 실패했습니다: " + err.message);
     }
+  };
+
+  const handleLeaveChatRoom = async (roomId) => {
+    if (!roomId || !userNickname) return;
+    const targetRoom = chatRooms.find(room => room.id === roomId);
+    const otherUser = targetRoom?.otherUser || '상대방';
+    if (!window.confirm(`${otherUser} 님과의 채팅방을 목록에서 나가시겠습니까?\n상대가 새 메시지를 보내면 방이 다시 표시됩니다.`)) {
+      return;
+    }
+
+    chatService.leaveChatRoom(userNickname, roomId);
+    setUnreadCounts(prev => {
+      const next = { ...prev, [roomId]: 0 };
+      localStorage.setItem(`dv3_unread_${roomId}`, '0');
+      return next;
+    });
+
+    if (chatActiveRoomIdRef.current === roomId) {
+      setChatActiveRoomId(null);
+      setChatActiveRoomNickname('');
+      setChatMessages([]);
+    }
+
+    await loadChatRooms();
   };
 
   // 활성 대화방 실시간 메시지 구독 및 최초 히스토리 로드
@@ -427,13 +457,7 @@ export function useChatViewModel({ userNickname }) {
       
       // 1. 상대방이 보낸 메시지인 경우, 활성화된 대화방 여부와 상관없이 무조건 알림음 재생
       if (msg.sender !== userNickname) {
-        try {
-          const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-84.wav");
-          audio.volume = 0.55;
-          audio.play().catch(e => console.log("알림음 재생 대기 (브라우저 상호작용 제약):", e));
-        } catch (e) {
-          console.error("오디오 로드 에러:", e);
-        }
+        playChatNotificationSound();
 
         // 2. 현재 열려 있는 방이 아니거나 채팅방 창이 아예 닫혀있을 때만 안 읽은 카운트 및 토스트 팝업 알림 적용
         if (!chatWindowOpenRef.current || chatActiveRoomIdRef.current !== msg.roomId) {
@@ -503,6 +527,7 @@ export function useChatViewModel({ userNickname }) {
     chatScrollRef,
     loadChatRooms,
     handleStartChat,
-    handleSendMessage
+    handleSendMessage,
+    handleLeaveChatRoom
   };
 }

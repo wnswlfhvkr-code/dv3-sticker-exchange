@@ -54,6 +54,25 @@ CREATE TABLE IF NOT EXISTS public.post_comments (
 -- RLS (Row Level Security) 비활성화
 ALTER TABLE public.post_comments DISABLE ROW LEVEL SECURITY;
 
+-- 3.5 독립 게시판(board_posts) 테이블 생성 DDL
+-- 메인 스티커 교환글(posts)과 분리된 공지/자유/드래곤 알 코드 거래 게시판입니다.
+CREATE TABLE IF NOT EXISTS public.board_posts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    type TEXT NOT NULL CHECK (type IN ('notice', 'free', 'egg_code')),
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    nickname TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS board_posts_type_created_at_idx
+    ON public.board_posts(type, created_at DESC);
+
+-- 현재 앱은 Supabase Auth가 아닌 닉네임+비밀번호 커스텀 로그인 구조라
+-- 사용자별 DB RLS를 엄격히 적용하기 어렵습니다. 실제 운영 보안 강화를 위해서는
+-- Supabase Auth 또는 Edge Function 기반 쓰기 검증으로 전환하는 것을 권장합니다.
+ALTER TABLE IF EXISTS public.board_posts DISABLE ROW LEVEL SECURITY;
+
 
 -- 4. 신고(reports) 테이블 생성 DDL
 CREATE TABLE IF NOT EXISTS public.reports (
@@ -74,6 +93,7 @@ ALTER TABLE public.reports DISABLE ROW LEVEL SECURITY;
 -- Supabase 대시보드에서 실시간 변경사항을 감지할 수 있도록 허용합니다.
 -- (만약 이미 등록되어 있으면 무시하거나 에러가 날 수 있으니 대시보드 설정 권장)
 -- ALTER PUBLICATION supabase_realtime ADD TABLE public.post_comments;
+-- ALTER PUBLICATION supabase_realtime ADD TABLE public.board_posts;
 -- ALTER PUBLICATION supabase_realtime ADD TABLE public.reports;
 -- ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_rooms;
 -- ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;

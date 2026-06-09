@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import './App.css';
 
 // 정적 데이터
@@ -16,6 +16,8 @@ import { usePostViewModel } from './features/post/usePostViewModel';
 import { PostFeed } from './features/post/PostFeed';
 import { PostFormModal } from './features/post/PostFormModal';
 import { EditPostModal } from './features/post/EditPostModal';
+
+import { BoardSection } from './features/board/BoardSection';
 
 import { useChatViewModel } from './features/chat/useChatViewModel';
 import { ChatWidget } from './features/chat/ChatWidget';
@@ -195,6 +197,11 @@ function App() {
         togglePostExpand={postVM.togglePostExpand}
       />
 
+      <div className="divider" style={{ margin: '2.5rem 0' }} />
+
+      {/* 6.5 로그인 전용 독립 게시판 */}
+      <BoardSection userNickname={authVM.userNickname} />
+
       {/* 7. 신규 게시글 등록 모달 */}
       <PostFormModal 
         isFormOpen={postVM.isFormOpen}
@@ -300,6 +307,7 @@ function App() {
         onlineUsers={authVM.onlineUsers}
         chatNotification={chatVM.chatNotification}
         setChatNotification={chatVM.setChatNotification}
+        handleLeaveChatRoom={chatVM.handleLeaveChatRoom}
       />
 
       {/* 하단 푸터 */}

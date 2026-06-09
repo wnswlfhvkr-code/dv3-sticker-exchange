@@ -1,25 +1,25 @@
-import React, { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { stickersData, getCategoryImage, categories } from '../../stickersData';
 
 export function StickerDetailGrid({
   selectedCategoryId,
   setSelectedCategoryId,
-  basketMode,
-  setBasketMode,
   myHaves,
   myWants,
   toggleStickerSelection
 }) {
-  const currentCategory = categories.find(c => c.id === selectedCategoryId);
-  if (!currentCategory) return null;
+  const [warningMessage, setWarningMessage] = useState(null);
+  const lastTapRef = useRef({});
+  const touchTimersRef = useRef({});
+  const skipNextClickRef = useRef({});
 
   // 이전 / 다음 카테고리 명칭 계산
-  const currentIndex = categories.findIndex(c => c.id === selectedCategoryId);
+  const foundCategoryIndex = categories.findIndex(c => c.id === selectedCategoryId);
+  const currentIndex = foundCategoryIndex >= 0 ? foundCategoryIndex : 0;
+  const currentCategory = categories[currentIndex];
   const prevCategory = categories[currentIndex === 0 ? categories.length - 1 : currentIndex - 1];
   const nextCategory = categories[currentIndex === categories.length - 1 ? 0 : currentIndex + 1];
-
-  const [warningMessage, setWarningMessage] = React.useState(null);
 
   // 경고 메시지 타이머
   useEffect(() => {
@@ -30,6 +30,13 @@ export function StickerDetailGrid({
       return () => clearTimeout(timer);
     }
   }, [warningMessage]);
+
+  useEffect(() => {
+    const timers = touchTimersRef.current;
+    return () => {
+      Object.values(timers).forEach(timer => clearTimeout(timer));
+    };
+  }, []);
 
   // 대표 이미지 (각 카테고리의 1번 스티커 이미지 사용)
   const repSticker = stickersData.find(s => s.id === `${selectedCategoryId}-1`);
@@ -60,6 +67,53 @@ export function StickerDetailGrid({
 
   const handleNextCategory = () => {
     setSelectedCategoryId(prev => (prev < categories.length ? prev + 1 : 1));
+  };
+
+  const showGoldenWarning = () => {
+    setWarningMessage("🔒 골든 등급 카드는 교환할 수 없습니다!");
+  };
+
+  const clearTouchTimer = (stickerId) => {
+    if (touchTimersRef.current[stickerId]) {
+      clearTimeout(touchTimersRef.current[stickerId]);
+      delete touchTimersRef.current[stickerId];
+    }
+  };
+
+  const selectHaveImmediately = (stickerId, isGolden) => {
+    if (isGolden) {
+      showGoldenWarning();
+      return;
+    }
+    toggleStickerSelection(stickerId, 'haves');
+  };
+
+  const selectWantImmediately = (stickerId, isGolden) => {
+    clearTouchTimer(stickerId);
+    if (isGolden) {
+      showGoldenWarning();
+      return;
+    }
+    toggleStickerSelection(stickerId, 'wants');
+  };
+
+  const handleTouchEnd = (e, stickerId, isGolden) => {
+    e.preventDefault();
+    skipNextClickRef.current[stickerId] = true;
+    const now = e.timeStamp;
+    const lastTap = lastTapRef.current[stickerId] || 0;
+    if (now - lastTap < 320) {
+      lastTapRef.current[stickerId] = 0;
+      clearTouchTimer(stickerId);
+      selectWantImmediately(stickerId, isGolden);
+      return;
+    }
+    lastTapRef.current[stickerId] = now;
+    clearTouchTimer(stickerId);
+    touchTimersRef.current[stickerId] = setTimeout(() => {
+      selectHaveImmediately(stickerId, isGolden);
+      delete touchTimersRef.current[stickerId];
+    }, 280);
   };
 
   return (
@@ -167,7 +221,7 @@ export function StickerDetailGrid({
           </div>
         </div>
 
-        {/* 상단으로 올려 배치한 좌클릭 / 우클릭 안내 가이드 및 경고 팝업 */}
+        {/* 상단으로 올려 배치한 좌클릭 / 우클릭 / 모바일 안내 가이드 및 경고 팝업 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%', marginBottom: '0.5rem' }}>
           <div style={{
             display: 'flex',
@@ -185,7 +239,7 @@ export function StickerDetailGrid({
             </span>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
             <span style={{ fontSize: '0.76rem', color: '#fca5a5', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              🖱️ 마우스 우클릭 → <span style={{ color: '#ef4444' }}>받고 싶은 카드</span>
+              🖱️ 우클릭·모바일 더블탭 → <span style={{ color: '#ef4444' }}>받고 싶은 카드</span>
             </span>
           </div>
 
@@ -212,9 +266,9 @@ export function StickerDetailGrid({
         </div>
 
         {/* 3x3 격자 렌더링 */}
-        <div style={{ 
+        <div className="sticker-detail-grid" style={{
           display: 'grid', 
-          gridTemplateColumns: 'repeat(3, 1fr)', 
+          gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
           gap: '1.2rem',
           width: '100%'
         }}>
@@ -269,18 +323,23 @@ export function StickerDetailGrid({
                 }}
                 onContextMenu={(e) => {
                   e.preventDefault();
-                  if (isGolden) {
-                    setWarningMessage("🔒 골든 등급 카드는 교환할 수 없습니다!");
-                    return;
-                  }
-                  toggleStickerSelection(stickerId, 'wants');
+                  selectWantImmediately(stickerId, isGolden);
                 }}
                 onClick={(e) => {
-                  if (isGolden) {
-                    setWarningMessage("🔒 골든 등급 카드는 교환할 수 없습니다!");
+                  e.preventDefault();
+                  if (skipNextClickRef.current[stickerId]) {
+                    skipNextClickRef.current[stickerId] = false;
                     return;
                   }
-                  toggleStickerSelection(stickerId, 'haves');
+                  selectHaveImmediately(stickerId, isGolden);
+                }}
+                onTouchEnd={(e) => {
+                  handleTouchEnd(e, stickerId, isGolden);
+                }}
+                onTouchStart={() => {
+                  if (isGolden) {
+                    showGoldenWarning();
+                  }
                 }}
               >
                 {/* 우측 상단 골든 등급 엠블럼 or 잠금 장치 */}

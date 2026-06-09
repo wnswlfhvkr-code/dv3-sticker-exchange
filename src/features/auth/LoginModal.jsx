@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 export function LoginModal({ 
   showLoginModal, 
@@ -25,6 +25,9 @@ export function LoginModal({
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginBottom: '1.5rem' }}>
           교환글 등록 및 1:1 채팅을 위해 로그인해주세요.
+        </p>
+        <p style={{ color: '#a7f3d0', fontSize: '0.74rem', textAlign: 'center', margin: '-0.85rem 0 1.2rem 0', lineHeight: 1.45 }}>
+          원활한 교환 확인을 위해 가급적 실제 게임 닉네임으로 설정하는 것을 추천합니다.
         </p>
 
         {/* 정식로그인 vs 게스트 로그인 탭 분할 */}

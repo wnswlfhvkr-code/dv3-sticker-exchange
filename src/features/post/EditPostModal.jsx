@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { X, Sparkles, MessageCircle } from 'lucide-react';
 import { stickersData, categories } from '../../stickersData';
 
@@ -17,6 +17,9 @@ export function EditPostModal({
   handleUpdatePost,
   toggleEditStickerSelection
 }) {
+  const lastTapRef = useRef({});
+  const touchTimersRef = useRef({});
+  const skipNextClickRef = useRef({});
   
   // 수정 모달 내에서의 '4', '6' 단축키 바인딩
   useEffect(() => {
@@ -37,6 +40,13 @@ export function EditPostModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isEditModalOpen, categories.length, setEditCurrentCategoryId]);
 
+  useEffect(() => {
+    const timers = touchTimersRef.current;
+    return () => {
+      Object.values(timers).forEach(timer => clearTimeout(timer));
+    };
+  }, []);
+
   if (!isEditModalOpen || !editingPost) return null;
 
   const currentEditCategory = categories.find(c => c.id === editCurrentCategoryId) || categories[0];
@@ -45,6 +55,39 @@ export function EditPostModal({
   };
   const handleEditNextCategory = () => {
     setEditCurrentCategoryId(prev => (prev < categories.length ? prev + 1 : 1));
+  };
+  const clearTouchTimer = (stickerId) => {
+    if (touchTimersRef.current[stickerId]) {
+      clearTimeout(touchTimersRef.current[stickerId]);
+      delete touchTimersRef.current[stickerId];
+    }
+  };
+  const selectEditHaveImmediately = (stickerId, isGolden) => {
+    if (isGolden) return;
+    toggleEditStickerSelection(stickerId, 'haves');
+  };
+  const selectEditWantImmediately = (stickerId, isGolden) => {
+    clearTouchTimer(stickerId);
+    if (isGolden) return;
+    toggleEditStickerSelection(stickerId, 'wants');
+  };
+  const handleEditTouchEnd = (e, stickerId, isGolden) => {
+    e.preventDefault();
+    skipNextClickRef.current[stickerId] = true;
+    const now = e.timeStamp;
+    const lastTap = lastTapRef.current[stickerId] || 0;
+    if (now - lastTap < 320) {
+      lastTapRef.current[stickerId] = 0;
+      clearTouchTimer(stickerId);
+      selectEditWantImmediately(stickerId, isGolden);
+      return;
+    }
+    lastTapRef.current[stickerId] = now;
+    clearTouchTimer(stickerId);
+    touchTimersRef.current[stickerId] = setTimeout(() => {
+      selectEditHaveImmediately(stickerId, isGolden);
+      delete touchTimersRef.current[stickerId];
+    }, 280);
   };
 
   return (
@@ -222,9 +265,9 @@ export function EditPostModal({
               </button>
             </div>
 
-            <div style={{ 
+            <div className="edit-sticker-grid" style={{
               display: 'grid', 
-              gridTemplateColumns: 'repeat(3, 1fr)', 
+              gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
               gap: '0.4rem', 
               marginBottom: '0.3rem' 
             }}>
@@ -258,13 +301,18 @@ export function EditPostModal({
                     key={stickerId}
                     onClick={(e) => {
                       e.preventDefault();
-                      if (isGolden) return;
-                      toggleEditStickerSelection(stickerId, 'haves');
+                      if (skipNextClickRef.current[stickerId]) {
+                        skipNextClickRef.current[stickerId] = false;
+                        return;
+                      }
+                      selectEditHaveImmediately(stickerId, isGolden);
+                    }}
+                    onTouchEnd={(e) => {
+                      handleEditTouchEnd(e, stickerId, isGolden);
                     }}
                     onContextMenu={(e) => {
                       e.preventDefault();
-                      if (isGolden) return;
-                      toggleEditStickerSelection(stickerId, 'wants');
+                      selectEditWantImmediately(stickerId, isGolden);
                     }}
                     style={{ 
                       border: borderStyle, 
@@ -340,7 +388,7 @@ export function EditPostModal({
               })}
             </div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '2px' }}>
-              💡 🖱️ 마우스 좌클릭: 줄 수 있는 카드 담기 / 🖱️ 마우스 우클릭: 받고 싶은 카드 담기
+              💡 PC: 좌클릭은 줄 수 있는 카드, 우클릭은 받고 싶은 카드 / 모바일: 탭, 더블탭
             </div>
           </div>
 

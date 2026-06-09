@@ -39,10 +39,26 @@ const mockDB = {
     localStorage.setItem('dv3_exchange_posts', JSON.stringify(posts));
     return { data: [postWithId], error: null };
   },
+  getPostsByNickname: async (nickname) => {
+    const data = localStorage.getItem('dv3_exchange_posts');
+    const posts = data ? JSON.parse(data) : [];
+    const filtered = posts
+      .filter(post => post.nickname === nickname)
+      .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+    return { data: filtered, error: null };
+  },
   deletePost: async (id) => {
     const data = localStorage.getItem('dv3_exchange_posts');
     let posts = data ? JSON.parse(data) : [];
     posts = posts.filter(post => post.id !== id);
+    localStorage.setItem('dv3_exchange_posts', JSON.stringify(posts));
+    return { error: null };
+  },
+  deletePosts: async (ids) => {
+    const idSet = new Set((ids || []).map(id => String(id)));
+    const data = localStorage.getItem('dv3_exchange_posts');
+    let posts = data ? JSON.parse(data) : [];
+    posts = posts.filter(post => !idSet.has(String(post.id)));
     localStorage.setItem('dv3_exchange_posts', JSON.stringify(posts));
     return { error: null };
   },
@@ -178,6 +194,18 @@ export const dbService = {
       return mockDB.insertPost(postData);
     }
   },
+  fetchPostsByNickname: async (nickname) => {
+    if (!isMock) {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('nickname', nickname)
+        .order('created_at', { ascending: true });
+      return { data, error };
+    } else {
+      return mockDB.getPostsByNickname(nickname);
+    }
+  },
   removePost: async (id) => {
     if (!isMock) {
       const { error } = await supabase
@@ -187,6 +215,18 @@ export const dbService = {
       return { error };
     } else {
       return mockDB.deletePost(id);
+    }
+  },
+  removePosts: async (ids) => {
+    if (!ids || ids.length === 0) return { error: null };
+    if (!isMock) {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .in('id', ids);
+      return { error };
+    } else {
+      return mockDB.deletePosts(ids);
     }
   },
   bumpPost: async (id) => {
@@ -421,7 +461,7 @@ export const dbService = {
           return { data, error };
         }
         return { data, error };
-      } catch (err) {
+      } catch {
         return mockDB.insertBugReport(reporter, title, description);
       }
     } else {
@@ -443,7 +483,7 @@ export const dbService = {
           return { data, error };
         }
         return { data, error };
-      } catch (err) {
+      } catch {
         return mockDB.getBugReports();
       }
     } else {
@@ -465,7 +505,7 @@ export const dbService = {
           return { error };
         }
         return { error };
-      } catch (err) {
+      } catch {
         return mockDB.deleteBugReport(bugId);
       }
     } else {

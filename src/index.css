@@ -498,4 +498,89 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+@media (max-width: 640px) {
+  .app-container {
+    padding: 0.85rem 0.55rem 5rem;
+  }
+
+  header {
+    justify-content: center !important;
+    margin-bottom: 1.25rem !important;
+  }
+
+  .logo-text {
+    font-size: 1.55rem;
+    letter-spacing: 0;
+    text-align: center;
+  }
+
+  .sub-logo-text {
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+    text-align: center;
+  }
+
+  .grid-container {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .detail-work-layout {
+    max-width: 100% !important;
+    gap: 0.85rem !important;
+  }
+
+  .detail-work-layout > .glass-card {
+    padding: 0.75rem !important;
+    border-radius: 12px !important;
+  }
+
+  .sticker-detail-grid,
+  .edit-sticker-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.42rem !important;
+  }
+
+  .slot-item {
+    border-radius: 10px !important;
+    min-width: 0;
+  }
+
+  .slot-item:hover {
+    transform: none;
+  }
+
+  .btn-floating-nav {
+    display: none !important;
+  }
+
+  .btn {
+    padding: 0.62rem 0.85rem;
+    font-size: 0.84rem;
+  }
+
+  .modal-content {
+    width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+    padding: 1rem;
+  }
+
+  .chat-widget-root {
+    right: 10px !important;
+    bottom: 10px !important;
+    left: 10px !important;
+    align-items: flex-end !important;
+  }
+
+  .chat-panel {
+    width: 100% !important;
+    height: min(72vh, 520px) !important;
+    border-radius: 14px !important;
+  }
+
+  .chat-toast {
+    width: min(100%, 320px) !important;
+    right: 0 !important;
+  }
+}
 

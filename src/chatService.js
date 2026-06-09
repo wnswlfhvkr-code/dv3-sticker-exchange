@@ -3,6 +3,7 @@ import { supabase, isMock } from './supabaseClient';
 // 로컬 스토리지 키 정의
 const CHAT_ROOMS_KEY = 'dv3_chat_rooms';
 const CHAT_MESSAGES_KEY = 'dv3_chat_messages';
+const CHAT_HIDDEN_ROOMS_PREFIX = 'dv3_hidden_chat_rooms_';
 
 // 로컬 스토리지 헬퍼 함수
 const getLocalRooms = () => {
@@ -64,6 +65,57 @@ const getRoomParticipants = (roomId, knownNickname) => {
 
 const isMyRoomId = (roomId, nickname) => Boolean(getRoomParticipants(roomId, nickname));
 
+const getHiddenRoomsKey = (nickname) => `${CHAT_HIDDEN_ROOMS_PREFIX}${nickname}`;
+
+const getHiddenRoomIds = (nickname) => {
+  try {
+    return JSON.parse(localStorage.getItem(getHiddenRoomsKey(nickname))) || [];
+  } catch {
+    return [];
+  }
+};
+
+const saveHiddenRoomIds = (nickname, roomIds) => {
+  localStorage.setItem(getHiddenRoomsKey(nickname), JSON.stringify([...new Set(roomIds)]));
+  window.dispatchEvent(new Event('dv3_chat_update'));
+};
+
+const hideRoomForUser = (nickname, roomId) => {
+  if (!nickname || !roomId) return;
+  saveHiddenRoomIds(nickname, [...getHiddenRoomIds(nickname), roomId]);
+};
+
+const unhideRoomForUser = (nickname, roomId) => {
+  if (!nickname || !roomId) return;
+  const next = getHiddenRoomIds(nickname).filter(id => String(id) !== String(roomId));
+  saveHiddenRoomIds(nickname, next);
+};
+
+const isRoomHiddenForUser = (nickname, roomId) => {
+  return getHiddenRoomIds(nickname).some(id => String(id) === String(roomId));
+};
+
+const fetchAllDbMessages = async () => {
+  const pageSize = 1000;
+  let from = 0;
+  let allMessages = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('chat_messages')
+      .select('*')
+      .order('timestamp', { ascending: false })
+      .range(from, from + pageSize - 1);
+
+    if (error) throw error;
+    allMessages = allMessages.concat(data || []);
+    if (!data || data.length < pageSize) break;
+    from += pageSize;
+  }
+
+  return allMessages;
+};
+
 // Supabase의 snake_case 응답을 로컬 camelCase 형태로 파싱해주는 포맷터
 const formatDbRoom = (dbRoom) => {
   if (!dbRoom) return null;
@@ -95,6 +147,7 @@ export const chatService = {
     const roomId = createRoomId(buyerNickname, sellerNickname);
     
     if (isMock) {
+      unhideRoomForUser(buyerNickname, roomId);
       const rooms = getLocalRooms();
       let room = rooms.find(r => r.id === roomId);
       if (!room) {
@@ -119,7 +172,10 @@ export const chatService = {
           .eq('id', roomId)
           .maybeSingle(); // single() 대신 안전한 maybeSingle() 사용
         
-        if (data) return formatDbRoom(data);
+        if (data) {
+          unhideRoomForUser(buyerNickname, roomId);
+          return formatDbRoom(data);
+        }
 
         // 방이 없으면 새로 생성 (방 ID를 정렬된 닉네임 조합인 roomId로 직접 명시)
         const { data: newRoom, error: createError } = await supabase
@@ -136,6 +192,7 @@ export const chatService = {
           .single();
         
         if (createError) throw createError;
+        unhideRoomForUser(buyerNickname, roomId);
         return formatDbRoom(newRoom);
       } catch (e) {
         console.warn('Supabase chat room error, using message-backed room:', e);
@@ -156,6 +213,7 @@ export const chatService = {
           rooms.push(room);
           saveLocalRooms(rooms);
         }
+        unhideRoomForUser(buyerNickname, roomId);
         return syntheticRoom;
       }
     }
@@ -167,8 +225,7 @@ export const chatService = {
       const rooms = getLocalRooms();
       return rooms.filter(r => {
         const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
-        const isValidFormat = (r.id || '').split('-').length === 3;
-        return isMyRoom && isValidFormat;
+        return isMyRoom && !isRoomHiddenForUser(nickname, r.id);
       });
     } else {
       try {
@@ -185,13 +242,7 @@ export const chatService = {
         [...(asBuyer || []), ...(asSeller || [])].forEach(r => { allRoomsMap[r.id] = r; });
         // 운영 DB에 chat_rooms.id가 예전 bigint 타입으로 남은 경우, 방 insert는 실패하지만
         // chat_messages.room_id에는 문자열 room-* 메시지가 쌓일 수 있다. 이 메시지들로 목록을 복원한다.
-        const { data: recentMessages, error: msgError } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .order('timestamp', { ascending: false })
-          .limit(1000);
-
-        if (msgError) throw msgError;
+        const recentMessages = await fetchAllDbMessages();
 
         (recentMessages || []).forEach(msg => {
           const roomId = msg.room_id;
@@ -211,14 +262,13 @@ export const chatService = {
         return Object.values(allRoomsMap).map(room => {
           const formatted = formatDbRoom(room);
           return formatted || room;
-        }).filter(r => (r.id || '').startsWith('room-'));
+        }).filter(r => !isRoomHiddenForUser(nickname, r.id));
       } catch (e) {
         console.warn('Supabase chat rooms fetch failed:', e);
         const rooms = getLocalRooms();
         return rooms.filter(r => {
           const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
-          const isValidFormat = (r.id || '').startsWith('room-');
-          return isMyRoom && isValidFormat;
+          return isMyRoom && !isRoomHiddenForUser(nickname, r.id);
         });
       }
     }
@@ -301,22 +351,27 @@ export const chatService = {
   async getMessages(roomId) {
     if (isMock) {
       const messages = getLocalMessages();
-      return messages.filter(m => m.roomId === roomId);
+      return messages.filter(m => String(m.roomId) === String(roomId));
     } else {
       try {
         const { data, error } = await supabase
           .from('chat_messages')
           .select('*')
-          .eq('room_id', roomId)
+          .eq('room_id', String(roomId))
           .order('timestamp', { ascending: true });
         if (error) throw error;
         return (data || []).map(formatDbMessage);
       } catch (e) {
         console.warn('Supabase fetch messages failed:', e);
         const messages = getLocalMessages();
-        return messages.filter(m => m.roomId === roomId);
+        return messages.filter(m => String(m.roomId) === String(roomId));
       }
     }
+  },
+
+  leaveChatRoom(nickname, roomId) {
+    hideRoomForUser(nickname, roomId);
+    localStorage.setItem(`dv3_unread_${roomId}`, '0');
   },
 
   // 5. 실시간 메시지 리스너 구독 설정
@@ -472,6 +527,7 @@ export const chatService = {
           (payload) => {
             const msg = payload.new;
             if (msg && isMyRoomId(msg.room_id, myNickname) && msg.sender !== myNickname) {
+              unhideRoomForUser(myNickname, msg.room_id);
               onNewMessage({
                 id: msg.id,
                 roomId: msg.room_id,
@@ -495,6 +551,7 @@ export const chatService = {
             if (allMessages.length > 0) {
               const lastMsg = allMessages[allMessages.length - 1];
               if (lastMsg && isMyRoomId(lastMsg.roomId, myNickname) && lastMsg.sender !== myNickname) {
+                unhideRoomForUser(myNickname, lastMsg.roomId);
                 onNewMessage({
                   id: lastMsg.id || Date.now(),
                   roomId: lastMsg.roomId,
@@ -515,6 +572,7 @@ export const chatService = {
         if (allMessages.length > 0) {
           const lastMsg = allMessages[allMessages.length - 1];
           if (lastMsg && isMyRoomId(lastMsg.roomId, myNickname) && lastMsg.sender !== myNickname) {
+            unhideRoomForUser(myNickname, lastMsg.roomId);
             onNewMessage({
               id: lastMsg.id || Date.now(),
               roomId: lastMsg.roomId,

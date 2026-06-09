@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import { useState, useEffect } from 'react';
 import { dbService, supabase, isMock } from '../../supabaseClient';
 import { stickersData } from '../../stickersData';
@@ -146,6 +147,35 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
     }
 
     const sanitizedContact = sanitizeInput(myContact);
+    let removedPostIds = [];
+
+    const { data: existingPosts, error: existingError } = await dbService.fetchPostsByNickname(userNickname);
+    if (existingError) {
+      alert("기존 교환글 확인에 실패했습니다: " + existingError.message);
+      return;
+    }
+
+    const sortedMyPosts = [...(existingPosts || [])]
+      .sort((a, b) => new Date(a.created_at || 0) - new Date(b.created_at || 0));
+
+    if (sortedMyPosts.length >= 3) {
+      const deleteCount = sortedMyPosts.length - 2;
+      const postsToDelete = sortedMyPosts.slice(0, deleteCount);
+      const confirmed = window.confirm(
+        `교환 등록글은 계정당 최대 3개까지만 유지됩니다.\n` +
+        `새 글을 등록하려면 가장 오래된 글 ${deleteCount}개를 삭제해야 합니다.\n\n` +
+        `삭제 후 새 글을 등록하시겠습니까?`
+      );
+
+      if (!confirmed) return;
+
+      removedPostIds = postsToDelete.map(post => post.id);
+      const { error: deleteOldError } = await dbService.removePosts(removedPostIds);
+      if (deleteOldError) {
+        alert("오래된 교환글 삭제에 실패해 새 글 등록을 중단했습니다: " + deleteOldError.message);
+        return;
+      }
+    }
 
     const { data, error } = await dbService.addPost(
       userNickname,
@@ -158,7 +188,11 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
       alert("게시글 등록에 실패했습니다: " + error.message);
     } else {
       if (data && data[0]) {
-        const newPostIds = [...myPostIds, data[0].id];
+        const removedIdSet = new Set(removedPostIds.map(id => String(id)));
+        const newPostIds = [
+          ...myPostIds.filter(id => !removedIdSet.has(String(id))),
+          data[0].id
+        ];
         setMyPostIds(newPostIds);
         localStorage.setItem('dv3_my_post_ids', JSON.stringify(newPostIds));
       }

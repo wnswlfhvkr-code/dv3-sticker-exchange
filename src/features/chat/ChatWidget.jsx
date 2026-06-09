@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { X, Send, MessageSquare, ArrowLeft } from 'lucide-react';
+import { X, Send, MessageSquare, ArrowLeft, Trash2 } from 'lucide-react';
 
 export function ChatWidget({
   chatRooms,
@@ -18,7 +18,8 @@ export function ChatWidget({
   chatScrollRef,
   onlineUsers,
   chatNotification,
-  setChatNotification
+  setChatNotification,
+  handleLeaveChatRoom
 }) {
   const inputRef = useRef(null);
 
@@ -58,11 +59,11 @@ export function ChatWidget({
   };
 
   return (
-    <div style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
+    <div className="chat-widget-root" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '12px' }}>
       
       {/* 1. 채팅방 본 창 */}
       {chatWindowOpen && (
-        <div className="glass-card" style={{
+        <div className="glass-card chat-panel" style={{
           width: '380px',
           height: '500px',
           border: '1px solid rgba(255, 255, 255, 0.12)',
@@ -115,6 +116,9 @@ export function ChatWidget({
                   </div>
                 ) : (
                   chatRooms.map(room => (
+                    (() => {
+                      const hasUnread = unreadCounts[room.id] > 0;
+                      return (
                     <div 
                       key={room.id}
                       onClick={() => {
@@ -122,9 +126,9 @@ export function ChatWidget({
                         setChatActiveRoomNickname(room.otherUser);
                       }}
                       style={{
-                        background: room.id === chatActiveRoomId ? 'rgba(133, 195, 0, 0.12)' : 'rgba(255,255,255,0.03)',
-                        border: room.id === chatActiveRoomId ? '1px solid var(--primary-color)' : '1px solid rgba(255,255,255,0.06)',
-                        boxShadow: room.id === chatActiveRoomId ? '0 0 8px rgba(133, 195, 0, 0.2)' : 'none',
+                        background: room.id === chatActiveRoomId ? 'rgba(133, 195, 0, 0.12)' : hasUnread ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255,255,255,0.03)',
+                        border: room.id === chatActiveRoomId ? '1px solid var(--primary-color)' : hasUnread ? '1px solid rgba(239, 68, 68, 0.35)' : '1px solid rgba(255,255,255,0.06)',
+                        boxShadow: room.id === chatActiveRoomId ? '0 0 8px rgba(133, 195, 0, 0.2)' : hasUnread ? '0 0 10px rgba(239, 68, 68, 0.18)' : 'none',
                         borderRadius: '12px',
                         padding: '0.85rem 1rem',
                         cursor: 'pointer',
@@ -151,7 +155,7 @@ export function ChatWidget({
                           {room.lastMessage || '대화를 시작해 보세요.'}
                         </span>
                       </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '5px', flexShrink: 0 }}>
                         <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
                           {room.updatedAt ? formatChatTime(room.updatedAt) : ''}
                         </span>
@@ -171,8 +175,21 @@ export function ChatWidget({
                             {unreadCounts[room.id]}
                           </span>
                         )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLeaveChatRoom(room.id);
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: '2px', display: 'flex' }}
+                          title="채팅방 나가기"
+                        >
+                          <Trash2 size={13} />
+                        </button>
                       </div>
                     </div>
+                      );
+                    })()
                   ))
                 )}
               </div>
@@ -282,6 +299,7 @@ export function ChatWidget({
       {/* 2. 실시간 새 메시지 팝업 알림 토스트 */}
       {chatNotification && (
         <div 
+          className="chat-toast"
           onClick={() => {
             setChatActiveRoomId(chatNotification.roomId);
             setChatActiveRoomNickname(chatNotification.sender || '상대방');
@@ -329,6 +347,7 @@ export function ChatWidget({
 
       {/* 3. 플로팅 채팅 위젯 버튼 */}
       <button 
+        className="chat-fab"
         type="button" 
         onClick={() => setChatWindowOpen(prev => !prev)}
         style={{
