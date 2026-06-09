@@ -33,6 +33,11 @@ const saveLocalMessages = (messages) => {
   window.dispatchEvent(new Event('dv3_chat_update'));
 };
 
+const makeSafeChannelName = (str) => {
+  if (!str) return 'channel';
+  return str.replace(/[^a-zA-Z0-9-_]/g, '_');
+};
+
 // Supabase의 snake_case 응답을 로컬 camelCase 형태로 파싱해주는 포맷터
 const formatDbRoom = (dbRoom) => {
   if (!dbRoom) return null;
@@ -143,7 +148,7 @@ export const chatService = {
         const { data, error } = await supabase
           .from('chat_rooms')
           .select('*')
-          .or(`buyer_nickname.eq.${nickname},seller_nickname.eq.${nickname}`);
+          .or(`buyer_nickname.eq."${nickname}",seller_nickname.eq."${nickname}"`);
         if (error) throw error;
         return (data || [])
           .map(formatDbRoom)
@@ -259,7 +264,7 @@ export const chatService = {
   subscribeMessages(roomId, onNewMessage) {
     if (!isMock) {
       const channel = supabase
-        .channel(`room-messages-${roomId}`)
+        .channel(`room-messages-${makeSafeChannelName(roomId)}`)
         .on(
           'postgres_changes',
           {
@@ -394,7 +399,7 @@ export const chatService = {
     if (!isMock) {
       // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
       const channel = supabase
-        .channel(`global-chat-notifications-${myNickname}`)
+        .channel(`global-chat-notifications-${makeSafeChannelName(myNickname)}`)
         .on(
           'postgres_changes',
           {
@@ -474,7 +479,7 @@ export const chatService = {
     if (!isMock) {
       // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
       const channel = supabase
-        .channel(`realtime-my-chat-rooms-${myNickname}`)
+        .channel(`realtime-my-chat-rooms-${makeSafeChannelName(myNickname)}`)
         .on(
           'postgres_changes',
           {

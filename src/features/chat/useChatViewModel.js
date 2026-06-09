@@ -137,7 +137,7 @@ export function useChatViewModel({ userNickname }) {
         const { data, error } = await supabase
           .from('chat_rooms')
           .select('*')
-          .or(`buyer_nickname.eq.${myNickname},seller_nickname.eq.${myNickname}`);
+          .or(`buyer_nickname.eq."${myNickname}",seller_nickname.eq."${myNickname}"`);
         if (!error && data) {
           allRooms = data.map(r => ({
             id: r.id,
