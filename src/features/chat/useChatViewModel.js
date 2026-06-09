@@ -221,12 +221,22 @@ export function useChatViewModel({ userNickname }) {
     }
   };
 
-  // 활성 대화방 실시간 메시지 구독
+  // 활성 대화방 실시간 메시지 구독 및 최초 히스토리 로드
   useEffect(() => {
     if (!chatActiveRoomId) {
       setChatMessages([]);
       return;
     }
+
+    const loadInitialMessages = async () => {
+      try {
+        const msgs = await chatService.getMessages(chatActiveRoomId);
+        setChatMessages(msgs || []);
+      } catch (e) {
+        console.warn("이전 대화 로드 실패:", e);
+      }
+    };
+    loadInitialMessages();
 
     const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (msgs) => {
       setChatMessages(msgs || []);

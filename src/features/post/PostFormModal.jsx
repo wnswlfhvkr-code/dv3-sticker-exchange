@@ -34,14 +34,13 @@ export function PostFormModal({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-            <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>연락처 정보 (오픈채팅 링크, 디스코드 ID 등)</label>
+            <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>연락처 정보 (선택 사항 - 오픈채팅 링크, 디스코드 ID 등)</label>
             <input 
               type="text" 
               className="input-field" 
-              placeholder="예: 오픈채팅 주소 또는 디스코드 태그" 
+              placeholder="예: 오픈채팅 주소 또는 디스코드 태그 (비워두기 가능)" 
               value={myContact}
               onChange={(e) => setMyContact(e.target.value)}
-              required
             />
           </div>
 

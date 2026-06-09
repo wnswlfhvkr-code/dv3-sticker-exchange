@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Sparkles, Trash2, MessageSquare, MessageCircle } from 'lucide-react';
 import { stickersData, categories } from '../../stickersData';
 
@@ -33,7 +33,15 @@ export function PostFeed({
   togglePostExpand
 }) {
   const [filterMatchedOnly, setFilterMatchedOnly] = useState(false);
+  const [filterExchangeableOnly, setFilterExchangeableOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 5;
+
+  // 필터 및 검색어 변경 시 페이지 1로 리셋
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterMatchedOnly, filterExchangeableOnly, searchQuery]);
 
   // 별 개수별 카드 매칭 묶어 보여주기 헬퍼 함수
   const renderMatchCardsByStars = (matchArray) => {
@@ -81,6 +89,14 @@ export function PostFeed({
       return false;
     }
 
+    // 교환 가능(매칭되는 항목 존재) 글만 필터링
+    if (filterExchangeableOnly) {
+      const { isPerfectMatch, isPartialMatch } = checkMatching(post);
+      if (!isPerfectMatch && !isPartialMatch) {
+        return false;
+      }
+    }
+
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const nicknameMatch = post.nickname.toLowerCase().includes(query);
@@ -97,24 +113,45 @@ export function PostFeed({
     return true;
   });
 
+  // 페이지네이션 슬라이싱 계산
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+
   return (
     <>
       {/* 검색 및 필터 바 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button 
-            className={`btn ${!filterMatchedOnly ? 'btn-primary' : 'btn-outline'}`}
-            onClick={() => setFilterMatchedOnly(false)}
+            className={`btn ${(!filterMatchedOnly && !filterExchangeableOnly) ? 'btn-primary' : 'btn-outline'}`}
+            onClick={() => {
+              setFilterMatchedOnly(false);
+              setFilterExchangeableOnly(false);
+            }}
           >
             전체 등록글 보기
           </button>
           <button 
             className={`btn ${filterMatchedOnly ? 'btn-secondary' : 'btn-outline'}`}
-            onClick={() => setFilterMatchedOnly(true)}
+            onClick={() => {
+              setFilterMatchedOnly(prev => !prev);
+            }}
             style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span> 
             접속중인 유저 글만 보기
+          </button>
+          <button 
+            className={`btn ${filterExchangeableOnly ? 'btn-secondary' : 'btn-outline'}`}
+            onClick={() => {
+              setFilterExchangeableOnly(prev => !prev);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            <Sparkles size={14} color={filterExchangeableOnly ? 'var(--primary-color)' : '#fff'} />
+            교환 가능 글만 보기
           </button>
         </div>
 
@@ -153,7 +190,7 @@ export function PostFeed({
         </div>
       ) : (
         <div className="grid-container" style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
-          {filteredPosts.map(post => {
+          {currentPosts.map(post => {
             const isMyPost = userNickname && post.nickname === userNickname;
             const { isPerfectMatch, isPartialMatch, myWantsMatch, myHavesMatch } = checkMatching(post);
             const hasHaves = post.haves && post.haves.length > 0;
@@ -492,6 +529,54 @@ export function PostFeed({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* 페이지네이션 제어 UI */}
+      {!loading && totalPages > 1 && (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '2rem', marginBottom: '3rem', width: '100%' }}>
+          <button
+            onClick={() => {
+              setCurrentPage(prev => Math.max(prev - 1, 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            disabled={currentPage === 1}
+            className="btn btn-outline"
+            style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem', opacity: currentPage === 1 ? 0.4 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+          >
+            이전
+          </button>
+          
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
+            <button
+              key={pageNumber}
+              onClick={() => {
+                setCurrentPage(pageNumber);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              className={`btn ${currentPage === pageNumber ? 'btn-primary' : 'btn-outline'}`}
+              style={{
+                padding: '0.45rem 0.85rem',
+                fontSize: '0.8rem',
+                minWidth: '32px',
+                border: currentPage === pageNumber ? '1px solid var(--primary-color)' : '1px solid rgba(255,255,255,0.1)'
+              }}
+            >
+              {pageNumber}
+            </button>
+          ))}
+
+          <button
+            onClick={() => {
+              setCurrentPage(prev => Math.min(prev + 1, totalPages));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            disabled={currentPage === totalPages}
+            className="btn btn-outline"
+            style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem', opacity: currentPage === totalPages ? 0.4 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+          >
+            다음
+          </button>
         </div>
       )}
     </>
