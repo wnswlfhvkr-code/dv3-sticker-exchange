@@ -92,7 +92,11 @@ export function ChatWidget({
               </div>
             </div>
             <button 
-              onClick={() => setChatWindowOpen(false)} 
+              onClick={() => {
+                setChatWindowOpen(false);
+                setChatActiveRoomId(null);
+                setChatActiveRoomNickname('');
+              }} 
               style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', padding: '2px' }}
             >
               <X size={18} />

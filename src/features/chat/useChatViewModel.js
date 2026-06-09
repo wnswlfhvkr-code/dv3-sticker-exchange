@@ -274,16 +274,46 @@ export function useChatViewModel({ userNickname }) {
     }
   }, [userNickname]);
 
-  // 채팅방 활성화 시 안 읽은 메시지 수 리셋
+  // 채팅방 활성화 및 창 열림, 혹은 메시지 갱신 시 안 읽은 메시지 수 리셋
   useEffect(() => {
-    if (chatActiveRoomId) {
+    if (chatActiveRoomId && chatWindowOpen) {
       setUnreadCounts(prev => {
+        if (prev[chatActiveRoomId] === 0) return prev;
         const next = { ...prev, [chatActiveRoomId]: 0 };
         localStorage.setItem(`dv3_unread_${chatActiveRoomId}`, '0');
+        // 로컬 업데이트 이벤트를 발생시켜 다른 탭에도 알림
+        window.dispatchEvent(new Event('dv3_chat_update'));
         return next;
       });
     }
-  }, [chatActiveRoomId]);
+  }, [chatActiveRoomId, chatWindowOpen, chatMessages]);
+
+  // 탭 간/스토리지 변경 간 안 읽은 카운트 실시간 동기화
+  useEffect(() => {
+    const syncUnreadCounts = () => {
+      const counts = {};
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith('dv3_unread_')) {
+            const roomId = key.replace('dv3_unread_', '');
+            counts[roomId] = parseInt(localStorage.getItem(key)) || 0;
+          }
+        }
+        setUnreadCounts(counts);
+      } catch (e) {
+        console.error("안 읽은 메시지 동기화 실패:", e);
+      }
+    };
+
+    window.addEventListener('storage', syncUnreadCounts);
+    window.addEventListener('dv3_chat_update', syncUnreadCounts);
+
+    return () => {
+      window.removeEventListener('storage', syncUnreadCounts);
+      window.removeEventListener('dv3_chat_update', syncUnreadCounts);
+    };
+  }, []);
 
   // 실시간 알림 팝업(Toast) 자동 소멸 타이머 (4초 후 소멸)
   useEffect(() => {
