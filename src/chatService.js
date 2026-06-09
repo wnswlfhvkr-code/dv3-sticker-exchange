@@ -145,20 +145,26 @@ export const chatService = {
       });
     } else {
       try {
-        const { data, error } = await supabase
-          .from('chat_rooms')
-          .select('*')
-          .or(`buyer_nickname.eq."${nickname}",seller_nickname.eq."${nickname}"`);
-        if (error) throw error;
-        return (data || [])
+        // buyer_nickname과 seller_nickname을 각각 eq로 조회 후 합치기
+        // (.or()의 특수문자 파싱 오류를 완전히 회피하는 안전한 방식)
+        const [{ data: asBuyer, error: e1 }, { data: asSeller, error: e2 }] = await Promise.all([
+          supabase.from('chat_rooms').select('*').eq('buyer_nickname', nickname),
+          supabase.from('chat_rooms').select('*').eq('seller_nickname', nickname)
+        ]);
+        if (e1) throw e1;
+        if (e2) throw e2;
+        // 중복 제거 후 합치기
+        const allRoomsMap = {};
+        [...(asBuyer || []), ...(asSeller || [])].forEach(r => { allRoomsMap[r.id] = r; });
+        return Object.values(allRoomsMap)
           .map(formatDbRoom)
-          .filter(r => (r.id || '').split('-').length === 3);
+          .filter(r => (r.id || '').startsWith('room-'));
       } catch (e) {
         console.warn('Supabase chat rooms fetch failed:', e);
         const rooms = getLocalRooms();
         return rooms.filter(r => {
           const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
-          const isValidFormat = (r.id || '').split('-').length === 3;
+          const isValidFormat = (r.id || '').startsWith('room-');
           return isMyRoom && isValidFormat;
         });
       }

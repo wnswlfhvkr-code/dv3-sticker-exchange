@@ -134,12 +134,14 @@ export function useChatViewModel({ userNickname }) {
           allRooms = [];
         }
       } else {
-        const { data, error } = await supabase
-          .from('chat_rooms')
-          .select('*')
-          .or(`buyer_nickname.eq."${myNickname}",seller_nickname.eq."${myNickname}"`);
-        if (!error && data) {
-          allRooms = data.map(r => ({
+        const [{ data: asBuyer, error: e1 }, { data: asSeller, error: e2 }] = await Promise.all([
+          supabase.from('chat_rooms').select('*').eq('buyer_nickname', myNickname),
+          supabase.from('chat_rooms').select('*').eq('seller_nickname', myNickname)
+        ]);
+        if (!e1 && !e2) {
+          const allMap = {};
+          [...(asBuyer || []), ...(asSeller || [])].forEach(r => { allMap[r.id] = r; });
+          allRooms = Object.values(allMap).map(r => ({
             id: r.id,
             postId: r.post_id,
             buyerNickname: r.buyer_nickname,
@@ -150,10 +152,7 @@ export function useChatViewModel({ userNickname }) {
         }
       }
 
-      const oldRooms = allRooms.filter(r => {
-        const parts = (r.id || '').split('-');
-        return parts.length !== 3;
-      });
+      const oldRooms = allRooms.filter(r => !(r.id || '').startsWith('room-'));
 
       if (oldRooms.length === 0) return;
 
