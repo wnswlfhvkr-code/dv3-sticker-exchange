@@ -246,9 +246,31 @@ export function useChatViewModel({ userNickname }) {
     if (!chatInput.trim() || !chatActiveRoomId) return;
     try {
       const sanitizedText = sanitizeInput(chatInput.trim());
-      await chatService.sendMessage(chatActiveRoomId, userNickname, sanitizedText);
+      const sentMsg = await chatService.sendMessage(chatActiveRoomId, userNickname, sanitizedText);
       setChatInput('');
-      await loadChatRooms();
+      
+      // 발송 메시지 메모리 목록 선갱신
+      if (sentMsg) {
+        setChatRooms(prevRooms => {
+          const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
+          if (index === -1) {
+            loadChatRooms();
+            return prevRooms;
+          }
+          const updatedRooms = [...prevRooms];
+          updatedRooms[index] = {
+            ...updatedRooms[index],
+            lastMessage: sentMsg.text,
+            updatedAt: sentMsg.timestamp
+          };
+          return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        });
+      }
+      
+      // 0.5초 뒤 최종 DB 데이터 쿼리 반영
+      setTimeout(() => {
+        loadChatRooms();
+      }, 500);
     } catch (err) {
       alert("메시지 전송에 실패했습니다: " + err.message);
     }
@@ -273,7 +295,28 @@ export function useChatViewModel({ userNickname }) {
 
     const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (msgs) => {
       setChatMessages(msgs || []);
-      loadChatRooms();
+      
+      if (msgs && msgs.length > 0) {
+        const lastMsg = msgs[msgs.length - 1];
+        setChatRooms(prevRooms => {
+          const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
+          if (index === -1) {
+            loadChatRooms();
+            return prevRooms;
+          }
+          const updatedRooms = [...prevRooms];
+          updatedRooms[index] = {
+            ...updatedRooms[index],
+            lastMessage: lastMsg.text,
+            updatedAt: lastMsg.timestamp
+          };
+          return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        });
+      }
+      
+      setTimeout(() => {
+        loadChatRooms();
+      }, 500);
     });
 
     return () => unsubscribe();
@@ -363,7 +406,25 @@ export function useChatViewModel({ userNickname }) {
     if (!userNickname) return;
 
     const unsubscribe = chatService.subscribeAllMyMessages(userNickname, (msg) => {
-      loadChatRooms();
+      // 실시간 메시지 수신 시 목록 최신 상태 즉각 메모리 선반영
+      setChatRooms(prevRooms => {
+        const index = prevRooms.findIndex(r => r.id === msg.roomId);
+        if (index === -1) {
+          loadChatRooms();
+          return prevRooms;
+        }
+        const updatedRooms = [...prevRooms];
+        updatedRooms[index] = {
+          ...updatedRooms[index],
+          lastMessage: msg.text,
+          updatedAt: msg.timestamp
+        };
+        return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+      });
+
+      setTimeout(() => {
+        loadChatRooms();
+      }, 500);
       
       // 1. 상대방이 보낸 메시지인 경우, 활성화된 대화방 여부와 상관없이 무조건 알림음 재생
       if (msg.sender !== userNickname) {
@@ -407,6 +468,13 @@ export function useChatViewModel({ userNickname }) {
 
     return () => unsubscribe();
   }, [userNickname]);
+
+  // 대화방 목록 화면으로 복귀할 때(또는 로그인 시) 최신 방 목록을 강제 로딩
+  useEffect(() => {
+    if (chatActiveRoomId === null && userNickname) {
+      loadChatRooms();
+    }
+  }, [chatActiveRoomId, userNickname]);
 
   // 안 읽은 메시지 수에 따라 브라우저 탭 타이틀에 숫자 표시
   useEffect(() => {
