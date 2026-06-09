@@ -28,3 +28,10 @@ ALTER TABLE public.reports DISABLE ROW LEVEL SECURITY;
 -- Supabase 대시보드에서 실시간 변경사항을 감지할 수 있도록 허용합니다.
 ALTER PUBLICATION supabase_realtime ADD TABLE public.post_comments;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.reports;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_rooms;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.chat_messages;
+
+-- 4. 채팅 테이블 RLS 비활성화 (익명 게스트도 실시간 1:1 대화가 가능하도록 처리)
+ALTER TABLE IF EXISTS public.chat_rooms DISABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.chat_messages DISABLE ROW LEVEL SECURITY;
+

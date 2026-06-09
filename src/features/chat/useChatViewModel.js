@@ -44,14 +44,19 @@ export function useChatViewModel({ userNickname }) {
     chatActiveRoomIdRef.current = chatActiveRoomId;
   }, [chatActiveRoomId]);
 
+  const chatActiveRoomNicknameRef = useRef(chatActiveRoomNickname);
+  useEffect(() => {
+    chatActiveRoomNicknameRef.current = chatActiveRoomNickname;
+  }, [chatActiveRoomNickname]);
+
   // 대화방 목록 조회 (otherUser 닉네임 매핑 및 실제 마지막 메시지 강제 보정 처리 추가)
-  const loadChatRooms = async () => {
+  const loadChatRooms = async (forceRoom = null) => {
     if (!userNickname) return;
     try {
       const rooms = await chatService.getMyChatRooms(userNickname);
       
       // 각 방의 최신 메시지를 직접 쿼리하여 보정 (Supabase RLS/동기화 딜레이 해결)
-      const mappedRooms = await Promise.all((rooms || []).map(async (r) => {
+      let mappedRooms = await Promise.all((rooms || []).map(async (r) => {
         const otherUser = r.buyerNickname === userNickname ? r.sellerNickname : r.buyerNickname;
         
         let lastMsgText = r.lastMessage;
@@ -75,6 +80,34 @@ export function useChatViewModel({ userNickname }) {
           updatedAt: lastMsgTime
         };
       }));
+
+      // [보완] 만약 현재 활성화된 대화방(chatActiveRoomIdRef.current)이 있고 목록에 없다면, 수동 추가로 즉각 반영 보장
+      const activeId = forceRoom ? forceRoom.id : chatActiveRoomIdRef.current;
+      const activeNickname = forceRoom ? forceRoom.nickname : chatActiveRoomNicknameRef.current;
+      if (activeId && activeNickname && !mappedRooms.some(r => r.id === activeId)) {
+        let lastMsgText = '';
+        let lastMsgTime = new Date().toISOString();
+        try {
+          const msgs = await chatService.getMessages(activeId);
+          if (msgs && msgs.length > 0) {
+            const lastMsg = msgs[msgs.length - 1];
+            lastMsgText = lastMsg.text;
+            lastMsgTime = lastMsg.timestamp;
+          }
+        } catch (e) {
+          console.warn("활성 방 메시지 조회 실패:", e);
+        }
+
+        mappedRooms.push({
+          id: activeId,
+          postId: null,
+          buyerNickname: userNickname,
+          sellerNickname: activeNickname,
+          otherUser: activeNickname,
+          lastMessage: lastMsgText,
+          updatedAt: lastMsgTime
+        });
+      }
 
       // 업데이트 시간 순으로 정렬 (최신 대화방이 위로 오도록)
       mappedRooms.sort((a, b) => {
@@ -201,7 +234,7 @@ export function useChatViewModel({ userNickname }) {
       setChatActiveRoomId(room.id);
       setChatActiveRoomNickname(post.nickname);
       setChatWindowOpen(true);
-      await loadChatRooms();
+      await loadChatRooms({ id: room.id, nickname: post.nickname });
     } catch (err) {
       alert("1:1 대화방 개설에 실패했습니다: " + err.message);
     }
