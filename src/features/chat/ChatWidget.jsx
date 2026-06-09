@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef } from 'react';
 import { X, Send, MessageSquare, ArrowLeft } from 'lucide-react';
 
 export function ChatWidget({
@@ -20,12 +20,12 @@ export function ChatWidget({
   chatNotification,
   setChatNotification
 }) {
+  const inputRef = useRef(null);
+
   if (!userNickname) return null;
 
   // 전체 안 읽은 메시지 개수 합산
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
-
-  const inputRef = useRef(null);
 
   // 메시지 전송 후 포커스 재지정 래퍼
   const onSubmit = async (e) => {
@@ -52,7 +52,7 @@ export function ChatWidget({
       if (diffHours < 24) return `${diffHours}시간 전`;
       
       return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
-    } catch (e) {
+    } catch {
       return '';
     }
   };
@@ -284,9 +284,7 @@ export function ChatWidget({
         <div 
           onClick={() => {
             setChatActiveRoomId(chatNotification.roomId);
-            const parts = chatNotification.roomId.replace('room-', '').split('-');
-            const other = parts[0] === userNickname ? parts[1] : parts[0];
-            setChatActiveRoomNickname(other || '상대방');
+            setChatActiveRoomNickname(chatNotification.sender || '상대방');
             setChatWindowOpen(true);
             setChatNotification(null);
           }}

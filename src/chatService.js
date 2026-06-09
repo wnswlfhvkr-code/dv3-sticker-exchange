@@ -8,7 +8,7 @@ const CHAT_MESSAGES_KEY = 'dv3_chat_messages';
 const getLocalRooms = () => {
   try {
     return JSON.parse(localStorage.getItem(CHAT_ROOMS_KEY)) || [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -22,7 +22,7 @@ const saveLocalRooms = (rooms) => {
 const getLocalMessages = () => {
   try {
     return JSON.parse(localStorage.getItem(CHAT_MESSAGES_KEY)) || [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -37,6 +37,32 @@ const makeSafeChannelName = (str) => {
   if (!str) return 'channel';
   return str.replace(/[^a-zA-Z0-9-_]/g, '_');
 };
+
+const createRoomId = (nicknameA, nicknameB) => {
+  const sorted = [nicknameA, nicknameB].sort();
+  return `room-${sorted[0]}-${sorted[1]}`;
+};
+
+const getRoomParticipants = (roomId, knownNickname) => {
+  if (!roomId || !knownNickname || !roomId.startsWith('room-')) return null;
+  const body = roomId.slice(5);
+  const asPrefix = `${knownNickname}-`;
+  const asSuffix = `-${knownNickname}`;
+
+  if (body.startsWith(asPrefix)) {
+    const other = body.slice(asPrefix.length);
+    return other ? { me: knownNickname, other } : null;
+  }
+
+  if (body.endsWith(asSuffix)) {
+    const other = body.slice(0, -asSuffix.length);
+    return other ? { me: knownNickname, other } : null;
+  }
+
+  return null;
+};
+
+const isMyRoomId = (roomId, nickname) => Boolean(getRoomParticipants(roomId, nickname));
 
 // Supabase의 snake_case 응답을 로컬 camelCase 형태로 파싱해주는 포맷터
 const formatDbRoom = (dbRoom) => {
@@ -66,8 +92,7 @@ export const chatService = {
   // 1. 채팅방 만들기 또는 가져오기
   async getOrCreateChatRoom(postId, buyerNickname, sellerNickname) {
     // 수신/발신 통합을 위해 닉네임 쌍을 가나다순 정렬하여 단 하나의 고유 방 ID 생성 (postId 무관)
-    const sorted = [buyerNickname, sellerNickname].sort();
-    const roomId = `room-${sorted[0]}-${sorted[1]}`;
+    const roomId = createRoomId(buyerNickname, sellerNickname);
     
     if (isMock) {
       const rooms = getLocalRooms();
@@ -88,7 +113,7 @@ export const chatService = {
     } else {
       try {
         // Supabase 연동 코드 (두 사람 간의 고유 방 ID로 조회)
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from('chat_rooms')
           .select('*')
           .eq('id', roomId)
@@ -113,23 +138,25 @@ export const chatService = {
         if (createError) throw createError;
         return formatDbRoom(newRoom);
       } catch (e) {
-        console.warn('Supabase chat room error, falling back to local:', e);
-        // Supabase 에러 시 로컬 저장소로 폴백 작동
+        console.warn('Supabase chat room error, using message-backed room:', e);
+        // Supabase의 chat_rooms.id가 아직 숫자 타입인 운영 DB에서도 메시지 기반 방은 계속 작동해야 한다.
+        const syntheticRoom = {
+          id: roomId,
+          postId,
+          buyerNickname,
+          sellerNickname,
+          lastMessage: '',
+          updatedAt: new Date().toISOString()
+        };
+
         const rooms = getLocalRooms();
         let room = rooms.find(r => r.id === roomId);
         if (!room) {
-          room = {
-            id: roomId,
-            postId,
-            buyerNickname,
-            sellerNickname,
-            lastMessage: '',
-            updatedAt: new Date().toISOString()
-          };
+          room = syntheticRoom;
           rooms.push(room);
           saveLocalRooms(rooms);
         }
-        return room;
+        return syntheticRoom;
       }
     }
   },
@@ -156,9 +183,35 @@ export const chatService = {
         // 중복 제거 후 합치기
         const allRoomsMap = {};
         [...(asBuyer || []), ...(asSeller || [])].forEach(r => { allRoomsMap[r.id] = r; });
-        return Object.values(allRoomsMap)
-          .map(formatDbRoom)
-          .filter(r => (r.id || '').startsWith('room-'));
+        // 운영 DB에 chat_rooms.id가 예전 bigint 타입으로 남은 경우, 방 insert는 실패하지만
+        // chat_messages.room_id에는 문자열 room-* 메시지가 쌓일 수 있다. 이 메시지들로 목록을 복원한다.
+        const { data: recentMessages, error: msgError } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .order('timestamp', { ascending: false })
+          .limit(1000);
+
+        if (msgError) throw msgError;
+
+        (recentMessages || []).forEach(msg => {
+          const roomId = msg.room_id;
+          if (!isMyRoomId(roomId, nickname) || allRoomsMap[roomId]) return;
+
+          const participants = getRoomParticipants(roomId, nickname);
+          allRoomsMap[roomId] = {
+            id: roomId,
+            postId: null,
+            buyerNickname: nickname,
+            sellerNickname: participants.other,
+            lastMessage: msg.text,
+            updatedAt: msg.timestamp
+          };
+        });
+
+        return Object.values(allRoomsMap).map(room => {
+          const formatted = formatDbRoom(room);
+          return formatted || room;
+        }).filter(r => (r.id || '').startsWith('room-'));
       } catch (e) {
         console.warn('Supabase chat rooms fetch failed:', e);
         const rooms = getLocalRooms();
@@ -353,7 +406,7 @@ export const chatService = {
     } else {
       // 로컬 스토리지 기반 온라인 유저 추적 (Heartbeat 방식)
       const updateLocalOnline = () => {
-        let onlineList = [];
+        let onlineList;
         try {
           onlineList = JSON.parse(localStorage.getItem('dv3_online_users')) || [];
         } catch {
@@ -362,7 +415,8 @@ export const chatService = {
         
         const now = Date.now();
         // 8초 이상 업데이트되지 않은 세션은 리스트에서 청소
-        onlineList = onlineList.filter(u => u.nickname !== myNickname && (now - u.lastActive < 8000));
+        const activeOthers = onlineList.filter(u => u.nickname !== myNickname && (now - u.lastActive < 8000));
+        onlineList = activeOthers;
         onlineList.push({ nickname: myNickname, lastActive: now });
         localStorage.setItem('dv3_online_users', JSON.stringify(onlineList));
         
@@ -395,7 +449,9 @@ export const chatService = {
           let list = JSON.parse(localStorage.getItem('dv3_online_users')) || [];
           list = list.filter(u => u.nickname !== myNickname);
           localStorage.setItem('dv3_online_users', JSON.stringify(list));
-        } catch {}
+        } catch {
+          // Local cleanup is best-effort only.
+        }
       };
     }
   },
@@ -415,7 +471,7 @@ export const chatService = {
           },
           (payload) => {
             const msg = payload.new;
-            if (msg && msg.room_id && msg.room_id.includes(myNickname) && msg.sender !== myNickname) {
+            if (msg && isMyRoomId(msg.room_id, myNickname) && msg.sender !== myNickname) {
               onNewMessage({
                 id: msg.id,
                 roomId: msg.room_id,
@@ -438,7 +494,7 @@ export const chatService = {
             const allMessages = JSON.parse(e.newValue) || [];
             if (allMessages.length > 0) {
               const lastMsg = allMessages[allMessages.length - 1];
-              if (lastMsg && lastMsg.roomId && lastMsg.roomId.includes(myNickname) && lastMsg.sender !== myNickname) {
+              if (lastMsg && isMyRoomId(lastMsg.roomId, myNickname) && lastMsg.sender !== myNickname) {
                 onNewMessage({
                   id: lastMsg.id || Date.now(),
                   roomId: lastMsg.roomId,
@@ -458,7 +514,7 @@ export const chatService = {
         const allMessages = getLocalMessages();
         if (allMessages.length > 0) {
           const lastMsg = allMessages[allMessages.length - 1];
-          if (lastMsg && lastMsg.roomId && lastMsg.roomId.includes(myNickname) && lastMsg.sender !== myNickname) {
+          if (lastMsg && isMyRoomId(lastMsg.roomId, myNickname) && lastMsg.sender !== myNickname) {
             onNewMessage({
               id: lastMsg.id || Date.now(),
               roomId: lastMsg.roomId,
@@ -519,5 +575,6 @@ export const chatService = {
         window.removeEventListener('dv3_chat_update', onRoomUpdate);
       };
     }
-  }
+  },
+  getRoomParticipants
 };
