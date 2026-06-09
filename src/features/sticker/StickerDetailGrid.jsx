@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ArrowLeft, ChevronLeft, ChevronRight, Check } from 'lucide-react';
-import { stickersData, getCategoryImage, categories } from '../stickersData';
+import { stickersData, getCategoryImage, categories } from '../../stickersData';
 
 export function StickerDetailGrid({
   selectedCategoryId,

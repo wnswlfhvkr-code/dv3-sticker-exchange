@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, Sparkles, ShoppingCart } from 'lucide-react';
-import { categories } from '../stickersData';
+import { categories } from '../../stickersData';
 
 export function PostFormModal({
   isFormOpen,

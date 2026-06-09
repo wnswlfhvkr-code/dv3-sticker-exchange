@@ -1,6 +1,6 @@
 import React from 'react';
 import { ShoppingCart, X, Sparkles } from 'lucide-react';
-import { categories } from '../stickersData';
+import { categories } from '../../stickersData';
 
 export function BasketSection({ 
   myHaves, 

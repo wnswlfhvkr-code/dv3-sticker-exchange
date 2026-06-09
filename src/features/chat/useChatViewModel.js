@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { chatService } from '../chatService';
-import { supabase, isMock } from '../supabaseClient';
+import { chatService } from '../../chatService';
+import { supabase, isMock } from '../../supabaseClient';
+import { sanitizeInput } from '../../utils/security';
 
 export function useChatViewModel({ userNickname }) {
   const [chatRooms, setChatRooms] = useState([]);
@@ -30,6 +31,18 @@ export function useChatViewModel({ userNickname }) {
   // 실시간 메시지 미리보기 팝업(Toast) 알림 상태
   const [chatNotification, setChatNotification] = useState(null);
   const chatScrollRef = useRef(null);
+
+  // 실시간 메시지 수신 시 소켓 재구독 프리징을 방지하기 위한 최신 상태 ref 매핑
+  const chatWindowOpenRef = useRef(chatWindowOpen);
+  const chatActiveRoomIdRef = useRef(chatActiveRoomId);
+
+  useEffect(() => {
+    chatWindowOpenRef.current = chatWindowOpen;
+  }, [chatWindowOpen]);
+
+  useEffect(() => {
+    chatActiveRoomIdRef.current = chatActiveRoomId;
+  }, [chatActiveRoomId]);
 
   // 대화방 목록 조회 (otherUser 닉네임 매핑 및 실제 마지막 메시지 강제 보정 처리 추가)
   const loadChatRooms = async () => {
@@ -64,7 +77,11 @@ export function useChatViewModel({ userNickname }) {
       }));
 
       // 업데이트 시간 순으로 정렬 (최신 대화방이 위로 오도록)
-      mappedRooms.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      mappedRooms.sort((a, b) => {
+        const timeA = new Date(a.updatedAt || 0);
+        const timeB = new Date(b.updatedAt || 0);
+        return timeB - timeA;
+      });
 
       setChatRooms(mappedRooms);
     } catch (err) {
@@ -195,7 +212,8 @@ export function useChatViewModel({ userNickname }) {
     if (e && e.preventDefault) e.preventDefault();
     if (!chatInput.trim() || !chatActiveRoomId) return;
     try {
-      await chatService.sendMessage(chatActiveRoomId, userNickname, chatInput.trim());
+      const sanitizedText = sanitizeInput(chatInput.trim());
+      await chatService.sendMessage(chatActiveRoomId, userNickname, sanitizedText);
       setChatInput('');
       await loadChatRooms();
     } catch (err) {
@@ -285,7 +303,7 @@ export function useChatViewModel({ userNickname }) {
         }
 
         // 2. 현재 열려 있는 방이 아니거나 채팅방 창이 아예 닫혀있을 때만 안 읽은 카운트 및 토스트 팝업 알림 적용
-        if (!chatWindowOpen || chatActiveRoomId !== msg.roomId) {
+        if (!chatWindowOpenRef.current || chatActiveRoomIdRef.current !== msg.roomId) {
           // 안 읽은 개수 증가
           setUnreadCounts(prev => {
             const newCount = (prev[msg.roomId] || 0) + 1;
@@ -304,7 +322,7 @@ export function useChatViewModel({ userNickname }) {
     });
 
     return () => unsubscribe();
-  }, [userNickname, chatWindowOpen, chatActiveRoomId]);
+  }, [userNickname]);
 
   // 글로벌 새 대화방 감지 훅 (누군가 나에게 처음 1:1 대화를 시도했을 때 대화방 실시간 추가 연동)
   useEffect(() => {

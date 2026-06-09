@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { dbService } from '../supabaseClient';
-import { chatService } from '../chatService';
+import { dbService } from '../../supabaseClient';
+import { chatService } from '../../chatService';
+import { validateNickname } from '../../utils/security';
 
 export function useAuthViewModel() {
   const [userNickname, setUserNickname] = useState(() => {
@@ -35,6 +36,11 @@ export function useAuthViewModel() {
   const handleLogin = async (nickname, password, isGuestMode) => {
     if (!nickname.trim()) {
       alert("닉네임을 입력해주세요!");
+      return;
+    }
+
+    if (!validateNickname(nickname)) {
+      alert("닉네임은 한글, 영문, 숫자 조합으로 25자 이내로만 작성할 수 있으며 특수문자는 사용할 수 없습니다.");
       return;
     }
 

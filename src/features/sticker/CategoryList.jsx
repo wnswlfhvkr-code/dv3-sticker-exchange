@@ -1,6 +1,6 @@
 import React from 'react';
 import { BookOpen, HelpCircle } from 'lucide-react';
-import { getCategoryImage, categories } from '../stickersData';
+import { getCategoryImage, categories } from '../../stickersData';
 
 export function CategoryList({ 
   getHavesCountInPage, 

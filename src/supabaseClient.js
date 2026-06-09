@@ -123,6 +123,32 @@ const mockDB = {
     reports = reports.filter(r => r.id !== reportId);
     localStorage.setItem('dv3_reports', JSON.stringify(reports));
     return { error: null };
+  },
+  insertBugReport: async (reporter, title, description) => {
+    const data = localStorage.getItem('dv3_bug_reports');
+    const bugReports = data ? JSON.parse(data) : [];
+    const newBug = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      reporter,
+      title,
+      description,
+      created_at: new Date().toISOString()
+    };
+    bugReports.push(newBug);
+    localStorage.setItem('dv3_bug_reports', JSON.stringify(bugReports));
+    return { data: [newBug], error: null };
+  },
+  getBugReports: async () => {
+    const data = localStorage.getItem('dv3_bug_reports');
+    const bugReports = data ? JSON.parse(data) : [];
+    return { data: bugReports.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)), error: null };
+  },
+  deleteBugReport: async (bugId) => {
+    const data = localStorage.getItem('dv3_bug_reports');
+    let bugReports = data ? JSON.parse(data) : [];
+    bugReports = bugReports.filter(b => b.id !== bugId);
+    localStorage.setItem('dv3_bug_reports', JSON.stringify(bugReports));
+    return { error: null };
   }
 };
 
@@ -378,6 +404,72 @@ export const dbService = {
       users.push(newUser);
       localStorage.setItem('dv3_users', JSON.stringify(users));
       return { data: newUser, error: null };
+    }
+  },
+  addBugReport: async (reporter, title, description) => {
+    if (!isMock) {
+      try {
+        const { data, error } = await supabase
+          .from('bug_reports')
+          .insert([{ reporter, title, description }])
+          .select();
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            return mockDB.insertBugReport(reporter, title, description);
+          }
+          return { data, error };
+        }
+        return { data, error };
+      } catch (err) {
+        return mockDB.insertBugReport(reporter, title, description);
+      }
+    } else {
+      return mockDB.insertBugReport(reporter, title, description);
+    }
+  },
+  fetchBugReports: async () => {
+    if (!isMock) {
+      try {
+        const { data, error } = await supabase
+          .from('bug_reports')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            return mockDB.getBugReports();
+          }
+          return { data, error };
+        }
+        return { data, error };
+      } catch (err) {
+        return mockDB.getBugReports();
+      }
+    } else {
+      return mockDB.getBugReports();
+    }
+  },
+  resolveBugReport: async (bugId) => {
+    if (!isMock) {
+      try {
+        const { error } = await supabase
+          .from('bug_reports')
+          .delete()
+          .eq('id', bugId);
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            return mockDB.deleteBugReport(bugId);
+          }
+          return { error };
+        }
+        return { error };
+      } catch (err) {
+        return mockDB.deleteBugReport(bugId);
+      }
+    } else {
+      return mockDB.deleteBugReport(bugId);
     }
   }
 };

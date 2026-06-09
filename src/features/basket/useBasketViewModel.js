@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { stickersData } from '../stickersData';
+import { stickersData } from '../../stickersData';
 
 export function useBasketViewModel({ userNickname, onBasketChange }) {
   // 선택된 카테고리 ID (null 또는 1 ~ 20)

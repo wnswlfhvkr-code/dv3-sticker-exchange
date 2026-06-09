@@ -13,7 +13,12 @@ export function AdminDashboard({
   loadAdminLogs,
   handleResolveReport,
   handleAdminDeletePost,
-  handleAdminDeleteComment
+  handleAdminDeleteComment,
+
+  // 버그 제보 관련
+  bugReportsList = [],
+  handleResolveBugReport,
+  loadBugReports
 }) {
   if (!isAdminTabOpen) return null;
 
@@ -62,18 +67,18 @@ export function AdminDashboard({
             👑 관리자 제어 센터 (간장 전용)
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-            접수된 유저 신고 내역을 모니터링하고 피드 콘텐츠 정화 처리를 관리합니다.
+            접수된 유저 신고 내역 및 버그 제보를 모니터링하고 콘텐츠 정화를 관리합니다.
           </p>
         </div>
 
         {/* 탭 제어 */}
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '3px', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', padding: '3px', marginBottom: '1rem', gap: '3px' }}>
           <button 
             onClick={() => setAdminActiveTab("reports")}
             style={{ 
               flex: 1, 
-              padding: '0.6rem', 
-              fontSize: '0.82rem', 
+              padding: '0.6rem 0.3rem', 
+              fontSize: '0.78rem', 
               fontWeight: '700', 
               borderRadius: '8px', 
               border: 'none', 
@@ -83,14 +88,31 @@ export function AdminDashboard({
               transition: 'all 0.2s'
             }}
           >
-            🚨 접수된 신고 목록 ({reportsList.length}건)
+            🚨 신고 목록 ({reportsList.length})
+          </button>
+          <button 
+            onClick={() => setAdminActiveTab("bugs")}
+            style={{ 
+              flex: 1, 
+              padding: '0.6rem 0.3rem', 
+              fontSize: '0.78rem', 
+              fontWeight: '700', 
+              borderRadius: '8px', 
+              border: 'none', 
+              background: adminActiveTab === "bugs" ? 'rgba(251, 191, 36, 0.15)' : 'transparent', 
+              color: adminActiveTab === "bugs" ? '#fbbf24' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            🐛 버그 제보 ({bugReportsList.length})
           </button>
           <button 
             onClick={() => setAdminActiveTab("logs")}
             style={{ 
               flex: 1, 
-              padding: '0.6rem', 
-              fontSize: '0.82rem', 
+              padding: '0.6rem 0.3rem', 
+              fontSize: '0.78rem', 
               fontWeight: '700', 
               borderRadius: '8px', 
               border: 'none', 
@@ -100,7 +122,7 @@ export function AdminDashboard({
               transition: 'all 0.2s'
             }}
           >
-            📋 조치 완료 로그 ({adminLogs.length}건)
+            📋 조치 로그 ({adminLogs.length})
           </button>
         </div>
 
@@ -168,6 +190,48 @@ export function AdminDashboard({
                 )}
               </div>
             </div>
+          ) : adminActiveTab === "bugs" ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* 유저들이 접수한 오류 및 버그 제보 목록입니다.</span>
+                <button onClick={loadBugReports} className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <RefreshCw size={12} className={adminLoading ? 'spin-anim' : ''} /> 새로고침
+                </button>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '350px', overflowY: 'auto' }}>
+                {bugReportsList.map(bug => (
+                  <div key={bug.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.82rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--primary-color)' }}>
+                        {bug.title}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                        제보일: {new Date(bug.created_at || bug.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    
+                    <div style={{ background: 'rgba(0,0,0,0.25)', padding: '0.6rem 0.8rem', borderRadius: '8px', fontSize: '0.8rem', color: '#e2e8f0', whiteSpace: 'pre-wrap', lineHeight: '1.4', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      {bug.description}
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '4px', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '6px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>제보자: <strong style={{ color: '#fff' }}>{bug.reporter}</strong></span>
+                      <button 
+                        onClick={() => handleResolveBugReport(bug.id)}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.72rem', background: 'var(--primary-color)', color: '#1e293b', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        해결 완료 (삭제)
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {bugReportsList.length === 0 && (
+                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', padding: '2rem 0' }}>접수된 버그 제보가 없습니다! 아주 평화롭습니다.</div>
+                )}
+              </div>
+            </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -188,7 +252,7 @@ export function AdminDashboard({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '350px', overflowY: 'auto' }}>
                 {adminLogs.map(log => (
-                  <div key={log.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div key={log.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.8', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{
                         background: log.action.includes('삭제') ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',

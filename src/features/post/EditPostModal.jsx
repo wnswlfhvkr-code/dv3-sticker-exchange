@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { X, Sparkles, MessageCircle } from 'lucide-react';
-import { stickersData, categories } from '../stickersData';
+import { stickersData, categories } from '../../stickersData';
 
 export function EditPostModal({
   isEditModalOpen,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { X, Send, MessageSquare, ArrowLeft } from 'lucide-react';
 
 export function ChatWidget({
@@ -24,6 +24,17 @@ export function ChatWidget({
 
   // 전체 안 읽은 메시지 개수 합산
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+
+  const inputRef = useRef(null);
+
+  // 메시지 전송 후 포커스 재지정 래퍼
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    await handleSendMessage(e);
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
 
   // 채팅 시간 포맷 도우미 함수
   const formatChatTime = (isoString) => {
@@ -88,8 +99,8 @@ export function ChatWidget({
             </button>
           </div>
 
-          {/* 본문 콘텐츠 */}
-          <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+          {/* 본문 콘텐츠: 활성 대화방이 열려 있을 때는 이중 스크롤 방지를 위해 overflowY hidden 처리 */}
+          <div style={{ flex: 1, overflowY: chatActiveRoomId ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
             {!chatActiveRoomId ? (
               /* 방 목록 화면 */
               <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
@@ -231,7 +242,7 @@ export function ChatWidget({
 
                 {/* 메시지 발송 폼 */}
                 <form 
-                  onSubmit={handleSendMessage}
+                  onSubmit={onSubmit}
                   style={{
                     padding: '0.75rem',
                     background: 'rgba(0,0,0,0.3)',
@@ -241,6 +252,7 @@ export function ChatWidget({
                   }}
                 >
                   <input 
+                    ref={inputRef}
                     type="text" 
                     placeholder="메시지를 입력하세요..."
                     value={chatInput}

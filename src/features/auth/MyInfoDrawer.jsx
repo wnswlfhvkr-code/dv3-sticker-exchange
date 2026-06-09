@@ -1,6 +1,6 @@
 import React from 'react';
 import { X, User, Trash2 } from 'lucide-react';
-import { categories } from '../stickersData';
+import { categories } from '../../stickersData';
 
 export function MyInfoDrawer({
   isMyInfoOpen,

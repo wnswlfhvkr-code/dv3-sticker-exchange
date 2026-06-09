@@ -8,7 +8,8 @@ export function Header({
   setIsMyInfoOpen, 
   handleOpenAdminTab, 
   handleLogout, 
-  setSelectedCategoryId 
+  setSelectedCategoryId,
+  setIsBugModalOpen
 }) {
   return (
     <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto', flexWrap: 'wrap', gap: '1rem' }}>
@@ -23,6 +24,36 @@ export function Header({
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* 버그 제보 버튼 */}
+        <button
+          onClick={() => setIsBugModalOpen(true)}
+          style={{
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.25)',
+            color: '#f87171',
+            cursor: 'pointer',
+            padding: '0.45rem 0.8rem',
+            borderRadius: '12px',
+            fontSize: '0.8rem',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.18)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.45)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+            e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+          }}
+          title="오류/버그 제보하기"
+        >
+          🐛 버그 제보
+        </button>
+
         {userNickname && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
             <User size={14} color="var(--primary-color)" />

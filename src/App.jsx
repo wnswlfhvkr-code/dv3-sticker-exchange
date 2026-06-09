@@ -4,26 +4,32 @@ import './App.css';
 // 정적 데이터
 import { categories } from './stickersData';
 
-// ViewModels (MVVM Hooks)
-import { useAuthViewModel } from './viewmodels/useAuthViewModel';
-import { useBasketViewModel } from './viewmodels/useBasketViewModel';
-import { usePostViewModel } from './viewmodels/usePostViewModel';
-import { useChatViewModel } from './viewmodels/useChatViewModel';
-import { useAdminViewModel } from './viewmodels/useAdminViewModel';
+// ViewModels & Components (Features)
+import { useAuthViewModel } from './features/auth/useAuthViewModel';
+import { LoginModal } from './features/auth/LoginModal';
+import { MyInfoDrawer } from './features/auth/MyInfoDrawer';
 
-// View Components
+import { useBasketViewModel } from './features/basket/useBasketViewModel';
+import { BasketSection } from './features/basket/BasketSection';
+
+import { usePostViewModel } from './features/post/usePostViewModel';
+import { PostFeed } from './features/post/PostFeed';
+import { PostFormModal } from './features/post/PostFormModal';
+import { EditPostModal } from './features/post/EditPostModal';
+
+import { useChatViewModel } from './features/chat/useChatViewModel';
+import { ChatWidget } from './features/chat/ChatWidget';
+
+import { useAdminViewModel } from './features/admin/useAdminViewModel';
+import { AdminDashboard } from './features/admin/AdminDashboard';
+import { ReportModal } from './features/admin/ReportModal';
+import { BugReportModal } from './features/admin/BugReportModal';
+
+import { CategoryList } from './features/sticker/CategoryList';
+import { StickerDetailGrid } from './features/sticker/StickerDetailGrid';
+
+// 공통 Components
 import { Header } from './components/Header';
-import { LoginModal } from './components/LoginModal';
-import { CategoryList } from './components/CategoryList';
-import { BasketSection } from './components/BasketSection';
-import { StickerDetailGrid } from './components/StickerDetailGrid';
-import { PostFormModal } from './components/PostFormModal';
-import { EditPostModal } from './components/EditPostModal';
-import { PostFeed } from './components/PostFeed';
-import { ChatWidget } from './components/ChatWidget';
-import { ReportModal } from './components/ReportModal';
-import { AdminDashboard } from './components/AdminDashboard';
-import { MyInfoDrawer } from './components/MyInfoDrawer';
 
 import { Info } from 'lucide-react';
 
@@ -114,6 +120,7 @@ function App() {
         setShowLoginModal={authVM.setShowLoginModal}
         handleOpenAdminTab={adminVM.handleOpenAdminTab}
         setIsMyInfoOpen={postVM.setIsMyInfoOpen}
+        setIsBugModalOpen={adminVM.setIsBugModalOpen}
       />
 
       {/* 2. 로그인 모달 */}
@@ -257,6 +264,21 @@ function App() {
         handleAdminDeleteComment={(commentId, postId, reportId) => 
           adminVM.handleAdminDeleteComment(commentId, postId, reportId, postVM.loadComments)
         }
+        bugReportsList={adminVM.bugReportsList}
+        handleResolveBugReport={adminVM.handleResolveBugReport}
+        loadBugReports={adminVM.loadBugReports}
+      />
+
+      {/* 11.5 버그 제보 모달 */}
+      <BugReportModal 
+        isBugModalOpen={adminVM.isBugModalOpen}
+        setIsBugModalOpen={adminVM.setIsBugModalOpen}
+        bugTitle={adminVM.bugTitle}
+        setBugTitle={adminVM.setBugTitle}
+        bugDescription={adminVM.bugDescription}
+        setBugDescription={adminVM.setBugDescription}
+        handleSubmitBug={adminVM.handleSubmitBug}
+        userNickname={authVM.userNickname}
       />
 
       {/* 12. 1:1 실시간 채팅 위젯 */}

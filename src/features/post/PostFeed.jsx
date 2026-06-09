@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Search, RefreshCw, Sparkles, Trash2, MessageSquare, MessageCircle } from 'lucide-react';
-import { stickersData, categories } from '../stickersData';
+import { stickersData, categories } from '../../stickersData';
 
 export function PostFeed({
   posts,
@@ -76,9 +76,8 @@ export function PostFeed({
 
   // 검색 및 필터링 계산
   const filteredPosts = posts.filter(post => {
-    const { isPerfectMatch, isPartialMatch } = checkMatching(post);
-
-    if (filterMatchedOnly && !isPerfectMatch && !isPartialMatch) {
+    // 현 접속중(onlineUsers에 닉네임이 포함된) 사람들의 글만 필터링
+    if (filterMatchedOnly && !onlineUsers.includes(post.nickname)) {
       return false;
     }
 
@@ -112,9 +111,10 @@ export function PostFeed({
           <button 
             className={`btn ${filterMatchedOnly ? 'btn-secondary' : 'btn-outline'}`}
             onClick={() => setFilterMatchedOnly(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
-            <Sparkles size={16} /> 실시간 매칭글만 보기
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span> 
+            접속중인 유저 글만 보기
           </button>
         </div>
 

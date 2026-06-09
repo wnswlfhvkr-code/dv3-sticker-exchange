@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { dbService } from '../supabaseClient';
-import { stickersData } from '../stickersData';
+import { dbService, supabase, isMock } from '../../supabaseClient';
+import { stickersData } from '../../stickersData';
+import { sanitizeInput } from '../../utils/security';
 
 export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, setMyWants }) {
   const [posts, setPosts] = useState([]);
@@ -76,26 +77,60 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
   };
 
   // 최초 로드
+  // 최초 로드 및 실시간 피드 업데이트 구독 바인딩
   useEffect(() => {
+    // 초기 피드 로드
     fetchData();
-  }, []);
 
-  // 1.5초마다 데이터 폴링
-  useEffect(() => {
-    const timer = setInterval(() => {
-      fetchDataSilent();
-    }, 1500);
-    return () => clearInterval(timer);
+    if (!isMock) {
+      // Supabase Realtime 채널을 활성화하여 글 추가/삭제/수정 시 백그라운드 갱신
+      const channel = supabase
+        .channel('realtime-posts-feed')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'posts'
+          },
+          () => {
+            fetchDataSilent();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } else {
+      // 로컬스토리지 및 커스텀 이벤트를 감지하여 탭/컴포넌트 간 즉시 동기화
+      const handleStorageChange = (e) => {
+        if (e.key === 'dv3_exchange_posts') {
+          fetchDataSilent();
+        }
+      };
+      const handleExchangeUpdate = () => {
+        fetchDataSilent();
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      window.addEventListener('dv3_exchange_update', handleExchangeUpdate);
+
+      return () => {
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('dv3_exchange_update', handleExchangeUpdate);
+      };
+    }
   }, []);
 
   // 도감에서 직접 바구니를 바꿨을 때 DB 실시간 동기화
   const updatePostStickersDirectly = async (postId, updatedHaves, updatedWants) => {
-    const { error } = await dbService.updatePost(postId, {
-      haves: updatedHaves,
-      wants: updatedWants
-    });
+    const targetPost = posts.find(p => p.id === postId);
+    const contactInfo = targetPost ? targetPost.contact : myContact;
+    const { error } = await dbService.updatePost(postId, contactInfo, updatedHaves, updatedWants);
     if (!error) {
-      setPosts(prev => prev.map(p => p.id === postId ? { ...p, haves: updatedHaves, wants: updatedWants } : p));
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, contact: contactInfo, haves: updatedHaves, wants: updatedWants } : p));
+      window.dispatchEvent(new Event('dv3_exchange_update'));
     }
   };
 
@@ -110,9 +145,11 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
       return;
     }
 
+    const sanitizedContact = sanitizeInput(myContact);
+
     const { data, error } = await dbService.addPost(
       userNickname,
-      myContact,
+      sanitizedContact,
       myHaves,
       myWants
     );
@@ -128,6 +165,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
       alert("교환 등록이 완료되었습니다!");
       fetchData();
       setIsFormOpen(false);
+      window.dispatchEvent(new Event('dv3_exchange_update'));
     }
   };
 
@@ -139,6 +177,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
       setMyPostIds(updated);
       localStorage.setItem('dv3_my_post_ids', JSON.stringify(updated));
       fetchData();
+      window.dispatchEvent(new Event('dv3_exchange_update'));
     } else {
       alert("삭제 실패: " + error.message);
     }
@@ -149,6 +188,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
     if (!error) {
       alert("글을 맨 위로 끌어올렸습니다!");
       fetchData();
+      window.dispatchEvent(new Event('dv3_exchange_update'));
     } else {
       alert("끌어올리기 실패: " + error.message);
     }
@@ -173,7 +213,8 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
   const handleUpdatePost = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!editingPost) return;
-    const { error } = await dbService.updatePost(editingPost.id, editContact, editHaves, editWants);
+    const sanitizedEditContact = sanitizeInput(editContact);
+    const { error } = await dbService.updatePost(editingPost.id, sanitizedEditContact, editHaves, editWants);
     if (!error) {
       alert("성공적으로 글이 수정되었습니다!");
       if (setMyHaves && setMyWants) {
@@ -185,6 +226,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
       setIsEditModalOpen(false);
       setEditingPost(null);
       fetchData();
+      window.dispatchEvent(new Event('dv3_exchange_update'));
     } else {
       alert("글 수정 실패: " + error.message);
     }
@@ -255,7 +297,8 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
       alert("로그인 후 댓글을 작성할 수 있습니다.");
       return;
     }
-    const { error } = await dbService.addComment(postId, userNickname, commentText.trim());
+    const sanitizedComment = sanitizeInput(commentText.trim());
+    const { error } = await dbService.addComment(postId, userNickname, sanitizedComment);
     if (!error) {
       setCommentInputs(prev => ({ ...prev, [postId]: '' }));
       await loadComments(postId);
