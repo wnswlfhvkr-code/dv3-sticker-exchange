@@ -36,7 +36,7 @@ export function PostFeed({
   const [filterExchangeableOnly, setFilterExchangeableOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 5;
+  const postsPerPage = 8;
 
   // 필터 및 검색어 변경 시 페이지 1로 리셋
   useEffect(() => {
