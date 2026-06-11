@@ -4,7 +4,7 @@ import { Sparkles } from 'lucide-react';
 export function AdBanner({ type = 'horizontal' }) {
   // 실제 애드센스가 승인되어 활성화되었을 때 true로 변경하면 됩니다.
   const isAdsenseActive = false; 
-  const publisherId = 'ca-pub-XXXXXXXXXXXXXXXX'; // 본인의 퍼블리셔 ID로 변경
+  const publisherId = 'ca-pub-3489777827665018'; // 실제 퍼블리셔 ID 세팅 완료
   const slotId = type === 'horizontal' ? '1234567890' : '0987654321'; // 본인의 슬롯 ID로 변경
 
   useEffect(() => {
