@@ -421,7 +421,8 @@ export function PostFeed({
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        const url = post.contact.startsWith('http') ? post.contact : `https://${post.contact}`;
+                        const decodedContact = decodeHTML(post.contact.trim());
+                        const url = decodedContact.startsWith('http') ? decodedContact : `https://${decodedContact}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
                       className="btn btn-secondary"
