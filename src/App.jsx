@@ -10,7 +10,6 @@ import { LoginModal } from './features/auth/LoginModal';
 import { MyInfoDrawer } from './features/auth/MyInfoDrawer';
 
 import { useBasketViewModel } from './features/basket/useBasketViewModel';
-import { BasketSection } from './features/basket/BasketSection';
 
 import { usePostViewModel } from './features/post/usePostViewModel';
 import { PostFeed } from './features/post/PostFeed';
@@ -165,16 +164,7 @@ function App() {
         />
       )}
 
-      {/* 5. 바구니 요약 및 등록 버튼 섹션 */}
-      <BasketSection 
-        myHaves={basketVM.myHaves}
-        myWants={basketVM.myWants}
-        setIsFormOpen={postVM.setIsFormOpen}
-        userNickname={authVM.userNickname}
-        setShowLoginModal={authVM.setShowLoginModal}
-      />
-
-      <div className="divider" style={{ margin: '2.5rem 0' }} />
+      {/* 바구니 요약 및 등록 버튼 섹션 제거 */}
 
       {/* 6. 교환글 피드 목록 */}
       <PostFeed 
@@ -192,6 +182,7 @@ function App() {
         handleStartChat={chatVM.handleStartChat}
         handleOpenReportModal={postVM.handleOpenReportModal}
         handleAdminDeletePost={adminVM.handleAdminDeletePost}
+        setIsFormOpen={postVM.setIsFormOpen}
         
         comments={postVM.comments}
         commentInputs={postVM.commentInputs}

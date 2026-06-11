@@ -11,10 +11,10 @@ export function CategoryList({
     <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '800px' }}>
       <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <BookOpen size={20} color="var(--primary-color)" />
-        스티커북 카테고리 선택
+        나의 스티커북
       </h2>
       <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-        원하는 카테고리를 선택한 뒤, 보유 중인 카드와 필요한 카드를 바구니에 담아 매칭해 보세요.
+        원하는 카드 묶음을 선택한 뒤, 보유 중인 카드와 필요한 카드를 표시하여 매칭을 진행해 보세요.
       </p>
 
       <div style={{ 
@@ -98,8 +98,9 @@ export function CategoryList({
                     style={{ 
                       width: '100%',
                       height: '100%',
-                      objectFit: 'cover',
-                      display: 'block'
+                      objectFit: 'contain',
+                      display: 'block',
+                      padding: '8px'
                     }}
                   />
                 ) : (

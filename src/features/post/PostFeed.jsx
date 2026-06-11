@@ -33,7 +33,8 @@ export function PostFeed({
   checkMatching,
   expandedPostIds,
   togglePostExpand,
-  handleTogglePostComplete
+  handleTogglePostComplete,
+  setIsFormOpen
 }) {
   const [filterMatchedOnly, setFilterMatchedOnly] = useState(false);
   const [filterExchangeableOnly, setFilterExchangeableOnly] = useState(false);
@@ -177,7 +178,7 @@ export function PostFeed({
           </button>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, justifySelf: 'flex-end', maxWidth: '400px' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, justifySelf: 'flex-end', maxWidth: '500px' }}>
           <div style={{ position: 'relative', width: '100%' }}>
             <input 
               type="text" 
@@ -188,6 +189,18 @@ export function PostFeed({
             />
             <Search size={18} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           </div>
+
+          {/* 로그인 시에만 노출되는 교환글 등록 버튼 */}
+          {userNickname && (
+            <button 
+              className="btn btn-primary"
+              onClick={() => setIsFormOpen(true)}
+              style={{ padding: '0.72rem 1.1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+            >
+              + 글쓰기
+            </button>
+          )}
+
           <button 
             className="btn btn-outline" 
             onClick={fetchData} 
@@ -583,7 +596,6 @@ export function PostFeed({
           <button
             onClick={() => {
               setCurrentPage(prev => Math.max(prev - 1, 1));
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             disabled={currentPage === 1}
             className="btn btn-outline"
@@ -597,7 +609,6 @@ export function PostFeed({
               key={pageNumber}
               onClick={() => {
                 setCurrentPage(pageNumber);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
               }}
               className={`btn ${currentPage === pageNumber ? 'btn-primary' : 'btn-outline'}`}
               style={{
@@ -610,11 +621,10 @@ export function PostFeed({
               {pageNumber}
             </button>
           ))}
-
+ 
           <button
             onClick={() => {
               setCurrentPage(prev => Math.min(prev + 1, totalPages));
-              window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
             disabled={currentPage === totalPages}
             className="btn btn-outline"
