@@ -8,6 +8,16 @@ export function useBoardViewModel({ userNickname, activeType }) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // --- 게시판 수정 관련 상태 ---
+  const [editingPostId, setEditingPostId] = useState(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+
+  // --- 게시판 댓글 관련 상태 ---
+  const [comments, setComments] = useState({});
+  const [commentInputs, setCommentInputs] = useState({});
+  const [expandedComments, setExpandedComments] = useState({});
+
   const loadPosts = async () => {
     if (!userNickname) {
       setPosts([]);
@@ -85,6 +95,96 @@ export function useBoardViewModel({ userNickname, activeType }) {
     await loadPosts();
   };
 
+  // --- 글 수정 핸들러 ---
+  const handleOpenEditBoard = (post) => {
+    setEditingPostId(post.id);
+    setEditTitle(post.title || '');
+    setEditContent(post.content || '');
+  };
+
+  const handleCancelEditBoard = () => {
+    setEditingPostId(null);
+    setEditTitle('');
+    setEditContent('');
+  };
+
+  const handleUpdateBoardPost = async (postId) => {
+    if (!editTitle.trim() || !editContent.trim()) {
+      alert('제목과 내용을 입력해 주세요.');
+      return;
+    }
+
+    const { error } = await boardService.updatePost(
+      postId,
+      sanitizeInput(editTitle.trim()),
+      sanitizeInput(editContent.trim())
+    );
+
+    if (error) {
+      alert('게시글 수정 실패: ' + error.message);
+      return;
+    }
+
+    setEditingPostId(null);
+    setEditTitle('');
+    setEditContent('');
+    await loadPosts();
+  };
+
+  // --- 댓글 핸들러 ---
+  const loadBoardComments = async (postId) => {
+    const { data, error } = await boardService.fetchComments(postId);
+    if (!error) {
+      setComments(prev => ({ ...prev, [postId]: data || [] }));
+    }
+  };
+
+  const toggleBoardComments = async (postId) => {
+    const isExpanded = !expandedComments[postId];
+    setExpandedComments(prev => ({ ...prev, [postId]: isExpanded }));
+    if (isExpanded) {
+      await loadBoardComments(postId);
+    }
+  };
+
+  const handleAddBoardComment = async (e, postId) => {
+    if (e && e.preventDefault) e.preventDefault();
+    const commentText = commentInputs[postId] || '';
+    if (!commentText.trim()) return;
+
+    if (!userNickname) {
+      alert('로그인 후 댓글을 작성할 수 있습니다.');
+      return;
+    }
+
+    const { error } = await boardService.addComment(
+      postId,
+      userNickname,
+      sanitizeInput(commentText.trim())
+    );
+
+    if (!error) {
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }));
+      await loadBoardComments(postId);
+      // 댓글 카운트 갱신을 위해 포스트 리로드
+      await loadPosts();
+    } else {
+      alert('댓글 등록 실패: ' + error.message);
+    }
+  };
+
+  const handleDeleteBoardComment = async (commentId, postId) => {
+    if (!window.confirm('정말 이 댓글을 삭제하시겠습니까?')) return;
+
+    const { error } = await boardService.deleteComment(commentId);
+    if (!error) {
+      await loadBoardComments(postId);
+      await loadPosts();
+    } else {
+      alert('댓글 삭제 실패: ' + error.message);
+    }
+  };
+
   return {
     posts,
     title,
@@ -94,6 +194,25 @@ export function useBoardViewModel({ userNickname, activeType }) {
     loading,
     loadPosts,
     createPost,
-    deletePost
+    deletePost,
+
+    // 수정 관련
+    editingPostId,
+    editTitle,
+    setEditTitle,
+    editContent,
+    setEditContent,
+    handleOpenEditBoard,
+    handleCancelEditBoard,
+    handleUpdateBoardPost,
+
+    // 댓글 관련
+    comments,
+    commentInputs,
+    setCommentInputs,
+    expandedComments,
+    toggleBoardComments,
+    handleAddBoardComment,
+    handleDeleteBoardComment
   };
 }

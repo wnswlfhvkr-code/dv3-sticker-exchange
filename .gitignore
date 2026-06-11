@@ -33,6 +33,7 @@ src_backup_*
 *.tmp
 Thumbs.db
 coverage
+backup_before_enhancements/
 
 # Data outputs exclusion
 data/*.json

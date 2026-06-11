@@ -10,7 +10,9 @@ export function MyInfoDrawer({
   myContact,
   setMyContact,
   posts,
-  handleDeletePost
+  handleDeletePost,
+  handleOpenEditModal,
+  handleTogglePostComplete
 }) {
   if (!isMyInfoOpen) return null;
 
@@ -117,20 +119,41 @@ export function MyInfoDrawer({
                       padding: '0.85rem',
                       display: 'flex',
                       flexDirection: 'column',
-                      gap: '0.5rem'
+                      gap: '0.5rem',
+                      opacity: post.is_completed ? 0.6 : 1,
+                      transition: 'opacity 0.2s'
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                        {new Date(post.created_at).toLocaleDateString()}
+                        {new Date(post.created_at).toLocaleDateString()} {post.is_completed && <strong style={{ color: '#fbbf24', marginLeft: '4px' }}>[완료]</strong>}
                       </span>
-                      <button 
-                        onClick={() => handleDeletePost(post.id)}
-                        style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-                        title="글 삭제"
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <button
+                          onClick={() => handleTogglePostComplete(post.id, post.is_completed)}
+                          style={{ background: 'none', border: 'none', color: post.is_completed ? '#86efac' : '#fca5a5', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 'bold' }}
+                          title={post.is_completed ? "거래중 상태로 복구" : "거래 완료 상태로 변경"}
+                        >
+                          {post.is_completed ? "복원" : "완료"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsMyInfoOpen(false);
+                            handleOpenEditModal(post);
+                          }}
+                          style={{ background: 'none', border: 'none', color: '#60a5fa', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 'bold' }}
+                          title="글 수정"
+                        >
+                          수정
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePost(post.id)}
+                          style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                          title="글 삭제"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.78rem' }}>

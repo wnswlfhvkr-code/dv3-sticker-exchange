@@ -24,8 +24,18 @@ const mockDB = {
   getPosts: async () => {
     const data = localStorage.getItem('dv3_exchange_posts');
     const posts = data ? JSON.parse(data) : [];
+    
+    // 로컬 댓글 카운트 매칭
+    const commentsData = localStorage.getItem('dv3_post_comments');
+    const comments = commentsData ? JSON.parse(commentsData) : [];
+    
+    const mapped = posts.map(post => ({
+      ...post,
+      commentCount: comments.filter(c => c.post_id === post.id).length
+    }));
+    
     // 생성일 역순 정렬
-    return { data: posts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)), error: null };
+    return { data: mapped.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)), error: null };
   },
   insertPost: async (newPost) => {
     const data = localStorage.getItem('dv3_exchange_posts');
@@ -173,11 +183,29 @@ export const dbService = {
   isMock,
   fetchPosts: async () => {
     if (!isMock) {
-      const { data, error } = await supabase
-        .from('posts')
-        .select('*')
-        .order('created_at', { ascending: false });
-      return { data, error };
+      try {
+        // post_comments 테이블 조인을 통해 댓글 개수를 함께 쿼리함
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*, post_comments(id)')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        
+        const mappedData = (data || []).map(post => ({
+          ...post,
+          commentCount: post.post_comments ? post.post_comments.length : 0
+        }));
+        
+        return { data: mappedData, error: null };
+      } catch (err) {
+        console.warn("posts fetch 조인 실패, 기본 조회 시도:", err);
+        const { data, error } = await supabase
+          .from('posts')
+          .select('*')
+          .order('created_at', { ascending: false });
+        return { data: (data || []).map(p => ({ ...p, commentCount: 0 })), error };
+      }
     } else {
       return mockDB.getPosts();
     }
@@ -250,6 +278,26 @@ export const dbService = {
       return { data, error };
     } else {
       return mockDB.updatePost(id, contact, haves, wants);
+    }
+  },
+  togglePostComplete: async (id, isCompleted) => {
+    if (!isMock) {
+      const { data, error } = await supabase
+        .from('posts')
+        .update({ is_completed: isCompleted })
+        .eq('id', id)
+        .select();
+      return { data, error };
+    } else {
+      const data = localStorage.getItem('dv3_exchange_posts');
+      let posts = data ? JSON.parse(data) : [];
+      const idx = posts.findIndex(post => post.id === id);
+      if (idx !== -1) {
+        posts[idx].is_completed = isCompleted;
+        localStorage.setItem('dv3_exchange_posts', JSON.stringify(posts));
+        return { data: [posts[idx]], error: null };
+      }
+      return { data: null, error: new Error('Post not found') };
     }
   },
   fetchComments: async (postId) => {

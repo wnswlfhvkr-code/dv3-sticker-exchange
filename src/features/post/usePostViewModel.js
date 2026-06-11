@@ -228,6 +228,18 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
     }
   };
 
+  const handleTogglePostComplete = async (postId, currentStatus) => {
+    const nextStatus = !currentStatus;
+    const { error } = await dbService.togglePostComplete(postId, nextStatus);
+    if (!error) {
+      alert(nextStatus ? "거래 완료 상태로 변경되었습니다." : "거래 가능 상태로 복구되었습니다.");
+      fetchData();
+      window.dispatchEvent(new Event('dv3_exchange_update'));
+    } else {
+      alert("상태 변경 실패: " + error.message);
+    }
+  };
+
   // --- 글 수정 핸들러 ---
   const handleOpenEditModal = (post) => {
     setEditingPost(post);
@@ -405,6 +417,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
     handleSubmitPost,
     handleDeletePost,
     handleBumpPost,
+    handleTogglePostComplete,
     updatePostStickersDirectly,
 
     // 수정 모달 관련

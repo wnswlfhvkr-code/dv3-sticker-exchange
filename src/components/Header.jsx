@@ -9,8 +9,11 @@ export function Header({
   handleOpenAdminTab, 
   handleLogout, 
   setSelectedCategoryId,
-  setIsBugModalOpen
+  setIsBugModalOpen,
+  unreadCounts = {}
 }) {
+  const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+
   return (
     <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto', flexWrap: 'wrap', gap: '1rem' }}>
       <div 
@@ -33,6 +36,8 @@ export function Header({
             color: '#f87171',
             cursor: 'pointer',
             padding: '0.45rem 0.8rem',
+            paddingLeft: '0.8rem',
+            paddingRight: '0.8rem',
             borderRadius: '12px',
             fontSize: '0.8rem',
             fontWeight: 'bold',
@@ -58,11 +63,25 @@ export function Header({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
             <User size={14} color="var(--primary-color)" />
             <span 
-              style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff', cursor: 'pointer' }}
+              style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
               onClick={() => setIsMyInfoOpen(true)}
               title="내 정보 열기"
             >
               {userNickname} {isGuest ? <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(게스트)</span> : null}
+              {totalUnread > 0 && (
+                <span style={{
+                  background: '#ef4444',
+                  color: '#fff',
+                  fontSize: '0.68rem',
+                  fontWeight: '800',
+                  borderRadius: '10px',
+                  padding: '1px 5px',
+                  lineHeight: '1',
+                  boxShadow: '0 0 5px rgba(239, 68, 68, 0.8)'
+                }}>
+                  {totalUnread}
+                </span>
+              )}
             </span>
             <button
               onClick={() => setIsMyInfoOpen(true)}

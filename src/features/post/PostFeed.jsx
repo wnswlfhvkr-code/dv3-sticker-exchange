@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Sparkles, Trash2, MessageSquare, MessageCircle } from 'lucide-react';
 import { stickersData, categories } from '../../stickersData';
+import { decodeHTML } from '../../utils/security';
 
 export function PostFeed({
   posts,
@@ -30,10 +31,12 @@ export function PostFeed({
   // 매칭 엔진 및 아코디언
   checkMatching,
   expandedPostIds,
-  togglePostExpand
+  togglePostExpand,
+  handleTogglePostComplete
 }) {
   const [filterMatchedOnly, setFilterMatchedOnly] = useState(false);
   const [filterExchangeableOnly, setFilterExchangeableOnly] = useState(false);
+  const [filterAvailableOnly, setFilterAvailableOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 8;
@@ -41,7 +44,7 @@ export function PostFeed({
   // 필터 및 검색어 변경 시 페이지 1로 리셋
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterMatchedOnly, filterExchangeableOnly, searchQuery]);
+  }, [filterMatchedOnly, filterExchangeableOnly, filterAvailableOnly, searchQuery]);
 
   // 별 개수별 카드 매칭 묶어 보여주기 헬퍼 함수
   const renderMatchCardsByStars = (matchArray) => {
@@ -95,6 +98,11 @@ export function PostFeed({
       if (!isPerfectMatch && !isPartialMatch) {
         return false;
       }
+    }
+
+    // 거래 가능(완료 제외) 글만 필터링
+    if (filterAvailableOnly && post.is_completed) {
+      return false;
     }
 
     if (searchQuery.trim()) {
@@ -152,6 +160,16 @@ export function PostFeed({
           >
             <Sparkles size={14} color={filterExchangeableOnly ? 'var(--primary-color)' : '#fff'} />
             교환 가능 글만 보기
+          </button>
+          <button 
+            className={`btn ${filterAvailableOnly ? 'btn-secondary' : 'btn-outline'}`}
+            onClick={() => {
+              setFilterAvailableOnly(prev => !prev);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+          >
+            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }}></span>
+            교환 가능 상태만 보기
           </button>
         </div>
 
@@ -214,7 +232,18 @@ export function PostFeed({
               <div 
                 key={post.id} 
                 className="glass-card"
-                style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', border: cardBorder, boxShadow: cardShadow, background: cardBackground, minHeight: '260px' }}
+                style={{ 
+                  textAlign: 'left', 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  justifyContent: 'space-between', 
+                  border: cardBorder, 
+                  boxShadow: cardShadow, 
+                  background: cardBackground, 
+                  minHeight: '260px',
+                  opacity: post.is_completed ? 0.6 : 1,
+                  transition: 'opacity 0.2s ease'
+                }}
               >
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
@@ -257,6 +286,7 @@ export function PostFeed({
                         )}
 
                         {isMyPost && <span className="badge" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff' }}>내 글</span>}
+                        {post.is_completed && <span className="badge" style={{ background: '#6b7280', color: '#fff', fontWeight: 'bold' }}>✓ 거래 완료</span>}
                       </div>
                       <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                         {new Date(post.created_at).toLocaleString('ko-KR', { hour12: false }).slice(0, -3)}
@@ -388,15 +418,17 @@ export function PostFeed({
                   )}
                   
                   {post.contact && post.contact.trim() && (
-                    <a 
-                      href={post.contact.startsWith('http') ? post.contact : `https://${post.contact}`}
-                      target="_blank" 
-                      rel="noopener noreferrer" 
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = post.contact.startsWith('http') ? post.contact : `https://${post.contact}`;
+                        window.open(url, '_blank', 'noopener,noreferrer');
+                      }}
                       className="btn btn-secondary"
-                      style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                      style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}
                     >
                       <MessageCircle size={14} /> 연락하기
-                    </a>
+                    </button>
                   )}
                   
                   {!isMyPost && (
@@ -422,7 +454,15 @@ export function PostFeed({
                   )}
                   
                   {isMyPost && (
-                    <div style={{ display: 'flex', gap: '4px', width: '100%', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: '4px', width: '100%', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                      <button 
+                        className="btn btn-outline" 
+                        onClick={() => handleTogglePostComplete(post.id, post.is_completed)}
+                        style={{ padding: '0.5rem 0.85rem', fontSize: '0.82rem', color: post.is_completed ? '#fca5a5' : '#86efac', borderColor: post.is_completed ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)', fontWeight: 'bold' }}
+                        title={post.is_completed ? "거래중 상태로 돌리기" : "거래 완료 상태로 변경"}
+                      >
+                        {post.is_completed ? "복원" : "완료"}
+                      </button>
                       <button 
                         className="btn btn-outline" 
                         onClick={() => handleOpenEditModal(post)}
@@ -457,7 +497,7 @@ export function PostFeed({
                     onClick={() => toggleComments(post.id)}
                     style={{ background: 'none', border: 'none', color: expandedComments[post.id] ? 'var(--primary-color)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', padding: '0 2px' }}
                   >
-                    💬 댓글 {comments[post.id] ? `(${comments[post.id].length})` : '(보기)'}
+                    💬 댓글 ({post.commentCount ?? (comments[post.id] ? comments[post.id].length : 0)})
                   </button>
 
                   {expandedComments[post.id] && (
@@ -474,7 +514,7 @@ export function PostFeed({
                                     {new Date(comment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </div>
-                                <span style={{ color: 'rgba(255,255,255,0.85)', wordBreak: 'break-all' }}>{comment.text}</span>
+                                <span style={{ color: 'rgba(255,255,255,0.85)', wordBreak: 'break-all' }}>{decodeHTML(comment.text)}</span>
                               </div>
                               <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                 {!isCommentOwner && (

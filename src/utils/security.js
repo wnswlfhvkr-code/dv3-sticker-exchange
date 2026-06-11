@@ -23,6 +23,25 @@ export function sanitizeInput(text) {
 }
 
 /**
+ * 이스케이프된 HTML 엔티티 문자열을 원래의 기호 문자로 다시 안전하게 복원(디코딩)합니다.
+ * 화면에 슬래시(/)나 따옴표 등이 깨져서 &#x2F; 등으로 나오는 현상을 해결합니다.
+ * 
+ * @param {string} html 이스케이프된 문자열
+ * @returns {string} 원래의 깨끗한 문자열
+ */
+export function decodeHTML(html) {
+  if (typeof html !== 'string') return '';
+  return html
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/');
+}
+
+
+/**
  * 회원 가입 및 로그인 시 입력받은 닉네임이 정상적인 문자열(한글, 영문, 숫자, 일부 공백)로만 
  * 구성되어 있는지 검사합니다. SQL Injection 및 해킹용 불량 닉네임을 사전 차단합니다.
  * 

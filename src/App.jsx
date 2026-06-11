@@ -123,6 +123,7 @@ function App() {
         handleOpenAdminTab={adminVM.handleOpenAdminTab}
         setIsMyInfoOpen={postVM.setIsMyInfoOpen}
         setIsBugModalOpen={adminVM.setIsBugModalOpen}
+        unreadCounts={chatVM.unreadCounts}
       />
 
       {/* 2. 로그인 모달 */}
@@ -240,6 +241,8 @@ function App() {
         setMyContact={postVM.setMyContact}
         posts={postVM.posts}
         handleDeletePost={postVM.handleDeletePost}
+        handleOpenEditModal={postVM.handleOpenEditModal}
+        handleTogglePostComplete={postVM.handleTogglePostComplete}
       />
 
       {/* 10. 신고 작성 모달 */}
