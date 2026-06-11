@@ -3,6 +3,7 @@ import { KeyRound, Megaphone, MessageCircle, RefreshCw, Send, Trash2 } from 'luc
 import { BOARD_TYPES } from './boardService';
 import { useBoardViewModel } from './useBoardViewModel';
 import { decodeHTML } from '../../utils/security';
+import { AdBanner } from '../../components/AdBanner';
 
 const boardIcons = {
   notice: Megaphone,
@@ -29,6 +30,9 @@ export function BoardSection({ userNickname }) {
 
   return (
     <section style={{ width: '100%', maxWidth: '800px', margin: '0 auto 2.5rem' }}>
+      {/* 자유게시판 상단 광고 배너 */}
+      <AdBanner type="horizontal" />
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <BoardIcon size={20} color="var(--primary-color)" />

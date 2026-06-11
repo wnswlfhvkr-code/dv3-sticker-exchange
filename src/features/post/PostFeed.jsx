@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, RefreshCw, Sparkles, Trash2, MessageSquare, MessageCircle } from 'lucide-react';
 import { stickersData, categories } from '../../stickersData';
 import { decodeHTML } from '../../utils/security';
+import { AdBanner } from '../../components/AdBanner';
 
 export function PostFeed({
   posts,
@@ -129,6 +130,9 @@ export function PostFeed({
 
   return (
     <>
+      {/* 교환소 피드 상단 후원 광고 배너 */}
+      <AdBanner type="horizontal" />
+
       {/* 검색 및 필터 바 */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>

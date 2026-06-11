@@ -32,8 +32,7 @@ import { StickerDetailGrid } from './features/sticker/StickerDetailGrid';
 
 // 공통 Components
 import { Header } from './components/Header';
-
-import { Info } from 'lucide-react';
+import { Footer } from './components/Footer';
 
 function App() {
   // 1. 사용자 인증 및 세션 정보
@@ -313,13 +312,8 @@ function App() {
         handleLeaveChatRoom={chatVM.handleLeaveChatRoom}
       />
 
-      {/* 하단 푸터 */}
-      <footer style={{ marginTop: 'auto', paddingTop: '3rem', color: 'var(--text-muted)', fontSize: '0.85rem', textAlign: 'center' }}>
-        <p>드래곤 빌리지 3 스티커 매칭 교환소 © 2026. All Rights Reserved.</p>
-        <p style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}>
-          <Info size={14} /> 본 사이트는 드빌 3 유저 간의 교환 편의 제공을 위해 개인 제작되었습니다.
-        </p>
-      </footer>
+      {/* 하단 푸터 및 이용약관 모달 */}
+      <Footer />
     </div>
   );
 }
