@@ -584,3 +584,28 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+/* 데스크톱 화면 제일 끝 고정 사이드 광고 배너 스타일 */
+.sidebar-ad {
+  display: none;
+  position: fixed;
+  top: 120px;
+  width: 160px;
+  height: 600px;
+  z-index: 100;
+  pointer-events: auto;
+}
+
+/* 1440px 이상의 넓은 데스크톱 모니터에서만 노출하여 본문 침범 방지 */
+@media (min-width: 1440px) {
+  .sidebar-ad {
+    display: block;
+  }
+  .sidebar-ad-left {
+    left: 20px;
+  }
+  .sidebar-ad-right {
+    right: 20px;
+  }
+}
+
+

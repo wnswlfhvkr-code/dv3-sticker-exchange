@@ -33,6 +33,7 @@ import { StickerDetailGrid } from './features/sticker/StickerDetailGrid';
 // 공통 Components
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { AdBanner } from './components/AdBanner';
 
 function App() {
   // 1. 사용자 인증 및 세션 정보
@@ -113,6 +114,14 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* 화면 제일 끝쪽 데스크톱 전용 사이드 광고 배너 */}
+      <div className="sidebar-ad sidebar-ad-left">
+        <AdBanner type="vertical" />
+      </div>
+      <div className="sidebar-ad sidebar-ad-right">
+        <AdBanner type="vertical" />
+      </div>
+
       {/* 1. 상단 글로벌 헤더 */}
       <Header 
         userNickname={authVM.userNickname}
