@@ -47,12 +47,12 @@ export function PostFormModal({
           {/* 등록하려는 카드 목록 요약 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <h3 style={{ fontSize: '0.82rem', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '4px', margin: 0 }}>
-              <ShoppingCart size={12} color="var(--primary-color)" /> 등록할 카드 요약 ({myHaves.length + myWants.length}개)
+              <ShoppingCart size={12} color="var(--primary-color)" /> 등록할 스티커 요약 ({myHaves.length + myWants.length}개)
             </h3>
             
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '150px', overflowY: 'auto' }}>
               <div>
-                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 'bold' }}>🟢 줄 수 있는 카드 ({myHaves.length}):</span>
+                <span style={{ fontSize: '0.72rem', color: '#10b981', fontWeight: 'bold' }}>🟢 줄 수 있는 스티커 ({myHaves.length}):</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
                   {myHaves.map(id => {
                     const [catId, s] = id.split('-');
@@ -66,9 +66,9 @@ export function PostFormModal({
                   {myHaves.length === 0 && <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>없음</span>}
                 </div>
               </div>
-
+ 
               <div>
-                <span style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 'bold' }}>🔴 받고 싶은 카드 ({myWants.length}):</span>
+                <span style={{ fontSize: '0.72rem', color: '#ef4444', fontWeight: 'bold' }}>🔴 받고 싶은 스티커 ({myWants.length}):</span>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px', marginTop: '4px' }}>
                   {myWants.map(id => {
                     const [catId, s] = id.split('-');

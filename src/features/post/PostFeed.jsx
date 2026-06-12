@@ -347,7 +347,7 @@ export function PostFeed({
                           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'}
                         >
                           <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#fff', fontWeight: '600' }}>
-                            📦 교환 카드 목록 ({post.haves.length + post.wants.length}개)
+                            📦 교환 스티커 목록 ({post.haves.length + post.wants.length}개)
                           </span>
                           <span style={{ fontSize: '0.7rem', color: isExpanded ? '#fca5a5' : '#86efac' }}>
                             {isExpanded ? '접기 ▲' : '자세히 보기 ▼'}
@@ -358,7 +358,7 @@ export function PostFeed({
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem', borderLeft: '2px solid rgba(255, 255, 255, 0.05)', paddingLeft: '0.75rem', marginLeft: '0.2rem' }}>
                             {hasHaves && (
                               <div>
-                                <div style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>🟢 줄 수 있는 카드</div>
+                                <div style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>🟢 줄 수 있는 스티커</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
                                   {post.haves.map(id => {
                                     const [catId, s] = id.split('-');
@@ -379,7 +379,7 @@ export function PostFeed({
 
                             {hasWants && (
                               <div>
-                                <div style={{ fontSize: '0.78rem', color: '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>🔴 받고 싶은 카드</div>
+                                <div style={{ fontSize: '0.78rem', color: '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>🔴 받고 싶은 스티커</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
                                   {post.wants.map(id => {
                                     const [catId, s] = id.split('-');
@@ -408,13 +408,13 @@ export function PostFeed({
                     <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '8px', padding: '0.5rem 0.65rem', marginBottom: '0.85rem', fontSize: '0.76rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {myWantsMatch.length > 0 && (
                         <div>
-                          <div style={{ fontWeight: '700', color: '#34d399', marginBottom: '2px' }}>🎁 내가 받을 수 있는 카드: </div>
+                          <div style={{ fontWeight: '700', color: '#34d399', marginBottom: '2px' }}>🎁 내가 받을 수 있는 스티커: </div>
                           {renderMatchCardsByStars(myWantsMatch)}
                         </div>
                       )}
                       {myHavesMatch.length > 0 && (
                         <div style={{ marginTop: myWantsMatch.length > 0 ? '4px' : '0' }}>
-                          <div style={{ fontWeight: '700', color: '#f87171', marginBottom: '2px' }}>✅ 내가 줄 수 있는 카드: </div>
+                          <div style={{ fontWeight: '700', color: '#f87171', marginBottom: '2px' }}>✅ 내가 줄 수 있는 스티커: </div>
                           {renderMatchCardsByStars(myHavesMatch)}
                         </div>
                       )}

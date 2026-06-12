@@ -134,7 +134,7 @@ export function EditPostModal({
               내 교환글 수정하기
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              줄 수 있는 카드와 받고 싶은 카드를 자유롭게 수정하고 완료 버튼을 눌러주세요.
+              줄 수 있는 스티커와 받고 싶은 스티커를 자유롭게 수정하고 완료 버튼을 눌러주세요.
             </p>
           </div>
 
@@ -170,7 +170,7 @@ export function EditPostModal({
                 fontSize: '0.85rem'
               }}
             >
-              🟢 줄 수 있는 카드 수정 ({editHaves.length}개)
+              🟢 줄 수 있는 스티커 수정 ({editHaves.length}개)
             </button>
             <button
               type="button"
@@ -187,7 +187,7 @@ export function EditPostModal({
                 fontSize: '0.85rem'
               }}
             >
-              🔴 받고 싶은 카드 수정 ({editWants.length}개)
+              🔴 받고 싶은 스티커 수정 ({editWants.length}개)
             </button>
           </div>
 
@@ -388,7 +388,7 @@ export function EditPostModal({
               })}
             </div>
             <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '2px' }}>
-              💡 PC: 좌클릭은 줄 수 있는 카드, 우클릭은 받고 싶은 카드 / 모바일: 탭, 더블탭
+              💡 PC: 좌클릭은 줄 수 있는 스티커, 우클릭은 받고 싶은 스티커 / 모바일: 탭, 더블탭
             </div>
           </div>
 

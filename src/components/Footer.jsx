@@ -82,10 +82,10 @@ export function Footer() {
               color: 'rgba(255, 255, 255, 0.4)',
             }}>
               <Mail size={15} />
-              문의: helper.dv3card@gmail.com
+              문의: helper.dv3sticker@gmail.com
             </span>
           </div>
-
+ 
           {/* 면책조항 및 저작권 정보 */}
           <div style={{
             maxWidth: '700px',
@@ -98,7 +98,7 @@ export function Footer() {
           }}>
             <p>본 서비스는 유저 편의를 위해 자발적으로 구축된 비공식 개별 정보 교환 도구입니다.</p>
             <p>드래곤빌리지 및 관련 스티커 아트워크, 상표권은 원 저작권사(highbrow 등)에 귀속되어 있습니다.</p>
-            <p>© 2026 DV3 카드교환소. All Rights Reserved.</p>
+            <p>© 2026 DV3 스티커교환소. All Rights Reserved.</p>
           </div>
         </div>
       </footer>

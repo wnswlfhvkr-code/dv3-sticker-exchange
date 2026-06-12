@@ -503,9 +503,9 @@ export function useChatViewModel({ userNickname }) {
   useEffect(() => {
     const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
     if (totalUnread > 0) {
-      document.title = `(${totalUnread}) 드래곤빌리지3 카드교환소`;
+      document.title = `(${totalUnread}) 드래곤빌리지3 스티커교환소`;
     } else {
-      document.title = `드래곤빌리지3 카드교환소`;
+      document.title = `드래곤빌리지3 스티커교환소`;
     }
   }, [unreadCounts]);
 

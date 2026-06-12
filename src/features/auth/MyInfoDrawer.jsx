@@ -159,7 +159,7 @@ export function MyInfoDrawer({
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.78rem' }}>
                       {hasHaves && (
                         <div>
-                          <span style={{ color: '#10b981', fontWeight: 'bold' }}>🟢 줄 수 있는 카드: </span>
+                          <span style={{ color: '#10b981', fontWeight: 'bold' }}>🟢 줄 수 있는 스티커: </span>
                           <span style={{ color: '#a7f3d0' }}>
                             {post.haves.map(id => {
                               const [catId, s] = id.split('-');
@@ -171,7 +171,7 @@ export function MyInfoDrawer({
                       )}
                       {hasWants && (
                         <div>
-                          <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 받고 싶은 카드: </span>
+                          <span style={{ color: '#ef4444', fontWeight: 'bold' }}>🔴 받고 싶은 스티커: </span>
                           <span style={{ color: '#fca5a5' }}>
                             {post.wants.map(id => {
                               const [catId, s] = id.split('-');

@@ -70,7 +70,7 @@ export function StickerDetailGrid({
   };
 
   const showGoldenWarning = () => {
-    setWarningMessage("🔒 골든 등급 카드는 교환할 수 없습니다!");
+    setWarningMessage("🔒 골든 등급 스티커는 교환할 수 없습니다!");
   };
 
   const clearTouchTimer = (stickerId) => {
@@ -235,11 +235,11 @@ export function StickerDetailGrid({
             width: '100%'
           }}>
             <span style={{ fontSize: '0.76rem', color: '#86efac', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              🖱️ 마우스 좌클릭 → <span style={{ color: '#10b981' }}>줄 수 있는 카드</span>
+              🖱️ 마우스 좌클릭 → <span style={{ color: '#10b981' }}>줄 수 있는 스티커</span>
             </span>
             <span style={{ color: 'rgba(255,255,255,0.2)' }}>|</span>
             <span style={{ fontSize: '0.76rem', color: '#fca5a5', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              🖱️ 우클릭·모바일 더블탭 → <span style={{ color: '#ef4444' }}>받고 싶은 카드</span>
+              🖱️ 우클릭·모바일 더블탭 → <span style={{ color: '#ef4444' }}>받고 싶은 스티커</span>
             </span>
           </div>
 
@@ -435,8 +435,8 @@ export function StickerDetailGrid({
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   zIndex: 8
-                }} title={sticker ? sticker.name : `${slotNum}번 카드`}>
-                  {sticker ? sticker.name : `${slotNum}번 카드`}
+                }} title={sticker ? sticker.name : `${slotNum}번 스티커`}>
+                  {sticker ? sticker.name : `${slotNum}번 스티커`}
                 </div>
 
                 {/* 선택 여부 체크 배지 */}

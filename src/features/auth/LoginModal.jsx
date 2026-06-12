@@ -21,7 +21,7 @@ export function LoginModal({
     <div className="modal-overlay" style={{ display: 'flex', zIndex: 1000 }}>
       <div className="modal-content glass-card" style={{ maxWidth: '400px', width: '90%', padding: '2rem' }}>
         <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '0.5rem', textAlign: 'center', color: 'var(--primary-color)' }}>
-          드래곤빌리지3 카드교환소
+          드래곤빌리지3 스티커교환소
         </h2>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginBottom: '1.5rem' }}>
           교환글 등록 및 1:1 채팅을 위해 로그인해주세요.

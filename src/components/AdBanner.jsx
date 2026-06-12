@@ -130,7 +130,7 @@ export function AdBanner({ type = 'horizontal' }) {
               textAlign: 'center',
               textShadow: '0 0 10px rgba(255,255,255,0.05)',
             }}>
-              카드교환소 후원 배너
+              스티커교환소 후원 배너
             </div>
 
             <div style={{
@@ -222,7 +222,7 @@ export function AdBanner({ type = 'horizontal' }) {
           color: 'rgba(255, 255, 255, 0.6)',
           textAlign: 'center',
         }}>
-          카드교환소 후원 광고 구역입니다. (애드센스 승인 심사 대기 중)
+          스티커교환소 후원 광고 구역입니다. (애드센스 승인 심사 대기 중)
         </span>
       </div>
 

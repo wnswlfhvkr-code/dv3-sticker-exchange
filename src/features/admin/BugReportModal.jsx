@@ -80,7 +80,7 @@ export function BugReportModal({
             <Bug size={24} color="var(--primary-color)" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: '#fff' }}>🐛 카드교환소 버그 제보하기</h2>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: '#fff' }}>🐛 스티커교환소 버그 제보하기</h2>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>발견하신 오류나 개선 요청사항을 상세히 남겨주세요.</p>
           </div>
         </div>
@@ -108,7 +108,7 @@ export function BugReportModal({
             <input
               type="text"
               required
-              placeholder="예: 카드 상세 보기에서 이미지가 안 나와요."
+              placeholder="예: 스티커 상세 보기에서 이미지가 안 나와요."
               value={bugTitle}
               onChange={(e) => setBugTitle(e.target.value)}
               style={{

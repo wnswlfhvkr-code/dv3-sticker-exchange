@@ -14,7 +14,7 @@ export function CategoryList({
         나의 스티커북
       </h2>
       <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-        원하는 카드 묶음을 선택한 뒤, 보유 중인 카드와 필요한 카드를 표시하여 매칭을 진행해 보세요.
+        원하는 스티커 묶음을 선택한 뒤, 보유 중인 스티커와 필요한 스티커를 표시하여 매칭을 진행해 보세요.
       </p>
 
       <div style={{ 
