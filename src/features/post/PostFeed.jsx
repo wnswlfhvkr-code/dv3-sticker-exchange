@@ -38,7 +38,6 @@ export function PostFeed({
 }) {
   const [filterMatchedOnly, setFilterMatchedOnly] = useState(false);
   const [filterExchangeableOnly, setFilterExchangeableOnly] = useState(false);
-  const [filterAvailableOnly, setFilterAvailableOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 8;
@@ -46,7 +45,7 @@ export function PostFeed({
   // 필터 및 검색어 변경 시 페이지 1로 리셋
   useEffect(() => {
     setCurrentPage(1);
-  }, [filterMatchedOnly, filterExchangeableOnly, filterAvailableOnly, searchQuery]);
+  }, [filterMatchedOnly, filterExchangeableOnly, searchQuery]);
 
   // 별 개수별 카드 매칭 묶어 보여주기 헬퍼 함수
   const renderMatchCardsByStars = (matchArray) => {
@@ -100,11 +99,6 @@ export function PostFeed({
       if (!isPerfectMatch && !isPartialMatch) {
         return false;
       }
-    }
-
-    // 거래 가능(완료 제외) 글만 필터링
-    if (filterAvailableOnly && post.is_completed) {
-      return false;
     }
 
     if (searchQuery.trim()) {
@@ -165,16 +159,6 @@ export function PostFeed({
           >
             <Sparkles size={14} color={filterExchangeableOnly ? 'var(--primary-color)' : '#fff'} />
             교환 가능 글만 보기
-          </button>
-          <button 
-            className={`btn ${filterAvailableOnly ? 'btn-secondary' : 'btn-outline'}`}
-            onClick={() => {
-              setFilterAvailableOnly(prev => !prev);
-            }}
-            style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-          >
-            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }}></span>
-            교환 가능 상태만 보기
           </button>
         </div>
 

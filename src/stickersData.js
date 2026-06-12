@@ -285,5 +285,5 @@ categories.forEach(cat => {
 export const getCategoryImage = (catId) => {
   const cat = categories.find(c => c.id === catId);
   if (!cat || !cat.image) return null;
-  return `/sticker_images/thumb_${cat.image}.png`;
+  return `/sticker_images/cropped_${cat.image}.png`;
 };

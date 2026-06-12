@@ -17,14 +17,7 @@ export function CategoryList({
         원하는 스티커 묶음을 선택한 뒤, 보유 중인 스티커와 필요한 스티커를 표시하여 매칭을 진행해 보세요.
       </p>
 
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(3, 1fr)', 
-        gap: '1.2rem',
-        maxHeight: '620px',
-        overflowY: 'auto',
-        padding: '0.5rem'
-      }}>
+      <div className="category-grid">
         {categories.map((cat) => {
           const havesCount = getHavesCountInPage(cat.id);
           const wantsCount = getWantsCountInPage(cat.id);
@@ -48,21 +41,10 @@ export function CategoryList({
           return (
             <div 
               key={cat.id}
-              className="glass-card slot-item"
+              className="glass-card slot-item category-card"
               style={{ 
-                padding: 0, 
-                cursor: 'pointer', 
-                overflow: 'hidden',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                borderRadius: '20px',
                 border: borderStyle,
-                boxShadow: shadowStyle,
-                transition: 'all 0.2s ease',
-                height: '230px',
-                background: '#1d2025',
-                position: 'relative'
+                boxShadow: shadowStyle
               }}
               onClick={() => setSelectedCategoryId(cat.id)}
             >
@@ -83,27 +65,13 @@ export function CategoryList({
               )}
 
               {/* 상단: 대표 이미지 영역 */}
-              <div style={{ 
-                height: '185px', 
-                width: '100%', 
-                overflow: 'hidden',
-                position: 'relative',
-                background: '#15181c'
-              }}>
+              <div className="category-img-container">
                 {imgUrl ? (
                   <img 
                     src={imgUrl} 
                     alt={cat.name} 
                     title={cat.name}
-                    style={{ 
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'cover',
-                      transformOrigin: 'center top',
-                      transform: 'scale(1.45)',
-                      objectPosition: 'center 28%',
-                      display: 'block'
-                    }}
+                    className="category-img"
                   />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
@@ -113,17 +81,7 @@ export function CategoryList({
               </div>
 
               {/* 하단: 카테고리 이름 영역 */}
-              <div style={{ 
-                height: '45px',
-                background: '#25282e',
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                padding: '0.25rem 0.5rem',
-                borderTop: '1.5px solid rgba(255,255,255,0.05)',
-                textAlign: 'center',
-                width: '100%'
-              }}>
+              <div className="category-title-container">
                 <span style={{ 
                   fontWeight: '700', 
                   fontSize: '0.88rem', 
