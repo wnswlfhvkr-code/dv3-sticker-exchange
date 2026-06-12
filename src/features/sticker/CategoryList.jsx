@@ -98,9 +98,10 @@ export function CategoryList({
                     style={{ 
                       width: '100%',
                       height: '100%',
-                      objectFit: 'contain',
-                      display: 'block',
-                      padding: '8px'
+                      objectFit: 'cover',
+                      objectPosition: 'center 38%',
+                      transform: 'scale(1.35)',
+                      display: 'block'
                     }}
                   />
                 ) : (
