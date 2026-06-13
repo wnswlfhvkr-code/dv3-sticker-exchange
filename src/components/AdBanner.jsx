@@ -172,8 +172,8 @@ export function AdBanner({ type = 'horizontal' }) {
   }
 
   // 2-2. 가로형 (horizontal)
-  // 모바일(<=728px)에서는 모바일 띠(320x50), 데스크톱에서는 긴 가로 배너(728x90)
-  const adUnit = isMobile ? 'DAN-PRyjLRSIiNfRtLAi' : 'DAN-rxrtRFNaR78fqsA2';
+  // 모바일(<=728px)에서는 모바일 띠(320x50), 데스크톱에서는 긴 가로 배너(728x90, 대체광고 연동 단위)
+  const adUnit = isMobile ? 'DAN-PRyjLRSIiNfRtLAi' : 'DAN-A07OtvumyDqAYcM9';
   const adWidth = isMobile ? '320' : '728';
   const adHeight = isMobile ? '50' : '90';
 
