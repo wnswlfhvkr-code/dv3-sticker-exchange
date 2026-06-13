@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 
 export function AdBanner({ type = 'horizontal' }) {
-  // 실제 애드센스가 승인되어 활성화되었을 때 true로 변경하면 됩니다.
+  // 실제 애드센스가 승인되어 활성화되었을 때 true로 변경하면 수동으로 강제 애드센스 고정이 가능합니다.
   const isAdsenseActive = false; 
   const publisherId = 'ca-pub-3489777827665018'; // 실제 퍼블리셔 ID
-  const slotId = type === 'horizontal' ? '1234567890' : '0987654321';
+  // 애드센스 단독 게재용 슬롯 ID
+  const slotId = type === 'horizontal' ? '1234567890' : '0987654321'; 
 
   const [isMobile, setIsMobile] = useState(false);
   const insRef = useRef(null);
@@ -18,6 +19,57 @@ export function AdBanner({ type = 'horizontal' }) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 카카오 애드핏 실패(NO-AD) 시 구글 애드센스 대체 송출용 전역 콜백 등록
+  useEffect(() => {
+    if (isAdsenseActive) return;
+
+    // 1. 가로형 배너 실패 콜백 등록
+    window.onAdfitFailHorizontal = (elm) => {
+      console.warn('Adfit Horizontal Ad load failed (No Ad). Injecting Google AdSense fallback...');
+      if (!elm) return;
+
+      const fallbackWidth = window.innerWidth <= 728 ? '320' : '728';
+      const fallbackHeight = window.innerWidth <= 728 ? '50' : '90';
+
+      elm.innerHTML = `
+        <ins class="adsbygoogle"
+          style="display:inline-block;width:${fallbackWidth}px;height:${fallbackHeight}px"
+          data-ad-client="${publisherId}"
+          data-ad-slot="1234567890"></ins>
+      `;
+
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error('AdSense Fallback push error (Horizontal):', e);
+      }
+    };
+
+    // 2. 세로형 배너 실패 콜백 등록
+    window.onAdfitFailVertical = (elm) => {
+      console.warn('Adfit Vertical Ad load failed (No Ad). Injecting Google AdSense fallback...');
+      if (!elm) return;
+
+      elm.innerHTML = `
+        <ins class="adsbygoogle"
+          style="display:inline-block;width:160px;height:600px"
+          data-ad-client="${publisherId}"
+          data-ad-slot="0987654321"></ins>
+      `;
+
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.error('AdSense Fallback push error (Vertical):', e);
+      }
+    };
+
+    return () => {
+      delete window.onAdfitFailHorizontal;
+      delete window.onAdfitFailVertical;
+    };
+  }, [isAdsenseActive]);
 
   // 카카오 애드핏 ba.min.js 스크립트 동적 삽입 및 청소
   useEffect(() => {
@@ -53,7 +105,7 @@ export function AdBanner({ type = 'horizontal' }) {
     };
   }, [type, isMobile, isAdsenseActive]);
 
-  // 1. 구글 애드센스 활성화 모드일 때 반환할 HTML
+  // 1. 구글 애드센스 강제 고정 모드일 때 반환할 HTML
   if (isAdsenseActive) {
     return (
       <div 
@@ -86,7 +138,7 @@ export function AdBanner({ type = 'horizontal' }) {
     );
   }
 
-  // 2. 카카오 애드핏 활성화 모드 (기본 상태)
+  // 2. 카카오 애드핏 활성화 모드 (기본 상태) + 실패 시 애드센스 자동 대체
   
   // 2-1. 세로형 (vertical) - 데스크톱 사이드바용 (160x600)
   if (type === 'vertical') {
@@ -113,6 +165,7 @@ export function AdBanner({ type = 'horizontal' }) {
           data-ad-unit="DAN-lpnU5qQK1FatjgnF"
           data-ad-width="160"
           data-ad-height="600"
+          data-ad-onfail="onAdfitFailVertical"
         />
       </div>
     );
@@ -149,10 +202,12 @@ export function AdBanner({ type = 'horizontal' }) {
         data-ad-unit={adUnit}
         data-ad-width={adWidth}
         data-ad-height={adHeight}
+        data-ad-onfail="onAdfitFailHorizontal"
       />
     </div>
   );
 }
+
 
 
 
