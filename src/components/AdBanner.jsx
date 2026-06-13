@@ -1,24 +1,53 @@
-import React, { useEffect } from 'react';
-import { Sparkles } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
 
 export function AdBanner({ type = 'horizontal' }) {
   // 실제 애드센스가 승인되어 활성화되었을 때 true로 변경하면 됩니다.
   const isAdsenseActive = false; 
-  const publisherId = 'ca-pub-3489777827665018'; // 실제 퍼블리셔 ID 세팅 완료
-  const slotId = type === 'horizontal' ? '1234567890' : '0987654321'; // 본인의 슬롯 ID로 변경
+  const publisherId = 'ca-pub-3489777827665018'; // 실제 퍼블리셔 ID
+  const slotId = type === 'horizontal' ? '1234567890' : '0987654321';
 
+  const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef(null);
+
+  // 화면 크기에 따른 모바일/데스크톱 판단 (가로형 배너 분기용)
   useEffect(() => {
-    if (isAdsenseActive) {
-      try {
-        // 구글 애드센스 스크립트 실행을 유도합니다.
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-      } catch (e) {
-        console.error('AdSense 렌더링 오류:', e);
-      }
-    }
-  }, [isAdsenseActive]);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 728);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // 구글 애드센스 활성화 모드일 때 반환할 HTML
+  // 카카오 애드핏 ba.min.js 스크립트 동적 로드 및 청소
+  useEffect(() => {
+    // 애드센스가 켜져 있다면 애드핏은 작동하지 않음
+    if (isAdsenseActive || !containerRef.current) return;
+
+    // 기존의 스크립트 태그가 있으면 제거 (반응형/타입 전환 시 리프레시 유도)
+    const existingScript = containerRef.current.querySelector('script[src*="kas/static/ba.min.js"]');
+    if (existingScript) {
+      containerRef.current.removeChild(existingScript);
+    }
+
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
+    script.async = true;
+
+    containerRef.current.appendChild(script);
+
+    return () => {
+      if (containerRef.current) {
+        const scr = containerRef.current.querySelector('script[src*="kas/static/ba.min.js"]');
+        if (scr) {
+          containerRef.current.removeChild(scr);
+        }
+      }
+    };
+  }, [type, isMobile, isAdsenseActive]);
+
+  // 1. 구글 애드센스 활성화 모드일 때 반환할 HTML
   if (isAdsenseActive) {
     return (
       <div 
@@ -51,189 +80,71 @@ export function AdBanner({ type = 'horizontal' }) {
     );
   }
 
-  // 세로형(Vertical) 사이드 배너 플레이스홀더 디자인
+  // 2. 카카오 애드핏 활성화 모드 (기본 상태)
+  
+  // 2-1. 세로형 (vertical) - 데스크톱 사이드바용 (160x600)
   if (type === 'vertical') {
     return (
       <div 
-        className="premium-ad-placeholder vertical"
+        ref={containerRef}
+        className="adfit-container vertical"
         style={{
-          width: '100%',
-          height: '100%',
-          minHeight: '600px',
-          background: 'rgba(255, 255, 255, 0.02)',
-          backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          borderRadius: '20px',
+          width: '160px',
+          height: '600px',
+          margin: '0 auto',
           display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
           justifyContent: 'center',
-          position: 'relative',
-          overflow: 'hidden',
-          boxShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.3)',
-          transition: 'all 0.3s ease',
-          padding: '24px 12px',
+          alignItems: 'center',
+          background: 'rgba(255, 255, 255, 0.01)',
+          borderRadius: '12px',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          overflow: 'hidden'
         }}
       >
-        {/* 세로형 네온 장식 테두리 효과 (왼쪽 세로선) */}
-        <div style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: '2px',
-          background: 'linear-gradient(180deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.45), rgba(59, 130, 246, 0.1))',
-        }} />
-
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '20px',
-          height: '100%',
-          justifyContent: 'space-between',
-        }}>
-          {/* 상단 뱃지 */}
-          <span style={{
-            fontSize: '10px',
-            fontWeight: '800',
-            letterSpacing: '1.5px',
-            color: '#a78bfa',
-            background: 'rgba(139, 92, 246, 0.12)',
-            padding: '4px 10px',
-            borderRadius: '20px',
-            border: '1px solid rgba(139, 92, 246, 0.25)',
-            textTransform: 'uppercase',
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '4px',
-          }}>
-            <Sparkles size={10} />
-            Sponsor
-          </span>
-
-          {/* 중앙 세로 텍스트/안내문 */}
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '24px',
-          }}>
-            <div style={{
-              writingMode: 'vertical-rl',
-              textOrientation: 'mixed',
-              fontSize: '14px',
-              fontWeight: '600',
-              color: 'rgba(255, 255, 255, 0.45)',
-              letterSpacing: '6px',
-              lineHeight: '1.8',
-              textAlign: 'center',
-              textShadow: '0 0 10px rgba(255,255,255,0.05)',
-            }}>
-              스티커교환소 후원 배너
-            </div>
-
-            <div style={{
-              fontSize: '11px',
-              color: 'rgba(255, 255, 255, 0.25)',
-              textAlign: 'center',
-              lineHeight: '1.6',
-              maxWidth: '120px',
-            }}>
-              데스크톱 와이드 전용 세로 광고 지면
-            </div>
-          </div>
-
-          {/* 하단 서브 텍스트 */}
-          <span style={{
-            fontSize: '9px',
-            color: 'rgba(255, 255, 255, 0.18)',
-            textAlign: 'center',
-            maxWidth: '120px',
-          }}>
-            구글 애드센스 심사 대기 중입니다.
-          </span>
-        </div>
+        <ins 
+          className="kakao_ad_area" 
+          style={{ display: 'none' }}
+          data-ad-unit="DAN-lpnU5qQK1FatjgnF"
+          data-ad-width="160"
+          data-ad-height="600"
+        />
       </div>
     );
   }
 
-  // 가로형(Horizontal) 배너 플레이스홀더 디자인
+  // 2-2. 가로형 (horizontal)
+  // 모바일(<=728px)에서는 모바일 띠(320x50), 데스크톱에서는 긴 가로 배너(728x90)
+  const adUnit = isMobile ? 'DAN-PRyjLRSIiNfRtLAi' : 'DAN-rxrtRFNaR78fqsA2';
+  const adWidth = isMobile ? '320' : '728';
+  const adHeight = isMobile ? '50' : '90';
+
   return (
     <div 
-      className="premium-ad-placeholder horizontal"
+      ref={containerRef}
+      className={`adfit-container horizontal ${isMobile ? 'mobile' : 'desktop'}`}
       style={{
-        margin: '16px auto',
-        padding: '16px 20px',
         width: '100%',
-        maxWidth: '1200px',
-        minHeight: '80px',
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255, 255, 255, 0.07)',
-        borderRadius: '16px',
+        maxWidth: isMobile ? '320px' : '728px',
+        height: isMobile ? '50px' : '90px',
+        margin: '20px auto',
         display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
         justifyContent: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
-        transition: 'all 0.3s ease',
+        alignItems: 'center',
+        background: 'rgba(255, 255, 255, 0.01)',
+        borderRadius: '12px',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        overflow: 'hidden'
       }}
     >
-      {/* 은은한 네온 장식 테두리 효과 */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        height: '2px',
-        background: 'linear-gradient(90deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.4), rgba(59, 130, 246, 0.1))',
-      }} />
-
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '12px',
-        flexWrap: 'wrap',
-        justifyContent: 'center'
-      }}>
-        <span style={{
-          fontSize: '11px',
-          fontWeight: '700',
-          letterSpacing: '1px',
-          color: '#a78bfa',
-          background: 'rgba(139, 92, 246, 0.15)',
-          padding: '2px 8px',
-          borderRadius: '20px',
-          border: '1px solid rgba(139, 92, 246, 0.3)',
-          textTransform: 'uppercase',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '4px',
-        }}>
-          <Sparkles size={12} />
-          Sponsor ad
-        </span>
-        <span style={{
-          fontSize: '13px',
-          fontWeight: '500',
-          color: 'rgba(255, 255, 255, 0.6)',
-          textAlign: 'center',
-        }}>
-          스티커교환소 후원 광고 구역입니다. (애드센스 승인 심사 대기 중)
-        </span>
-      </div>
-
-      <span style={{
-        fontSize: '11px',
-        color: 'rgba(255, 255, 255, 0.35)',
-        marginTop: '6px',
-        textAlign: 'center',
-      }}>
-        광고 게재가 승인되면 이 영역에 유익한 배너가 표시됩니다.
-      </span>
+      <ins 
+        key={`${adUnit}-${adWidth}-${adHeight}`} // 상태 변환 시 강제 DOM 재구축 유도
+        className="kakao_ad_area" 
+        style={{ display: 'none' }}
+        data-ad-unit={adUnit}
+        data-ad-width={adWidth}
+        data-ad-height={adHeight}
+      />
     </div>
   );
 }
+
