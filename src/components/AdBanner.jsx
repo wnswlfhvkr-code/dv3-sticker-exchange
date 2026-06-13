@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 
 export function AdBanner({ type = 'horizontal' }) {
   // 실제 애드센스가 승인되어 활성화되었을 때 true로 변경하면 됩니다.
@@ -7,6 +7,7 @@ export function AdBanner({ type = 'horizontal' }) {
   const slotId = type === 'horizontal' ? '1234567890' : '0987654321';
 
   const [isMobile, setIsMobile] = useState(false);
+  const insRef = useRef(null);
 
   // 화면 크기에 따른 모바일/데스크톱 판단 (가로형 배너 분기용)
   useEffect(() => {
@@ -17,6 +18,40 @@ export function AdBanner({ type = 'horizontal' }) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // 카카오 애드핏 ba.min.js 스크립트 동적 삽입 및 청소
+  useEffect(() => {
+    if (isAdsenseActive || !insRef.current) return;
+
+    const insElement = insRef.current;
+    const parent = insElement.parentElement;
+    if (!parent) return;
+
+    // 기존에 해당 배너 부모 아래 등록된 스크립트가 있다면 먼저 제거 (중복 실행 방지)
+    const oldScript = parent.querySelector('.adfit-script');
+    if (oldScript) {
+      parent.removeChild(oldScript);
+    }
+
+    // 새로운 script 엘리먼트 생성 및 삽입 (dangerouslySetInnerHTML의 스크립트 차단 우회)
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.charset = 'utf-8';
+    script.async = true;
+    script.className = 'adfit-script';
+    // 캐시 방지 쿼리 파라미터를 달아 매번 카카오 라이브러리가 즉시 실행 코드를 실행하도록 강제
+    script.src = `https://t1.kakaocdn.net/kas/static/ba.min.js?v=${Date.now()}-${Math.random()}`;
+
+    // ins 태그 바로 다음에 삽입하여 카카오 SDK가 로드 후 즉시 바로 위에 있는 ins를 찾을 수 있도록 유도
+    insElement.after(script);
+
+    return () => {
+      const scr = parent.querySelector('.adfit-script');
+      if (scr) {
+        parent.removeChild(scr);
+      }
+    };
+  }, [type, isMobile, isAdsenseActive]);
 
   // 1. 구글 애드센스 활성화 모드일 때 반환할 HTML
   if (isAdsenseActive) {
@@ -52,17 +87,9 @@ export function AdBanner({ type = 'horizontal' }) {
   }
 
   // 2. 카카오 애드핏 활성화 모드 (기본 상태)
-  // React 가상 DOM 우회 및 브라우저 파서 직접 구동을 위해 dangerouslySetInnerHTML 사용
   
   // 2-1. 세로형 (vertical) - 데스크톱 사이드바용 (160x600)
   if (type === 'vertical') {
-    const adHtml = `
-      <ins class="kakao_ad_area" style="display:none;"
-        data-ad-unit="DAN-lpnU5qQK1FatjgnF"
-        data-ad-width="160"
-        data-ad-height="600"></ins>
-      <script type="text/javascript" src="https://t1.kakaocdn.net/kas/static/ba.min.js" async></script>
-    `;
     return (
       <div 
         className="adfit-container vertical"
@@ -78,8 +105,16 @@ export function AdBanner({ type = 'horizontal' }) {
           border: '1px solid rgba(255, 255, 255, 0.05)',
           overflow: 'hidden'
         }}
-        dangerouslySetInnerHTML={{ __html: adHtml }}
-      />
+      >
+        <ins 
+          ref={insRef}
+          className="kakao_ad_area" 
+          style={{ display: 'none' }}
+          data-ad-unit="DAN-lpnU5qQK1FatjgnF"
+          data-ad-width="160"
+          data-ad-height="600"
+        />
+      </div>
     );
   }
 
@@ -89,17 +124,8 @@ export function AdBanner({ type = 'horizontal' }) {
   const adWidth = isMobile ? '320' : '728';
   const adHeight = isMobile ? '50' : '90';
 
-  const adHtml = `
-    <ins class="kakao_ad_area" style="display:none;"
-      data-ad-unit="${adUnit}"
-      data-ad-width="${adWidth}"
-      data-ad-height="${adHeight}"></ins>
-    <script type="text/javascript" src="https://t1.kakaocdn.net/kas/static/ba.min.js" async></script>
-  `;
-
   return (
     <div 
-      key={`${adUnit}-${adWidth}-${adHeight}`} // 뷰포트 상태 전환 시 강제 렌더링 유도
       className={`adfit-container horizontal ${isMobile ? 'mobile' : 'desktop'}`}
       style={{
         width: '100%',
@@ -114,9 +140,19 @@ export function AdBanner({ type = 'horizontal' }) {
         border: '1px solid rgba(255, 255, 255, 0.05)',
         overflow: 'hidden'
       }}
-      dangerouslySetInnerHTML={{ __html: adHtml }}
-    />
+    >
+      <ins 
+        ref={insRef}
+        key={`${adUnit}-${adWidth}-${adHeight}`} // 뷰포트 상태 전환 시 강제 DOM 재구축 유도
+        className="kakao_ad_area" 
+        style={{ display: 'none' }}
+        data-ad-unit={adUnit}
+        data-ad-width={adWidth}
+        data-ad-height={adHeight}
+      />
+    </div>
   );
 }
+
 
 
