@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export function AdBanner({ type = 'horizontal' }) {
   // 실제 애드센스가 승인되어 활성화되었을 때 true로 변경하면 됩니다.
@@ -7,7 +7,6 @@ export function AdBanner({ type = 'horizontal' }) {
   const slotId = type === 'horizontal' ? '1234567890' : '0987654321';
 
   const [isMobile, setIsMobile] = useState(false);
-  const containerRef = useRef(null);
 
   // 화면 크기에 따른 모바일/데스크톱 판단 (가로형 배너 분기용)
   useEffect(() => {
@@ -18,34 +17,6 @@ export function AdBanner({ type = 'horizontal' }) {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  // 카카오 애드핏 ba.min.js 스크립트 동적 로드 및 청소
-  useEffect(() => {
-    // 애드센스가 켜져 있다면 애드핏은 작동하지 않음
-    if (isAdsenseActive || !containerRef.current) return;
-
-    // 기존의 스크립트 태그가 있으면 제거 (반응형/타입 전환 시 리프레시 유도)
-    const existingScript = containerRef.current.querySelector('script[src*="kas/static/ba.min.js"]');
-    if (existingScript) {
-      containerRef.current.removeChild(existingScript);
-    }
-
-    const script = document.createElement('script');
-    script.type = 'text/javascript';
-    script.src = '//t1.kakaocdn.net/kas/static/ba.min.js';
-    script.async = true;
-
-    containerRef.current.appendChild(script);
-
-    return () => {
-      if (containerRef.current) {
-        const scr = containerRef.current.querySelector('script[src*="kas/static/ba.min.js"]');
-        if (scr) {
-          containerRef.current.removeChild(scr);
-        }
-      }
-    };
-  }, [type, isMobile, isAdsenseActive]);
 
   // 1. 구글 애드센스 활성화 모드일 때 반환할 HTML
   if (isAdsenseActive) {
@@ -81,12 +52,19 @@ export function AdBanner({ type = 'horizontal' }) {
   }
 
   // 2. 카카오 애드핏 활성화 모드 (기본 상태)
+  // React 가상 DOM 우회 및 브라우저 파서 직접 구동을 위해 dangerouslySetInnerHTML 사용
   
   // 2-1. 세로형 (vertical) - 데스크톱 사이드바용 (160x600)
   if (type === 'vertical') {
+    const adHtml = `
+      <ins class="kakao_ad_area" style="display:none;"
+        data-ad-unit="DAN-lpnU5qQK1FatjgnF"
+        data-ad-width="160"
+        data-ad-height="600"></ins>
+      <script type="text/javascript" src="https://t1.kakaocdn.net/kas/static/ba.min.js" async></script>
+    `;
     return (
       <div 
-        ref={containerRef}
         className="adfit-container vertical"
         style={{
           width: '160px',
@@ -100,15 +78,8 @@ export function AdBanner({ type = 'horizontal' }) {
           border: '1px solid rgba(255, 255, 255, 0.05)',
           overflow: 'hidden'
         }}
-      >
-        <ins 
-          className="kakao_ad_area" 
-          style={{ display: 'none' }}
-          data-ad-unit="DAN-lpnU5qQK1FatjgnF"
-          data-ad-width="160"
-          data-ad-height="600"
-        />
-      </div>
+        dangerouslySetInnerHTML={{ __html: adHtml }}
+      />
     );
   }
 
@@ -118,9 +89,17 @@ export function AdBanner({ type = 'horizontal' }) {
   const adWidth = isMobile ? '320' : '728';
   const adHeight = isMobile ? '50' : '90';
 
+  const adHtml = `
+    <ins class="kakao_ad_area" style="display:none;"
+      data-ad-unit="${adUnit}"
+      data-ad-width="${adWidth}"
+      data-ad-height="${adHeight}"></ins>
+    <script type="text/javascript" src="https://t1.kakaocdn.net/kas/static/ba.min.js" async></script>
+  `;
+
   return (
     <div 
-      ref={containerRef}
+      key={`${adUnit}-${adWidth}-${adHeight}`} // 뷰포트 상태 전환 시 강제 렌더링 유도
       className={`adfit-container horizontal ${isMobile ? 'mobile' : 'desktop'}`}
       style={{
         width: '100%',
@@ -135,16 +114,9 @@ export function AdBanner({ type = 'horizontal' }) {
         border: '1px solid rgba(255, 255, 255, 0.05)',
         overflow: 'hidden'
       }}
-    >
-      <ins 
-        key={`${adUnit}-${adWidth}-${adHeight}`} // 상태 변환 시 강제 DOM 재구축 유도
-        className="kakao_ad_area" 
-        style={{ display: 'none' }}
-        data-ad-unit={adUnit}
-        data-ad-width={adWidth}
-        data-ad-height={adHeight}
-      />
-    </div>
+      dangerouslySetInnerHTML={{ __html: adHtml }}
+    />
   );
 }
+
 
