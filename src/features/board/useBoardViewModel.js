@@ -19,11 +19,6 @@ export function useBoardViewModel({ userNickname, activeType }) {
   const [expandedComments, setExpandedComments] = useState({});
 
   const loadPosts = async () => {
-    if (!userNickname) {
-      setPosts([]);
-      return;
-    }
-
     setLoading(true);
     const { data, error } = await boardService.fetchPosts(activeType);
     if (!error) {
@@ -36,16 +31,13 @@ export function useBoardViewModel({ userNickname, activeType }) {
     const timer = window.setTimeout(() => {
       loadPosts();
     }, 0);
-    if (!userNickname) {
-      return () => window.clearTimeout(timer);
-    }
 
     const unsubscribe = boardService.subscribe(activeType, loadPosts);
     return () => {
       window.clearTimeout(timer);
       unsubscribe();
     };
-  }, [activeType, userNickname]);
+  }, [activeType]);
 
   const createPost = async (e) => {
     if (e && e.preventDefault) e.preventDefault();

@@ -69,41 +69,39 @@ export function BoardSection({ userNickname }) {
       </div>
 
       {!userNickname ? (
-        <div className="glass-card" style={{ padding: '1.2rem', color: 'var(--text-secondary)', textAlign: 'center', borderRadius: '10px' }}>
-          게시판은 로그인 후 이용할 수 있습니다.
+        <div className="glass-card" style={{ padding: '0.9rem 1rem', color: 'var(--text-secondary)', textAlign: 'center', borderRadius: '10px', marginBottom: '0.9rem', fontSize: '0.85rem' }}>
+          게시글을 작성하려면 로그인이 필요합니다.
         </div>
+      ) : canWrite ? (
+        <form onSubmit={boardVM.createPost} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', padding: '1rem', borderRadius: '10px', marginBottom: '0.9rem' }}>
+          <input
+            type="text"
+            value={boardVM.title}
+            onChange={(e) => boardVM.setTitle(e.target.value)}
+            placeholder="제목"
+            maxLength={80}
+            style={{ width: '100%' }}
+          />
+          <textarea
+            value={boardVM.content}
+            onChange={(e) => boardVM.setContent(e.target.value)}
+            placeholder={activeType === 'egg_code' ? '드래곤 알 코드 거래 내용을 작성하세요.' : '내용'}
+            maxLength={1200}
+            rows={4}
+            style={{ width: '100%', resize: 'vertical' }}
+          />
+          <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end', padding: '0.55rem 0.95rem', fontSize: '0.84rem' }}>
+            <Send size={14} />
+            게시글 등록
+          </button>
+        </form>
       ) : (
-        <>
-          {canWrite ? (
-            <form onSubmit={boardVM.createPost} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', padding: '1rem', borderRadius: '10px', marginBottom: '0.9rem' }}>
-              <input
-                type="text"
-                value={boardVM.title}
-                onChange={(e) => boardVM.setTitle(e.target.value)}
-                placeholder="제목"
-                maxLength={80}
-                style={{ width: '100%' }}
-              />
-              <textarea
-                value={boardVM.content}
-                onChange={(e) => boardVM.setContent(e.target.value)}
-                placeholder={activeType === 'egg_code' ? '드래곤 알 코드 거래 내용을 작성하세요.' : '내용'}
-                maxLength={1200}
-                rows={4}
-                style={{ width: '100%', resize: 'vertical' }}
-              />
-              <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end', padding: '0.55rem 0.95rem', fontSize: '0.84rem' }}>
-                <Send size={14} />
-                게시글 등록
-              </button>
-            </form>
-          ) : (
-            <div className="glass-card" style={{ padding: '0.9rem 1rem', color: 'var(--text-muted)', borderRadius: '10px', marginBottom: '0.9rem', fontSize: '0.85rem' }}>
-              공지 게시글은 관리자만 작성할 수 있습니다.
-            </div>
-          )}
+        <div className="glass-card" style={{ padding: '0.9rem 1rem', color: 'var(--text-muted)', borderRadius: '10px', marginBottom: '0.9rem', fontSize: '0.85rem' }}>
+          공지 게시글은 관리자만 작성할 수 있습니다.
+        </div>
+      )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             {boardVM.posts.length === 0 ? (
               <div className="glass-card" style={{ padding: '1.2rem', color: 'var(--text-secondary)', textAlign: 'center', borderRadius: '10px' }}>
                 아직 등록된 게시글이 없습니다.
@@ -260,8 +258,6 @@ export function BoardSection({ userNickname }) {
               ))
             )}
           </div>
-        </>
-      )}
     </section>
   );
 }
