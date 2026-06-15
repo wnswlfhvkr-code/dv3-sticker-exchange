@@ -5,7 +5,7 @@
       "headers": [
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; media-src 'self' https://assets.mixkit.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.kakaocdn.net https://*.kakao.com https://*.googlesyndication.com https://*.doubleclick.net https://*.google.com https://*.adservice.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.kakao.com https://*.kakaocdn.net https://*.google-analytics.com https://*.googlesyndication.com https://*.doubleclick.net; media-src 'self' https://assets.mixkit.co; object-src 'none'; base-uri 'self'; form-action 'self'; frame-src 'self' https://*.kakao.com https://*.google.com https://*.googlesyndication.com https://*.doubleclick.net; frame-ancestors 'none'"
         },
         {
           "key": "X-Frame-Options",
