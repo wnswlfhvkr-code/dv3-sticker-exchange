@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sanitizeInput } from '../../utils/security';
+import { sanitizeInput, decodeHTML } from '../../utils/security';
 import { boardService } from './boardService';
 
 export function useBoardViewModel({ userNickname, activeType }) {
@@ -90,8 +90,8 @@ export function useBoardViewModel({ userNickname, activeType }) {
   // --- 글 수정 핸들러 ---
   const handleOpenEditBoard = (post) => {
     setEditingPostId(post.id);
-    setEditTitle(post.title || '');
-    setEditContent(post.content || '');
+    setEditTitle(decodeHTML(post.title || ''));
+    setEditContent(decodeHTML(post.content || ''));
   };
 
   const handleCancelEditBoard = () => {

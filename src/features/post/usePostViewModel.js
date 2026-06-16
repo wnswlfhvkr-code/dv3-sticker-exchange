@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { dbService, supabase, isMock } from '../../supabaseClient';
 import { stickersData } from '../../stickersData';
-import { sanitizeInput } from '../../utils/security';
+import { sanitizeInput, decodeHTML } from '../../utils/security';
 
 export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, setMyWants }) {
   const [posts, setPosts] = useState([]);
@@ -243,7 +243,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
   // --- 글 수정 핸들러 ---
   const handleOpenEditModal = (post) => {
     setEditingPost(post);
-    setEditContact(post.contact || '');
+    setEditContact(decodeHTML(post.contact || ''));
     setEditHaves(post.haves || []);
     setEditWants(post.wants || []);
     setEditBasketMode('haves');
