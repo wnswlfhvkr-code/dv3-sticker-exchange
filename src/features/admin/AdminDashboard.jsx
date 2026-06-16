@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, RefreshCw, Trash2 } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
 
 export function AdminDashboard({
   isAdminTabOpen,
@@ -18,7 +18,12 @@ export function AdminDashboard({
   // 버그 제보 관련
   bugReportsList = [],
   handleResolveBugReport,
-  loadBugReports
+  loadBugReports,
+
+  // 통계 관련
+  statsData = null,
+  statsLoading = false,
+  loadDashboardStats
 }) {
   if (!isAdminTabOpen) return null;
 
@@ -36,7 +41,7 @@ export function AdminDashboard({
     }}>
       <div className="glass-card" style={{
         width: '100%',
-        maxWidth: '560px',
+        maxWidth: '680px', // 통계 화면을 위해 넉넉하게 확장
         border: '1px solid rgba(251, 191, 36, 0.25)',
         padding: '1.8rem',
         borderRadius: '18px',
@@ -67,7 +72,7 @@ export function AdminDashboard({
             👑 관리자 제어 센터 (간장 전용)
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-            접수된 유저 신고 내역 및 버그 제보를 모니터링하고 콘텐츠 정화를 관리합니다.
+            접수된 신고 내역, 오류 제보 확인 및 실시간 사이트 운영 통계를 모니터링합니다.
           </p>
         </div>
 
@@ -124,11 +129,30 @@ export function AdminDashboard({
           >
             📋 조치 로그 ({adminLogs.length})
           </button>
+          <button 
+            onClick={() => setAdminActiveTab("stats")}
+            style={{ 
+              flex: 1, 
+              padding: '0.6rem 0.3rem', 
+              fontSize: '0.78rem', 
+              fontWeight: '700', 
+              borderRadius: '8px', 
+              border: 'none', 
+              background: adminActiveTab === "stats" ? 'rgba(251, 191, 36, 0.15)' : 'transparent', 
+              color: adminActiveTab === "stats" ? '#fbbf24' : 'var(--text-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+          >
+            📊 사이트 통계
+          </button>
         </div>
 
         {/* 탭 내용 영역 */}
         <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem' }}>
-          {adminActiveTab === "reports" ? (
+          
+          {/* 1. 신고 목록 탭 */}
+          {adminActiveTab === "reports" && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* 신고 내역을 확인하고 처리해 주세요.</span>
@@ -190,7 +214,10 @@ export function AdminDashboard({
                 )}
               </div>
             </div>
-          ) : adminActiveTab === "bugs" ? (
+          )}
+
+          {/* 2. 버그 제보 탭 */}
+          {adminActiveTab === "bugs" && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* 유저들이 접수한 오류 및 버그 제보 목록입니다.</span>
@@ -232,7 +259,10 @@ export function AdminDashboard({
                 )}
               </div>
             </div>
-          ) : (
+          )}
+
+          {/* 3. 조치 로그 탭 */}
+          {adminActiveTab === "logs" && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* 처리 완료된 신고 로그 기록입니다.</span>
@@ -252,7 +282,7 @@ export function AdminDashboard({
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '350px', overflowY: 'auto' }}>
                 {adminLogs.map(log => (
-                  <div key={log.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.8', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                  <div key={log.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', padding: '0.85rem', borderRadius: '10px', fontSize: '0.8rem', display: 'flex', flexDirection: 'column', gap: '5px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{
                         background: log.action.includes('삭제') ? 'rgba(239, 68, 68, 0.15)' : 'rgba(16, 185, 129, 0.15)',
@@ -283,6 +313,94 @@ export function AdminDashboard({
               </div>
             </div>
           )}
+
+          {/* 4. 사이트 통계 탭 */}
+          {adminActiveTab === "stats" && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>* 실시간 및 일별 누적 사이트 활동량 지표입니다.</span>
+                <button onClick={loadDashboardStats} className="btn btn-outline" style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                  <RefreshCw size={12} className={statsLoading ? 'spin-anim' : ''} /> 새로고침
+                </button>
+              </div>
+
+              {statsLoading ? (
+                <div style={{ textAlign: 'center', padding: '3.5rem 0', color: 'var(--text-muted)' }}>
+                  <div className="spin-anim" style={{ display: 'inline-block', marginBottom: '0.6rem' }}><RefreshCw size={24} /></div>
+                  <p style={{ fontSize: '0.82rem' }}>통계 데이터를 불러오는 중...</p>
+                </div>
+              ) : statsData ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
+                  {/* 요약 카드 */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '4px' }}>누적 접속로그</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: '#60a5fa' }}>{statsData.totalVisits}회</div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '4px' }}>오늘 접속자 (UV)</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: '#10b981' }}>
+                        {statsData.dailyStats && statsData.dailyStats[0] ? statsData.dailyStats[0].visitors : 0}명
+                      </div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '4px' }}>전체 게시글</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: '#fbbf24' }}>{statsData.totalPosts}개</div>
+                    </div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '4px' }}>전체 메시지</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: '#ec4899' }}>{statsData.totalMessages}개</div>
+                    </div>
+                  </div>
+
+                  {/* 7일간의 추이 표 */}
+                  <div>
+                    <h3 style={{ fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', marginBottom: '0.6rem', borderLeft: '3px solid #fbbf24', paddingLeft: '6px' }}>
+                      최근 7일간 일별 활동 트렌드
+                    </h3>
+                    <div style={{ overflowX: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', textAlign: 'center' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                            <th style={{ padding: '0.65rem 0.4rem' }}>날짜</th>
+                            <th style={{ padding: '0.65rem 0.4rem', color: '#10b981' }}>접속자 수 (UV)</th>
+                            <th style={{ padding: '0.65rem 0.4rem', color: '#fbbf24' }}>새로운 글</th>
+                            <th style={{ padding: '0.65rem 0.4rem', color: '#ec4899' }}>채팅 메시지</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {statsData.dailyStats && statsData.dailyStats.map((day, idx) => (
+                            <tr 
+                              key={idx} 
+                              style={{ 
+                                borderBottom: idx === statsData.dailyStats.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.03)',
+                                background: idx === 0 ? 'rgba(255, 255, 255, 0.01)' : 'transparent'
+                              }}
+                            >
+                              <td style={{ padding: '0.65rem 0.4rem', fontWeight: idx === 0 ? 'bold' : 'normal', color: idx === 0 ? '#fff' : 'var(--text-secondary)' }}>
+                                {day.date} {idx === 0 && <span style={{ fontSize: '0.65rem', color: '#10b981', marginLeft: '3px', verticalAlign: 'middle' }}>(오늘)</span>}
+                              </td>
+                              <td style={{ padding: '0.65rem 0.4rem', fontWeight: idx === 0 ? 'bold' : 'normal', color: '#10b981' }}>{day.visitors}명</td>
+                              <td style={{ padding: '0.65rem 0.4rem', color: 'var(--text-secondary)' }}>{day.posts}개</td>
+                              <td style={{ padding: '0.65rem 0.4rem', color: 'var(--text-secondary)' }}>{day.messages}개</td>
+                            </tr>
+                          ))}
+                          {(!statsData.dailyStats || statsData.dailyStats.length === 0) && (
+                            <tr>
+                              <td colSpan="4" style={{ padding: '1.5rem', color: 'var(--text-muted)' }}>통계 집계 데이터가 존재하지 않습니다.</td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '2rem 0', color: 'var(--text-muted)' }}>통계를 불러올 수 없습니다.</div>
+              )}
+            </div>
+          )}
+
         </div>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>

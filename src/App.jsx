@@ -33,6 +33,7 @@ import { StickerDetailGrid } from './features/sticker/StickerDetailGrid';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AdBanner } from './components/AdBanner';
+import { dbService } from './supabaseClient';
 
 function App() {
   // 1. 사용자 인증 및 세션 정보
@@ -68,6 +69,16 @@ function App() {
     userNickname: authVM.userNickname,
     fetchPosts: postVM.fetchData
   });
+
+  // 앱 최초 마운트 시 접속 로그 기록 (고유 visitorKey 기반)
+  useEffect(() => {
+    let visitorKey = localStorage.getItem('dv3_visitor_key');
+    if (!visitorKey) {
+      visitorKey = 'visitor-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now().toString(36);
+      localStorage.setItem('dv3_visitor_key', visitorKey);
+    }
+    dbService.logVisit(visitorKey, authVM.userNickname || null);
+  }, [authVM.userNickname]);
 
   // 실시간 포스트 갱신 시 바구니 자동 동기화 보정
   useEffect(() => {
@@ -276,6 +287,9 @@ function App() {
         bugReportsList={adminVM.bugReportsList}
         handleResolveBugReport={adminVM.handleResolveBugReport}
         loadBugReports={adminVM.loadBugReports}
+        statsData={adminVM.statsData}
+        statsLoading={adminVM.statsLoading}
+        loadDashboardStats={adminVM.loadDashboardStats}
       />
 
       {/* 11.5 버그 제보 모달 */}

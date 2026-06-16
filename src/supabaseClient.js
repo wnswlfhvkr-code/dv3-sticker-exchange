@@ -175,6 +175,24 @@ const mockDB = {
     bugReports = bugReports.filter(b => b.id !== bugId);
     localStorage.setItem('dv3_bug_reports', JSON.stringify(bugReports));
     return { error: null };
+  },
+  logVisit: async (visitorKey, nickname) => {
+    const data = localStorage.getItem('dv3_visit_logs');
+    const logs = data ? JSON.parse(data) : [];
+    const newLog = {
+      id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      created_at: new Date().toISOString(),
+      visitor_key: visitorKey,
+      nickname
+    };
+    logs.push(newLog);
+    localStorage.setItem('dv3_visit_logs', JSON.stringify(logs));
+    return { data: newLog, error: null };
+  },
+  getVisitLogs: async () => {
+    const data = localStorage.getItem('dv3_visit_logs');
+    const logs = data ? JSON.parse(data) : [];
+    return { data: logs, error: null };
   }
 };
 
@@ -558,6 +576,187 @@ export const dbService = {
       }
     } else {
       return mockDB.deleteBugReport(bugId);
+    }
+  },
+  logVisit: async (visitorKey, nickname) => {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const localVisitedKey = `dv3_visited_today_${todayStr}`;
+    
+    if (localStorage.getItem(localVisitedKey)) {
+      return { data: null, error: null };
+    }
+    
+    const visitData = { visitor_key: visitorKey, nickname };
+    
+    if (!isMock) {
+      try {
+        const { data, error } = await supabase
+          .from('visit_logs')
+          .insert([visitData])
+          .select();
+        
+        if (error) {
+          if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
+            const res = await mockDB.logVisit(visitorKey, nickname);
+            if (!res.error) localStorage.setItem(localVisitedKey, 'true');
+            return res;
+          }
+          return { data, error };
+        }
+        localStorage.setItem(localVisitedKey, 'true');
+        return { data, error: null };
+      } catch (err) {
+        console.warn("visit_logs 기록 실패, 로컬 폴백:", err);
+        const res = await mockDB.logVisit(visitorKey, nickname);
+        if (!res.error) localStorage.setItem(localVisitedKey, 'true');
+        return res;
+      }
+    } else {
+      const res = await mockDB.logVisit(visitorKey, nickname);
+      if (!res.error) localStorage.setItem(localVisitedKey, 'true');
+      return res;
+    }
+  },
+  fetchDashboardStats: async () => {
+    try {
+      let posts = [];
+      if (!isMock) {
+        try {
+          const { data } = await supabase.from('posts').select('created_at');
+          posts = data || [];
+        } catch {
+          const data = localStorage.getItem('dv3_exchange_posts');
+          posts = data ? JSON.parse(data) : [];
+        }
+      } else {
+        const data = localStorage.getItem('dv3_exchange_posts');
+        posts = data ? JSON.parse(data) : [];
+      }
+
+      let visitLogs = [];
+      if (!isMock) {
+        try {
+          const { data, error } = await supabase.from('visit_logs').select('*');
+          if (!error) {
+            visitLogs = data || [];
+          } else {
+            const res = await mockDB.getVisitLogs();
+            visitLogs = res.data || [];
+          }
+        } catch {
+          const res = await mockDB.getVisitLogs();
+          visitLogs = res.data || [];
+        }
+      } else {
+        const res = await mockDB.getVisitLogs();
+        visitLogs = res.data || [];
+      }
+
+      let chatMessages = [];
+      if (!isMock) {
+        try {
+          const { data } = await supabase.from('chat_messages').select('timestamp');
+          chatMessages = data || [];
+        } catch {
+          const data = localStorage.getItem('dv3_chat_messages');
+          chatMessages = data ? JSON.parse(data) : [];
+        }
+      } else {
+        const data = localStorage.getItem('dv3_chat_messages');
+        chatMessages = data ? JSON.parse(data) : [];
+      }
+
+      const stats = {
+        totalVisits: visitLogs.length,
+        totalPosts: posts.length,
+        totalMessages: chatMessages.length,
+        dailyStats: {}
+      };
+
+      const getFormattedDate = (dateStr) => {
+        if (!dateStr) return null;
+        try {
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return null;
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const day = String(d.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        } catch {
+          return null;
+        }
+      };
+
+      const now = new Date();
+      for (let i = 0; i < 7; i++) {
+        const targetDate = new Date(now);
+        targetDate.setDate(now.getDate() - i);
+        const dateKey = getFormattedDate(targetDate);
+        if (dateKey) {
+          stats.dailyStats[dateKey] = {
+            date: dateKey,
+            visitors: 0,
+            visitorKeys: new Set(),
+            posts: 0,
+            messages: 0
+          };
+        }
+      }
+
+      visitLogs.forEach(log => {
+        const dateKey = getFormattedDate(log.created_at || log.createdAt);
+        if (dateKey) {
+          if (!stats.dailyStats[dateKey]) {
+            stats.dailyStats[dateKey] = { date: dateKey, visitors: 0, visitorKeys: new Set(), posts: 0, messages: 0 };
+          }
+          stats.dailyStats[dateKey].visitorKeys.add(log.visitor_key || log.visitorKey);
+        }
+      });
+
+      posts.forEach(post => {
+        const dateKey = getFormattedDate(post.created_at);
+        if (dateKey) {
+          if (!stats.dailyStats[dateKey]) {
+            stats.dailyStats[dateKey] = { date: dateKey, visitors: 0, visitorKeys: new Set(), posts: 0, messages: 0 };
+          }
+          stats.dailyStats[dateKey].posts += 1;
+        }
+      });
+
+      chatMessages.forEach(msg => {
+        const dateKey = getFormattedDate(msg.timestamp);
+        if (dateKey) {
+          if (!stats.dailyStats[dateKey]) {
+            stats.dailyStats[dateKey] = { date: dateKey, visitors: 0, visitorKeys: new Set(), posts: 0, messages: 0 };
+          }
+          stats.dailyStats[dateKey].messages += 1;
+        }
+      });
+
+      const dailyList = Object.values(stats.dailyStats).map(day => {
+        return {
+          date: day.date,
+          visitors: day.visitorKeys ? day.visitorKeys.size : 0,
+          posts: day.posts,
+          messages: day.messages
+        };
+      });
+
+      dailyList.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      return {
+        data: {
+          totalVisits: stats.totalVisits,
+          totalPosts: stats.totalPosts,
+          totalMessages: stats.totalMessages,
+          dailyStats: dailyList
+        },
+        error: null
+      };
+
+    } catch (e) {
+      console.error("Dashboard stats aggregation error:", e);
+      return { data: null, error: e };
     }
   }
 };

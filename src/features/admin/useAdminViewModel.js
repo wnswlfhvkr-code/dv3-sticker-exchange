@@ -8,6 +8,10 @@ export function useAdminViewModel({ userNickname, fetchPosts }) {
   const [adminLogs, setAdminLogs] = useState([]);
   const [adminActiveTab, setAdminActiveTab] = useState("reports");
 
+  // --- 대시보드 통계 관련 상태 ---
+  const [statsData, setStatsData] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
   const loadAdminLogs = () => {
     try {
       const logsRaw = localStorage.getItem('dv3_admin_resolved_logs');
@@ -118,11 +122,21 @@ export function useAdminViewModel({ userNickname, fetchPosts }) {
     setAdminLoading(false);
   };
 
+  const loadDashboardStats = async () => {
+    setStatsLoading(true);
+    const { data, error } = await dbService.fetchDashboardStats();
+    if (!error) {
+      setStatsData(data);
+    }
+    setStatsLoading(false);
+  };
+
   const handleOpenAdminTab = async () => {
     setIsAdminTabOpen(true);
     setAdminActiveTab("reports");
     await loadReports();
     await loadBugReports();
+    await loadDashboardStats();
   };
 
   const handleSubmitBug = async (reporterNickname) => {
@@ -190,6 +204,11 @@ export function useAdminViewModel({ userNickname, fetchPosts }) {
     setBugDescription,
     loadBugReports,
     handleSubmitBug,
-    handleResolveBugReport
+    handleResolveBugReport,
+
+    // 통계 관련
+    statsData,
+    statsLoading,
+    loadDashboardStats
   };
 }
