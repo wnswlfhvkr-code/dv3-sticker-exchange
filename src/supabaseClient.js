@@ -579,13 +579,6 @@ export const dbService = {
     }
   },
   logVisit: async (visitorKey, nickname) => {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const localVisitedKey = `dv3_visited_today_${todayStr}`;
-    
-    if (localStorage.getItem(localVisitedKey)) {
-      return { data: null, error: null };
-    }
-    
     const visitData = { visitor_key: visitorKey, nickname };
     
     if (!isMock) {
@@ -597,73 +590,59 @@ export const dbService = {
         
         if (error) {
           if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
-            const res = await mockDB.logVisit(visitorKey, nickname);
-            if (!res.error) localStorage.setItem(localVisitedKey, 'true');
-            return res;
+            return mockDB.logVisit(visitorKey, nickname);
           }
           return { data, error };
         }
-        localStorage.setItem(localVisitedKey, 'true');
         return { data, error: null };
       } catch (err) {
         console.warn("visit_logs 기록 실패, 로컬 폴백:", err);
-        const res = await mockDB.logVisit(visitorKey, nickname);
-        if (!res.error) localStorage.setItem(localVisitedKey, 'true');
-        return res;
+        return mockDB.logVisit(visitorKey, nickname);
       }
     } else {
-      const res = await mockDB.logVisit(visitorKey, nickname);
-      if (!res.error) localStorage.setItem(localVisitedKey, 'true');
-      return res;
+      return mockDB.logVisit(visitorKey, nickname);
     }
   },
   fetchDashboardStats: async () => {
     try {
       let posts = [];
-      if (!isMock) {
-        try {
-          const { data } = await supabase.from('posts').select('created_at');
-          posts = data || [];
-        } catch {
-          const data = localStorage.getItem('dv3_exchange_posts');
-          posts = data ? JSON.parse(data) : [];
-        }
-      } else {
-        const data = localStorage.getItem('dv3_exchange_posts');
-        posts = data ? JSON.parse(data) : [];
-      }
-
       let visitLogs = [];
+      let chatMessages = [];
+
       if (!isMock) {
+        // 실서버 데이터베이스 모드: 순수 DB 데이터로만 집계
         try {
-          const { data, error } = await supabase.from('visit_logs').select('*');
-          if (!error) {
-            visitLogs = data || [];
-          } else {
-            const res = await mockDB.getVisitLogs();
-            visitLogs = res.data || [];
-          }
-        } catch {
+          const { data: postsData } = await supabase.from('posts').select('created_at');
+          posts = postsData || [];
+        } catch (e) {
+          console.warn("posts 쿼리 실패:", e);
+        }
+
+        try {
+          const { data: visitsData } = await supabase.from('visit_logs').select('*');
+          visitLogs = visitsData || [];
+        } catch (e) {
+          console.warn("visit_logs 쿼리 실패 (테이블 미생성 시 로컬 폴백):", e);
           const res = await mockDB.getVisitLogs();
           visitLogs = res.data || [];
         }
-      } else {
-        const res = await mockDB.getVisitLogs();
-        visitLogs = res.data || [];
-      }
 
-      let chatMessages = [];
-      if (!isMock) {
         try {
-          const { data } = await supabase.from('chat_messages').select('timestamp');
-          chatMessages = data || [];
-        } catch {
-          const data = localStorage.getItem('dv3_chat_messages');
-          chatMessages = data ? JSON.parse(data) : [];
+          const { data: chatsData } = await supabase.from('chat_messages').select('timestamp');
+          chatMessages = chatsData || [];
+        } catch (e) {
+          console.warn("chat_messages 쿼리 실패:", e);
         }
       } else {
-        const data = localStorage.getItem('dv3_chat_messages');
-        chatMessages = data ? JSON.parse(data) : [];
+        // 로컬 모드: 로컬스토리지만 조회
+        const postsRaw = localStorage.getItem('dv3_exchange_posts');
+        posts = postsRaw ? JSON.parse(postsRaw) : [];
+
+        const logsRes = await mockDB.getVisitLogs();
+        visitLogs = logsRes.data || [];
+
+        const chatsRaw = localStorage.getItem('dv3_chat_messages');
+        chatMessages = chatsRaw ? JSON.parse(chatsRaw) : [];
       }
 
       const stats = {
