@@ -648,8 +648,14 @@ export const dbService = {
         chatMessages = chatsRaw ? JSON.parse(chatsRaw) : [];
       }
 
+      const allVisitorKeys = new Set();
+      visitLogs.forEach(log => {
+        allVisitorKeys.add(log.visitor_key || log.visitorKey);
+      });
+
       const stats = {
         totalVisits: visitLogs.length,
+        totalUniqueVisitors: allVisitorKeys.size,
         totalPosts: posts.length,
         totalMessages: chatMessages.length,
         dailyStats: {}
@@ -729,6 +735,7 @@ export const dbService = {
       return {
         data: {
           totalVisits: stats.totalVisits,
+          totalUniqueVisitors: stats.totalUniqueVisitors,
           totalPosts: stats.totalPosts,
           totalMessages: stats.totalMessages,
           dailyStats: dailyList
