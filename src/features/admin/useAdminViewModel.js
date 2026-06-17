@@ -62,6 +62,7 @@ export function useAdminViewModel({ userNickname, fetchPosts }) {
     if (!error) {
       alert("신고 내역이 반려(무시) 처리되었습니다.");
       await loadReports();
+      await loadDashboardStats();
     } else {
       alert("처리 실패: " + error.message);
     }
@@ -79,6 +80,7 @@ export function useAdminViewModel({ userNickname, fetchPosts }) {
         await dbService.resolveReport(reportId);
       }
       await loadReports();
+      await loadDashboardStats();
       if (fetchPosts) {
         await fetchPosts();
       }
@@ -99,6 +101,7 @@ export function useAdminViewModel({ userNickname, fetchPosts }) {
         await dbService.resolveReport(reportId);
       }
       await loadReports();
+      await loadDashboardStats();
       if (loadComments) {
         await loadComments(postId);
       }
@@ -174,6 +177,7 @@ export function useAdminViewModel({ userNickname, fetchPosts }) {
     if (!error) {
       alert("버그 제보가 해결 완료 처리되었습니다.");
       await loadBugReports();
+      await loadDashboardStats();
     } else {
       alert("처리 실패: " + error.message);
     }

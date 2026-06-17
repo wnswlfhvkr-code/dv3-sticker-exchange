@@ -612,14 +612,16 @@ export const dbService = {
       if (!isMock) {
         // 실서버 데이터베이스 모드: 순수 DB 데이터로만 집계
         try {
-          const { data: postsData } = await supabase.from('posts').select('created_at');
+          const { data: postsData, error: postsError } = await supabase.from('posts').select('created_at');
+          if (postsError) throw postsError;
           posts = postsData || [];
         } catch (e) {
           console.warn("posts 쿼리 실패:", e);
         }
 
         try {
-          const { data: visitsData } = await supabase.from('visit_logs').select('*');
+          const { data: visitsData, error: visitsError } = await supabase.from('visit_logs').select('*');
+          if (visitsError) throw visitsError;
           visitLogs = visitsData || [];
         } catch (e) {
           console.warn("visit_logs 쿼리 실패 (테이블 미생성 시 로컬 폴백):", e);
@@ -628,7 +630,8 @@ export const dbService = {
         }
 
         try {
-          const { data: chatsData } = await supabase.from('chat_messages').select('timestamp');
+          const { data: chatsData, error: chatsError } = await supabase.from('chat_messages').select('timestamp');
+          if (chatsError) throw chatsError;
           chatMessages = chatsData || [];
         } catch (e) {
           console.warn("chat_messages 쿼리 실패:", e);
