@@ -687,5 +687,18 @@ input:focus, select:focus, textarea:focus {
   }
 }
 
+/* 구글 애드센스 광고가 모바일 가로 뷰포트를 뚫고 나가지 않도록 완전 방어 */
+.adsense-container {
+  max-width: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+.adsense-container ins, 
+.adsense-container iframe {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
 
 

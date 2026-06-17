@@ -576,47 +576,87 @@ export function PostFeed({
 
       {/* 페이지네이션 제어 UI */}
       {!loading && totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '2rem', marginBottom: '3rem', width: '100%' }}>
-          <button
-            onClick={() => {
-              setCurrentPage(prev => Math.max(prev - 1, 1));
-            }}
-            disabled={currentPage === 1}
-            className="btn btn-outline"
-            style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem', opacity: currentPage === 1 ? 0.4 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
-          >
-            이전
-          </button>
-          
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-            <button
-              key={pageNumber}
-              onClick={() => {
-                setCurrentPage(pageNumber);
-              }}
-              className={`btn ${currentPage === pageNumber ? 'btn-primary' : 'btn-outline'}`}
-              style={{
-                padding: '0.45rem 0.85rem',
-                fontSize: '0.8rem',
-                minWidth: '32px',
-                border: currentPage === pageNumber ? '1px solid var(--primary-color)' : '1px solid rgba(255,255,255,0.1)'
-              }}
-            >
-              {pageNumber}
-            </button>
-          ))}
- 
-          <button
-            onClick={() => {
-              setCurrentPage(prev => Math.min(prev + 1, totalPages));
-            }}
-            disabled={currentPage === totalPages}
-            className="btn btn-outline"
-            style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem', opacity: currentPage === totalPages ? 0.4 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
-          >
-            다음
-          </button>
-        </div>
+        (() => {
+          const getPageNumbers = () => {
+            const pageLimit = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(pageLimit / 2));
+            let endPage = Math.min(totalPages, startPage + pageLimit - 1);
+
+            if (endPage - startPage + 1 < pageLimit) {
+              startPage = Math.max(1, endPage - pageLimit + 1);
+            }
+
+            const pages = [];
+            for (let i = startPage; i <= endPage; i++) {
+              pages.push(i);
+            }
+            return pages;
+          };
+
+          return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', marginTop: '2rem', marginBottom: '3rem', width: '100%', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="btn btn-outline"
+                style={{ padding: '0.45rem 0.65rem', fontSize: '0.75rem', opacity: currentPage === 1 ? 0.4 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                title="맨 처음 페이지로"
+              >
+                «
+              </button>
+
+              <button
+                onClick={() => {
+                  setCurrentPage(prev => Math.max(prev - 1, 1));
+                }}
+                disabled={currentPage === 1}
+                className="btn btn-outline"
+                style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem', opacity: currentPage === 1 ? 0.4 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+              >
+                이전
+              </button>
+              
+              {getPageNumbers().map(pageNumber => (
+                <button
+                  key={pageNumber}
+                  onClick={() => {
+                    setCurrentPage(pageNumber);
+                  }}
+                  className={`btn ${currentPage === pageNumber ? 'btn-primary' : 'btn-outline'}`}
+                  style={{
+                    padding: '0.45rem 0.85rem',
+                    fontSize: '0.8rem',
+                    minWidth: '32px',
+                    border: currentPage === pageNumber ? '1px solid var(--primary-color)' : '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  {pageNumber}
+                </button>
+              ))}
+     
+              <button
+                onClick={() => {
+                  setCurrentPage(prev => Math.min(prev + 1, totalPages));
+                }}
+                disabled={currentPage === totalPages}
+                className="btn btn-outline"
+                style={{ padding: '0.45rem 0.8rem', fontSize: '0.8rem', opacity: currentPage === totalPages ? 0.4 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+              >
+                다음
+              </button>
+
+              <button
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="btn btn-outline"
+                style={{ padding: '0.45rem 0.65rem', fontSize: '0.75rem', opacity: currentPage === totalPages ? 0.4 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                title="맨 끝 페이지로"
+              >
+                »
+              </button>
+            </div>
+          );
+        })()
       )}
     </>
   );

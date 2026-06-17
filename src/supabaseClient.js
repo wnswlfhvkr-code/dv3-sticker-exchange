@@ -622,6 +622,7 @@ export const dbService = {
     }
   },
   fetchDashboardStats: async () => {
+    let isDbFailed = false;
     try {
       let posts = [];
       let visitLogs = [];
@@ -643,6 +644,7 @@ export const dbService = {
           visitLogs = visitsData || [];
         } catch (e) {
           console.warn("visit_logs 쿼리 실패 (테이블 미생성 시 로컬 폴백):", e);
+          isDbFailed = true;
           const res = await mockDB.getVisitLogs();
           visitLogs = res.data || [];
         }
@@ -756,7 +758,8 @@ export const dbService = {
           totalUniqueVisitors: stats.totalUniqueVisitors,
           totalPosts: stats.totalPosts,
           totalMessages: stats.totalMessages,
-          dailyStats: dailyList
+          dailyStats: dailyList,
+          isDbFailed: isDbFailed
         },
         error: null
       };
