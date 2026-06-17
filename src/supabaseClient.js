@@ -579,6 +579,17 @@ export const dbService = {
     }
   },
   logVisit: async (visitorKey, nickname) => {
+    const localDate = new Date();
+    const year = localDate.getFullYear();
+    const month = String(localDate.getMonth() + 1).padStart(2, '0');
+    const day = String(localDate.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+    const localVisitedKey = `dv3_visited_today_${todayStr}`;
+    
+    if (localStorage.getItem(localVisitedKey)) {
+      return { data: null, error: null };
+    }
+    
     const visitData = { visitor_key: visitorKey, nickname };
     
     if (!isMock) {
@@ -590,17 +601,24 @@ export const dbService = {
         
         if (error) {
           if (error.message?.includes("relation") || error.message?.includes("table") || error.code === 'PGRST116') {
-            return mockDB.logVisit(visitorKey, nickname);
+            const res = await mockDB.logVisit(visitorKey, nickname);
+            if (!res.error) localStorage.setItem(localVisitedKey, 'true');
+            return res;
           }
           return { data, error };
         }
+        localStorage.setItem(localVisitedKey, 'true');
         return { data, error: null };
       } catch (err) {
         console.warn("visit_logs 기록 실패, 로컬 폴백:", err);
-        return mockDB.logVisit(visitorKey, nickname);
+        const res = await mockDB.logVisit(visitorKey, nickname);
+        if (!res.error) localStorage.setItem(localVisitedKey, 'true');
+        return res;
       }
     } else {
-      return mockDB.logVisit(visitorKey, nickname);
+      const res = await mockDB.logVisit(visitorKey, nickname);
+      if (!res.error) localStorage.setItem(localVisitedKey, 'true');
+      return res;
     }
   },
   fetchDashboardStats: async () => {

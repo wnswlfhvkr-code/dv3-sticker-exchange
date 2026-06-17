@@ -333,14 +333,9 @@ export function AdminDashboard({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.4rem' }}>
                   {/* 요약 카드 */}
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
-                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0.75rem 0.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' }}>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '4px' }}>총 접속자 (UV)</div>
-                      <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: '#60a5fa' }}>
-                        {statsData.totalUniqueVisitors || 0}명
-                      </div>
-                      <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.62rem', marginTop: '2px' }}>
-                        (누적 {statsData.totalVisits || 0}회)
-                      </div>
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '4px' }}>총 접속자 수</div>
+                      <div style={{ fontSize: '1.15rem', fontWeight: 'bold', color: '#60a5fa' }}>{statsData.totalVisits}명</div>
                     </div>
                     <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0.75rem 0.5rem', textAlign: 'center' }}>
                       <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem', marginBottom: '4px' }}>오늘 접속자 (UV)</div>
