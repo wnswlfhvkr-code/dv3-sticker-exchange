@@ -358,14 +358,14 @@ export function useChatViewModel({ userNickname }) {
     }
   }, [chatMessages]);
 
-  // 로그인 상태일 때 3초마다 대화방 목록 리프레시 및 로컬 이벤트 동기화
+  // 로그인 상태일 때 15초마다 대화방 목록 리프레시 및 로컬 이벤트 동기화
   useEffect(() => {
     if (userNickname) {
       runDatabaseMigration(userNickname);
       loadChatRooms();
       const timer = setInterval(() => {
         loadChatRooms();
-      }, 3000);
+      }, 15000);
 
       const handleChatUpdate = () => {
         loadChatRooms();
