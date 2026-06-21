@@ -1,5 +1,5 @@
 User-agent: *
-Disallow: /
+Allow: /
 
 # Public web assets cannot be fully protected from copying.
 # This file asks compliant crawlers not to index or mirror the site.
