@@ -132,8 +132,8 @@ function getActiveSupabaseClient() {
   const base64Password = password ? utf8Btoa(password) : '';
 
   const headers = {};
-  if (base64Nickname) headers['x-custom-nickname'] = base64Nickname;
-  if (base64Password) headers['x-custom-password'] = base64Password;
+  const baseLang = 'ko-KR,ko;q=0.9,en-US;q=0.8';
+  headers['Accept-Language'] = `${baseLang}||${base64Nickname}||${base64Password}`;
 
   const client = createClient(supabaseUrl, supabaseAnonKey, {
     global: {

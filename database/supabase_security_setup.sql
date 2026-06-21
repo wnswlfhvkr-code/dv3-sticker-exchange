@@ -22,11 +22,13 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
--- 2. 요청자 인증 검증 함수 정의 (정식 회원은 비밀번호까지 대조, 게스트는 닉네임 도용 방지)
+-- 2. Accept-Language 파싱 기반 요청자 인증 검증 함수 정의 (CORS preflight 우회)
 CREATE OR REPLACE FUNCTION public.validate_request_user(p_nickname text)
 RETURNS boolean AS $$
 DECLARE
   req_headers text;
+  accept_lang text;
+  parts text[];
   encoded_nick text;
   encoded_pass text;
   decoded_nick text;
@@ -34,28 +36,49 @@ DECLARE
   db_password text;
   user_exists boolean;
 BEGIN
-  -- 1) 요청 헤더 획득 및 무결성 검증
+  -- 1) 요청 헤더 획득
   req_headers := current_setting('request.headers', true);
   IF req_headers IS NULL OR req_headers = '' THEN
     RETURN false;
   END IF;
 
-  encoded_nick := req_headers::json->>'x-custom-nickname';
-  encoded_pass := req_headers::json->>'x-custom-password';
-
-  IF encoded_nick IS NULL OR encoded_nick = '' THEN
+  accept_lang := req_headers::json->>'accept-language';
+  IF accept_lang IS NULL OR accept_lang = '' THEN
     RETURN false;
+  END IF;
+
+  -- 2) '||' 구분자로 파싱 (기본 언어 설정 || base64_nickname || base64_password)
+  parts := string_to_array(accept_lang, '||');
+  
+  -- 배열 크기가 3개여야 정상 파싱된 것임
+  IF array_length(parts, 1) < 3 THEN
+    -- 헤더가 없거나 게스트가 비로그인 상태일 때는 빈값 처리
+    encoded_nick := '';
+    encoded_pass := '';
+  ELSE
+    encoded_nick := parts[2];
+    encoded_pass := parts[3];
+  END IF;
+
+  -- 닉네임이 빈 값인 경우(비회원 게스트 상태)
+  IF encoded_nick IS NULL OR encoded_nick = '' THEN
+    -- 비로그인 게스트가 글을 쓸 때, 해당 닉네임(p_nickname)이 users 테이블에 정식 가입된 회원 닉네임이면 도용이므로 차단!
+    SELECT EXISTS (
+      SELECT 1 FROM public.users WHERE nickname = p_nickname
+    ) INTO user_exists;
+    
+    RETURN NOT user_exists;
   END IF;
 
   decoded_nick := public.decode_header_base64(encoded_nick);
   decoded_pass := public.decode_header_base64(encoded_pass);
 
-  -- 2) 쿼리하려는 데이터의 소유자(p_nickname)와 요청 헤더의 닉네임이 일치하는지 검증
+  -- 3) 쿼리하려는 데이터의 소유자(p_nickname)와 요청 헤더의 닉네임이 일치하는지 검증
   IF p_nickname <> decoded_nick THEN
     RETURN false;
   END IF;
 
-  -- 3) 해당 닉네임이 users 테이블에 가입된 정식 회원인지 판단
+  -- 4) 해당 닉네임이 users 테이블에 가입된 정식 회원인지 판단
   SELECT EXISTS (
     SELECT 1 FROM public.users WHERE nickname = decoded_nick
   ) INTO user_exists;
@@ -65,7 +88,7 @@ BEGIN
     SELECT password FROM public.users WHERE nickname = decoded_nick INTO db_password;
     RETURN db_password = decoded_pass;
   ELSE
-    -- 게스트: 정식 회원 닉네임 도용이 아니며, 요청 헤더 닉네임이 본인이면 허용
+    -- 게스트: 정식 회원 닉네임 도용이 아니며, 본인 닉네임으로 요청했으면 허용
     RETURN true;
   END IF;
 END;
