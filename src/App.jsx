@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import './App.css';
 
 // 정적 데이터
@@ -328,6 +329,9 @@ function App() {
 
       {/* 하단 푸터 및 이용약관 모달 */}
       <Footer />
+
+      {/* Vercel Web Analytics */}
+      <Analytics />
     </div>
   );
 }
