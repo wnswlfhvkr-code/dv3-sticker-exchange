@@ -3,21 +3,170 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || import.meta.env.NEXT_PUBLIC_SUPABASE_URL || import.meta.env.SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || import.meta.env.SUPABASE_ANON_KEY;
 
+const isProd = import.meta.env.PROD; // 빌드 배포 환경 여부 감지
+
+// 12시간에 1번만 관리자에게 장애 메일을 보내는 헬퍼 함수
+export const sendErrorEmail = async (errorMessage) => {
+  const lastSent = localStorage.getItem('dv3_error_email_sent');
+  const now = Date.now();
+  if (lastSent && (now - Number(lastSent) < 12 * 60 * 60 * 1000)) {
+    // 12시간 이내에 이미 보냈다면 무한 발송 방지
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.web3forms.com/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        access_key: "3051c02c-1aa7-4928-94e8-437046a539c4", // 사용자가 전달한 고유 키
+        subject: "[드비3 카드교환소] 서버 에러 발생 알림",
+        from_name: "드비3 카드교환소 시스템",
+        to_email: "wnsdudvhkr@gmail.com",
+        message: `교환소 서버 상태에 이상이 발견되었습니다.\n\n[오류 세부 내용]\n${errorMessage}\n\n사용자 브라우저에서 Supabase 연결이 실패했거나 무료 한도를 초과했을 가능성이 있습니다. 확인해 주세요.`
+      })
+    });
+    if (response.ok) {
+      localStorage.setItem('dv3_error_email_sent', now.toString());
+      console.log("관리자 이메일로 서버 오류 경보를 발송했습니다.");
+    }
+  } catch (e) {
+    console.error("이메일 경보 발송 실패:", e);
+  }
+};
+
 // Supabase 클라이언트 초기화 시도
-let supabase = null;
+let rawSupabase = null;
 let isMock = true;
 
 if (supabaseUrl && supabaseAnonKey && supabaseUrl !== "YOUR_SUPABASE_URL" && supabaseUrl !== "undefined" && supabaseAnonKey !== "undefined") {
   try {
-    supabase = createClient(supabaseUrl, supabaseAnonKey);
+    rawSupabase = createClient(supabaseUrl, supabaseAnonKey);
     isMock = false;
     console.log("Supabase 연동 완료! 실시간 데이터베이스 모드로 동작합니다.");
   } catch (error) {
     console.error("Supabase 연결 실패, 로컬 모드로 전환합니다:", error);
+    if (isProd) {
+      // 실제 배포 서버(프로덕션) 환경인 경우 강제로 mock 모드가 되지 않도록 격리하고 에러를 메일로 통보
+      isMock = false;
+      sendErrorEmail(`초기 연결 실패: ${error.message || error}`);
+    }
   }
 } else {
   console.log("Supabase 설정이 없습니다. 로컬 브라우저 저장소(LocalStorage) 모드로 동작합니다. 배포 시 .env 설정을 해주세요.");
+  if (isProd) {
+    isMock = false;
+    sendErrorEmail("초기 설정 오류: Supabase 환경 변수가 설정되지 않았습니다.");
+  }
 }
+
+// 실제 Supabase 클라이언트 인스턴스를 닉네임/비밀번호별로 캐싱하는 맵
+const clientCache = new Map();
+
+function getActiveSupabaseClient() {
+  if (isMock || !rawSupabase) return null;
+
+  // 최신 유저 인증 정보 조회
+  const nickname = sessionStorage.getItem('dv3_nickname') || localStorage.getItem('dv3_nickname') || '';
+  const password = localStorage.getItem('dv3_password') || '';
+
+  const cacheKey = `${nickname}:${password}`;
+  if (clientCache.has(cacheKey)) {
+    return clientCache.get(cacheKey);
+  }
+
+  // Base64 인코딩을 통해 비ASCII 한글 닉네임 깨짐 방지
+  const utf8Btoa = (str) => {
+    try {
+      return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => {
+        return String.fromCharCode(parseInt(p1, 16));
+      }));
+    } catch {
+      return '';
+    }
+  };
+
+  const base64Nickname = nickname ? utf8Btoa(nickname) : '';
+  const base64Password = password ? utf8Btoa(password) : '';
+
+  const headers = {};
+  if (base64Nickname) headers['x-custom-nickname'] = base64Nickname;
+  if (base64Password) headers['x-custom-password'] = base64Password;
+
+  const client = createClient(supabaseUrl, supabaseAnonKey, {
+    global: {
+      headers
+    }
+  });
+
+  clientCache.set(cacheKey, client);
+  return client;
+}
+
+// Promise 결과를 감시해서 error가 존재하면 이메일을 보내는 헬퍼
+function wrapPromiseWithAlert(promise) {
+  if (!(promise instanceof Promise)) return promise;
+
+  return promise.then(result => {
+    if (result && result.error) {
+      const err = result.error;
+      const isCritical = err.code || err.status || err.message;
+      if (isCritical && isProd) {
+        sendErrorEmail(`DB 쿼리 오류 [Code: ${err.code || 'N/A'}] (Status: ${err.status || 'N/A'}): ${err.message}`);
+      }
+    }
+    return result;
+  }).catch(err => {
+    if (isProd) {
+      sendErrorEmail(`DB 네트워크 예외 발생: ${err.message || err}`);
+    }
+    throw err;
+  });
+}
+
+// 외부에서 import { supabase } from './supabaseClient' 로 사용하는 객체를 Proxy로 감싸서 동적 포워딩
+const supabase = new Proxy({}, {
+  get(target, prop) {
+    const activeClient = getActiveSupabaseClient();
+    if (!activeClient) return undefined;
+    const val = activeClient[prop];
+    if (typeof val === 'function') {
+      return (...args) => {
+        const result = val.apply(activeClient, args);
+        
+        // 최종 실행되는 Promise를 캐치
+        if (result && typeof result.then === 'function') {
+          return wrapPromiseWithAlert(result);
+        }
+        
+        // Query Builder 체이닝 함수 추적용 프록시
+        if (result && typeof result === 'object') {
+          return new Proxy(result, {
+            get(subTarget, subProp) {
+              const subVal = subTarget[subProp];
+              if (typeof subVal === 'function') {
+                return (...subArgs) => {
+                  const subResult = subVal.apply(subTarget, subArgs);
+                  if (subResult && typeof subResult.then === 'function') {
+                    return wrapPromiseWithAlert(subResult);
+                  }
+                  return subResult;
+                };
+              }
+              return subVal;
+            }
+          });
+        }
+        
+        return result;
+      };
+    }
+    return val;
+  }
+});
 
 // 로컬 스토리지 기반의 가짜 DB 엔진 (Supabase API와 동일한 인터페이스 모사)
 const mockDB = {
@@ -196,11 +345,45 @@ const mockDB = {
   }
 };
 
+const safeParseArray = (val) => {
+  if (!val) return [];
+  if (Array.isArray(val)) return val;
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    if (typeof val === 'string' && val.trim() !== '') {
+      return val.split(',').map(item => {
+        const num = Number(item.trim());
+        return isNaN(num) ? item.trim() : num;
+      });
+    }
+    return [];
+  }
+};
+
+// 프론트엔드 Egress 트래픽 절감을 위한 30초 시간 기반 로컬 캐시 시스템
+let postsCache = null;
+let lastPostsFetchTime = 0;
+const CACHE_TTL_MS = 30000; // 30초 캐시 유지
+
+export const clearPostsCache = () => {
+  postsCache = null;
+  lastPostsFetchTime = 0;
+  // console.log("Posts cache cleared due to data mutation.");
+};
+
 // 서비스 래퍼
 export const dbService = {
   isMock,
   fetchPosts: async () => {
     if (!isMock) {
+      const now = Date.now();
+      // 캐시가 존재하고 30초 이내인 경우 네트워크 요청 없이 캐시 반환
+      if (postsCache && (now - lastPostsFetchTime < CACHE_TTL_MS)) {
+        return { data: postsCache, error: null };
+      }
+
       try {
         // post_comments 테이블 조인을 통해 댓글 개수를 함께 쿼리함
         const { data, error } = await supabase
@@ -212,9 +395,13 @@ export const dbService = {
         
         const mappedData = (data || []).map(post => ({
           ...post,
+          haves: safeParseArray(post.haves),
+          wants: safeParseArray(post.wants),
           commentCount: post.post_comments ? post.post_comments.length : 0
         }));
         
+        postsCache = mappedData;
+        lastPostsFetchTime = now;
         return { data: mappedData, error: null };
       } catch (err) {
         console.warn("posts fetch 조인 실패, 기본 조회 시도:", err);
@@ -222,22 +409,49 @@ export const dbService = {
           .from('posts')
           .select('*')
           .order('created_at', { ascending: false });
-        return { data: (data || []).map(p => ({ ...p, commentCount: 0 })), error };
+        
+        const mappedData = (data || []).map(p => ({ 
+          ...p, 
+          haves: safeParseArray(p.haves),
+          wants: safeParseArray(p.wants),
+          commentCount: 0 
+        }));
+
+        if (!error) {
+          postsCache = mappedData;
+          lastPostsFetchTime = now;
+        }
+        return { data: mappedData, error };
       }
     } else {
       return mockDB.getPosts();
     }
   },
   addPost: async (nickname, contact, haves, wants) => {
-    const postData = { nickname, contact, haves, wants };
+    clearPostsCache();
+    const postData = { 
+      nickname, 
+      contact, 
+      haves: Array.isArray(haves) ? JSON.stringify(haves) : haves, 
+      wants: Array.isArray(wants) ? JSON.stringify(wants) : wants 
+    };
     if (!isMock) {
       const { data, error } = await supabase
         .from('posts')
         .insert([postData])
         .select();
-      return { data, error };
+      
+      let parsedData = null;
+      if (data && data[0]) {
+        parsedData = [{
+          ...data[0],
+          haves: safeParseArray(data[0].haves),
+          wants: safeParseArray(data[0].wants)
+        }];
+      }
+      return { data: parsedData, error };
     } else {
-      return mockDB.insertPost(postData);
+      return mockDB.insertPost({ nickname, contact, haves, wants });
     }
   },
   fetchPostsByNickname: async (nickname) => {
@@ -247,12 +461,19 @@ export const dbService = {
         .select('*')
         .eq('nickname', nickname)
         .order('created_at', { ascending: true });
-      return { data, error };
+      
+      const mappedData = (data || []).map(p => ({
+        ...p,
+        haves: safeParseArray(p.haves),
+        wants: safeParseArray(p.wants)
+      }));
+      return { data: mappedData, error };
     } else {
       return mockDB.getPostsByNickname(nickname);
     }
   },
   removePost: async (id) => {
+    clearPostsCache();
     if (!isMock) {
       const { error } = await supabase
         .from('posts')
@@ -264,6 +485,7 @@ export const dbService = {
     }
   },
   removePosts: async (ids) => {
+    clearPostsCache();
     if (!ids || ids.length === 0) return { error: null };
     if (!isMock) {
       const { error } = await supabase
@@ -276,6 +498,7 @@ export const dbService = {
     }
   },
   bumpPost: async (id) => {
+    clearPostsCache();
     if (!isMock) {
       const { error } = await supabase
         .from('posts')
@@ -287,18 +510,34 @@ export const dbService = {
     }
   },
   updatePost: async (id, contact, haves, wants) => {
+    clearPostsCache();
+    const updateData = { 
+      contact, 
+      haves: Array.isArray(haves) ? JSON.stringify(haves) : haves, 
+      wants: Array.isArray(wants) ? JSON.stringify(wants) : wants 
+    };
     if (!isMock) {
       const { data, error } = await supabase
         .from('posts')
-        .update({ contact, haves, wants })
+        .update(updateData)
         .eq('id', id)
         .select();
-      return { data, error };
+      
+      let parsedData = null;
+      if (data && data[0]) {
+        parsedData = [{
+          ...data[0],
+          haves: safeParseArray(data[0].haves),
+          wants: safeParseArray(data[0].wants)
+        }];
+      }
+      return { data: parsedData, error };
     } else {
       return mockDB.updatePost(id, contact, haves, wants);
     }
   },
   togglePostComplete: async (id, isCompleted) => {
+    clearPostsCache();
     if (!isMock) {
       const { data, error } = await supabase
         .from('posts')
@@ -767,6 +1006,94 @@ export const dbService = {
     } catch (e) {
       console.error("Dashboard stats aggregation error:", e);
       return { data: null, error: e };
+    }
+  },
+  migrateLocalStorageToSupabase: async () => {
+    try {
+      console.log("Starting LocalStorage to Supabase Migration...");
+      
+      // 1. 유저 데이터 이전 (중복 가입 방지 upsert)
+      const localUsers = JSON.parse(localStorage.getItem('dv3_users')) || [];
+      for (const u of localUsers) {
+        try {
+          await supabase.from('users').upsert({ nickname: u.nickname, password: u.password }, { onConflict: 'nickname' });
+        } catch (e) {
+          console.warn(`User ${u.nickname} migration skipped:`, e);
+        }
+      }
+      
+      // 2. 게시글 데이터 이전 (중복 방지 upsert)
+      const localPosts = JSON.parse(localStorage.getItem('dv3_exchange_posts')) || [];
+      for (const p of localPosts) {
+        try {
+          await supabase.from('posts').upsert({
+            id: isNaN(Number(p.id)) ? undefined : Number(p.id),
+            nickname: p.nickname,
+            contact: p.contact,
+            haves: Array.isArray(p.haves) ? JSON.stringify(p.haves) : p.haves,
+            wants: Array.isArray(p.wants) ? JSON.stringify(p.wants) : p.wants,
+            is_completed: p.is_completed || false,
+            created_at: p.created_at
+          }, { onConflict: 'id' });
+        } catch (e) {
+          console.warn(`Post ${p.id} migration skipped:`, e);
+        }
+      }
+      
+      // 3. 댓글 데이터 이전 (중복 방지 upsert)
+      const localComments = JSON.parse(localStorage.getItem('dv3_post_comments')) || [];
+      for (const c of localComments) {
+        try {
+          await supabase.from('post_comments').upsert({
+            id: isNaN(Number(c.id)) ? undefined : Number(c.id),
+            post_id: isNaN(Number(c.post_id)) ? undefined : Number(c.post_id),
+            nickname: c.nickname,
+            text: c.text,
+            created_at: c.created_at
+          }, { onConflict: 'id' });
+        } catch (e) {
+          console.warn(`Comment ${c.id} migration skipped:`, e);
+        }
+      }
+      
+      // 4. 대화방 데이터 이전 (중복 방지 upsert)
+      const localRooms = JSON.parse(localStorage.getItem('dv3_chat_rooms')) || [];
+      for (const r of localRooms) {
+        try {
+          await supabase.from('chat_rooms').upsert({
+            id: r.id,
+            post_id: isNaN(Number(r.postId)) ? null : Number(r.postId),
+            buyer_nickname: r.buyerNickname,
+            seller_nickname: r.sellerNickname,
+            last_message: r.lastMessage,
+            updated_at: r.updatedAt
+          }, { onConflict: 'id' });
+        } catch (e) {
+          console.warn(`Chat room ${r.id} migration skipped:`, e);
+        }
+      }
+      
+      // 5. 채팅 메시지 데이터 이전 (중복 방지 upsert)
+      const localMessages = JSON.parse(localStorage.getItem('dv3_chat_messages')) || [];
+      for (const m of localMessages) {
+        try {
+          await supabase.from('chat_messages').upsert({
+            id: isNaN(Number(m.id)) ? undefined : Number(m.id),
+            room_id: m.roomId,
+            sender: m.sender,
+            text: m.text,
+            timestamp: m.timestamp
+          }, { onConflict: 'id' });
+        } catch (e) {
+          console.warn(`Message ${m.id} migration skipped:`, e);
+        }
+      }
+
+      console.log("Migration completed successfully!");
+      return { success: true };
+    } catch (err) {
+      console.error("Migration failed:", err);
+      return { success: false, error: err };
     }
   }
 };

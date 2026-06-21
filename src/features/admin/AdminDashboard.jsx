@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, RefreshCw } from 'lucide-react';
+import { dbService } from '../../supabaseClient';
 
 export function AdminDashboard({
   isAdminTabOpen,
@@ -25,6 +26,35 @@ export function AdminDashboard({
   statsLoading = false,
   loadDashboardStats
 }) {
+  const [migrationLoading, setMigrationLoading] = React.useState(false);
+  const [migrationStatus, setMigrationStatus] = React.useState('');
+
+  const handleMigrateData = async () => {
+    if (!window.confirm("⚠️ 주의: 현재 브라우저에 임시 저장되어 있는 활동 내역(게시글, 댓글, 채팅방 등)을 새로운 실서버 Supabase 데이터베이스로 일괄 전송하여 복구합니다. 진행하시겠습니까?")) {
+      return;
+    }
+    
+    setMigrationLoading(true);
+    setMigrationStatus('데이터 이전 중...');
+    
+    try {
+      const res = await dbService.migrateLocalStorageToSupabase();
+      if (res.success) {
+        alert("🎉 데이터 복구가 완벽하게 성공했습니다! 페이지를 새로고침하여 새로운 실서버 데이터를 확인해 보세요.");
+        setMigrationStatus('복구 성공!');
+        window.location.reload();
+      } else {
+        alert("❌ 복구 실패: " + (res.error?.message || "알 수 없는 오류"));
+        setMigrationStatus('복구 실패');
+      }
+    } catch (err) {
+      alert("❌ 오류 발생: " + err.message);
+      setMigrationStatus('오류 발생');
+    } finally {
+      setMigrationLoading(false);
+    }
+  };
+
   if (!isAdminTabOpen) return null;
 
   return (
@@ -419,11 +449,37 @@ ALTER TABLE visit_logs DISABLE ROW LEVEL SECURITY;`}
 
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button 
+              onClick={handleMigrateData}
+              disabled={migrationLoading}
+              className="btn"
+              style={{ 
+                padding: '0.55rem 0.9rem', 
+                fontSize: '0.78rem', 
+                background: 'linear-gradient(135deg, #e11d48, #be123c)', // 로즈/레드 톤의 프리미엄 그라데이션
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                boxShadow: '0 4px 12px rgba(225, 29, 72, 0.25)',
+                opacity: migrationLoading ? 0.6 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                transition: 'all 0.2s'
+              }}
+            >
+              💾 이전 로컬 데이터 새 DB로 복구하기
+            </button>
+            {migrationStatus && <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 'bold' }}>{migrationStatus}</span>}
+          </div>
           <button 
             onClick={() => setIsAdminTabOpen(false)}
             className="btn btn-outline" 
-            style={{ padding: '0.6rem 1.2rem', fontSize: '0.85rem' }}
+            style={{ padding: '0.55rem 1.2rem', fontSize: '0.8rem' }}
           >
             닫기
           </button>

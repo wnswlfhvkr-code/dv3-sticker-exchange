@@ -95,27 +95,6 @@ const isRoomHiddenForUser = (nickname, roomId) => {
   return getHiddenRoomIds(nickname).some(id => String(id) === String(roomId));
 };
 
-const fetchAllDbMessages = async () => {
-  const pageSize = 1000;
-  let from = 0;
-  let allMessages = [];
-
-  while (true) {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .order('timestamp', { ascending: false })
-      .range(from, from + pageSize - 1);
-
-    if (error) throw error;
-    allMessages = allMessages.concat(data || []);
-    if (!data || data.length < pageSize) break;
-    from += pageSize;
-  }
-
-  return allMessages;
-};
-
 // Supabase의 snake_case 응답을 로컬 camelCase 형태로 파싱해주는 포맷터
 const formatDbRoom = (dbRoom) => {
   if (!dbRoom) return null;
@@ -196,6 +175,8 @@ export const chatService = {
         return formatDbRoom(newRoom);
       } catch (e) {
         console.warn('Supabase chat room error, using message-backed room:', e);
+        if (import.meta.env.PROD) throw e;
+        
         // Supabase의 chat_rooms.id가 아직 숫자 타입인 운영 DB에서도 메시지 기반 방은 계속 작동해야 한다.
         const syntheticRoom = {
           id: roomId,
@@ -237,26 +218,11 @@ export const chatService = {
         ]);
         if (e1) throw e1;
         if (e2) throw e2;
+        
         // 중복 제거 후 합치기
         const allRoomsMap = {};
-        [...(asBuyer || []), ...(asSeller || [])].forEach(r => { allRoomsMap[r.id] = r; });
-        // 운영 DB에 chat_rooms.id가 예전 bigint 타입으로 남은 경우, 방 insert는 실패하지만
-        // chat_messages.room_id에는 문자열 room-* 메시지가 쌓일 수 있다. 이 메시지들로 목록을 복원한다.
-        const recentMessages = await fetchAllDbMessages();
-
-        (recentMessages || []).forEach(msg => {
-          const roomId = msg.room_id;
-          if (!isMyRoomId(roomId, nickname) || allRoomsMap[roomId]) return;
-
-          const participants = getRoomParticipants(roomId, nickname);
-          allRoomsMap[roomId] = {
-            id: roomId,
-            postId: null,
-            buyerNickname: nickname,
-            sellerNickname: participants.other,
-            lastMessage: msg.text,
-            updatedAt: msg.timestamp
-          };
+        [...(asBuyer || []), ...(asSeller || [])].forEach(r => { 
+          allRoomsMap[r.id] = r; 
         });
 
         return Object.values(allRoomsMap).map(room => {
@@ -265,6 +231,8 @@ export const chatService = {
         }).filter(r => !isRoomHiddenForUser(nickname, r.id));
       } catch (e) {
         console.warn('Supabase chat rooms fetch failed:', e);
+        if (import.meta.env.PROD) throw e;
+        
         const rooms = getLocalRooms();
         return rooms.filter(r => {
           const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
@@ -330,6 +298,8 @@ export const chatService = {
         return formatDbMessage(data);
       } catch (e) {
         console.warn('Supabase send message failed, saving locally:', e);
+        if (import.meta.env.PROD) throw e;
+        
         // 폴백 저장
         const messages = getLocalMessages();
         messages.push(newMessage);
@@ -363,6 +333,8 @@ export const chatService = {
         return (data || []).map(formatDbMessage);
       } catch (e) {
         console.warn('Supabase fetch messages failed:', e);
+        if (import.meta.env.PROD) throw e;
+        
         const messages = getLocalMessages();
         return messages.filter(m => String(m.roomId) === String(roomId));
       }
@@ -387,10 +359,12 @@ export const chatService = {
             table: 'chat_messages',
             filter: `room_id=eq.${roomId}`
           },
-          async (payload) => {
+          (payload) => {
             console.log('실시간 새 메시지 수신:', payload.new);
-            const updatedMessages = await this.getMessages(roomId);
-            onNewMessage(updatedMessages);
+            const formatted = formatDbMessage(payload.new);
+            if (formatted) {
+              onNewMessage(formatted);
+            }
           }
         )
         .subscribe();

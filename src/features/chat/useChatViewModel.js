@@ -322,26 +322,29 @@ export function useChatViewModel({ userNickname }) {
     };
     loadInitialMessages();
 
-    const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (msgs) => {
-      setChatMessages(msgs || []);
+    const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (newMsg) => {
+      if (!newMsg) return;
       
-      if (msgs && msgs.length > 0) {
-        const lastMsg = msgs[msgs.length - 1];
-        setChatRooms(prevRooms => {
-          const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
-          if (index === -1) {
-            loadChatRooms();
-            return prevRooms;
-          }
-          const updatedRooms = [...prevRooms];
-          updatedRooms[index] = {
-            ...updatedRooms[index],
-            lastMessage: lastMsg.text,
-            updatedAt: lastMsg.timestamp
-          };
-          return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
-        });
-      }
+      setChatMessages(prev => {
+        // 중복 방지 검증
+        if (prev.some(m => String(m.id) === String(newMsg.id))) return prev;
+        return [...prev, newMsg];
+      });
+      
+      setChatRooms(prevRooms => {
+        const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
+        if (index === -1) {
+          loadChatRooms();
+          return prevRooms;
+        }
+        const updatedRooms = [...prevRooms];
+        updatedRooms[index] = {
+          ...updatedRooms[index],
+          lastMessage: newMsg.text,
+          updatedAt: newMsg.timestamp
+        };
+        return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+      });
       
       setTimeout(() => {
         loadChatRooms();
@@ -358,22 +361,56 @@ export function useChatViewModel({ userNickname }) {
     }
   }, [chatMessages]);
 
-  // 로그인 상태일 때 15초마다 대화방 목록 리프레시 및 로컬 이벤트 동기화
+  // 로그인 상태일 때 45초마다 대화방 목록 리프레시 (화면 활성화 상태에서만 동작하여 Egress 극적으로 아낌)
   useEffect(() => {
     if (userNickname) {
       runDatabaseMigration(userNickname);
       loadChatRooms();
-      const timer = setInterval(() => {
-        loadChatRooms();
-      }, 15000);
+
+      let timer = null;
+
+      const startTimer = () => {
+        if (timer) clearInterval(timer);
+        timer = setInterval(() => {
+          if (document.visibilityState === 'visible') {
+            loadChatRooms();
+          }
+        }, 45000); // 15초 -> 45초로 최적화 (실시간 WebSocket이 보조하므로 45초로 충분)
+      };
+
+      const stopTimer = () => {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      };
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          loadChatRooms();
+          startTimer();
+        } else {
+          stopTimer();
+        }
+      };
+
+      // 초기 기동
+      if (document.visibilityState === 'visible') {
+        startTimer();
+      }
 
       const handleChatUpdate = () => {
-        loadChatRooms();
+        if (document.visibilityState === 'visible') {
+          loadChatRooms();
+        }
       };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
       window.addEventListener('dv3_chat_update', handleChatUpdate);
 
       return () => {
-        clearInterval(timer);
+        stopTimer();
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
         window.removeEventListener('dv3_chat_update', handleChatUpdate);
       };
     }
