@@ -38,6 +38,45 @@ export const sendErrorEmail = async (errorMessage) => {
   }
 };
 
+// OpenAI API 호출 래퍼 함수 (호출 실패 시 관리자 이메일 전송)
+export const callOpenAI = async (messages, options = {}) => {
+  const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+  
+  if (!apiKey) {
+    console.warn("OpenAI API Key가 설정되지 않았습니다.");
+    return null;
+  }
+  
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: options.model || 'gpt-4o-mini',
+        messages,
+        temperature: options.temperature ?? 0.7
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(`OpenAI API HTTP Error ${response.status}: ${errData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (err) {
+    console.error("OpenAI API 호출 실패:", err);
+    if (isProd) {
+      sendErrorEmail(`OpenAI API 호출 실패: ${err.message || err}`);
+    }
+    throw err;
+  }
+};
+
 // Supabase 클라이언트 초기화 시도
 let rawSupabase = null;
 let isMock = true;
