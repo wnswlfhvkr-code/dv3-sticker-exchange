@@ -22,12 +22,12 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
--- 2. Accept-Language 파싱 기반 요청자 인증 검증 함수 정의 (CORS preflight 우회)
+-- 2. X-Client-Info 파싱 기반 요청자 인증 검증 함수 정의 (CORS preflight 및 프록시 우회)
 CREATE OR REPLACE FUNCTION public.validate_request_user(p_nickname text)
 RETURNS boolean AS $$
 DECLARE
   req_headers text;
-  accept_lang text;
+  client_info text;
   parts text[];
   encoded_nick text;
   encoded_pass text;
@@ -42,13 +42,13 @@ BEGIN
     RETURN false;
   END IF;
 
-  accept_lang := req_headers::json->>'accept-language';
-  IF accept_lang IS NULL OR accept_lang = '' THEN
+  client_info := req_headers::json->>'x-client-info';
+  IF client_info IS NULL OR client_info = '' THEN
     RETURN false;
   END IF;
 
-  -- 2) '||' 구분자로 파싱 (기본 언어 설정 || base64_nickname || base64_password)
-  parts := string_to_array(accept_lang, '||');
+  -- 2) '||' 구분자로 파싱 (supabase-js/버전 || base64_nickname || base64_password)
+  parts := string_to_array(client_info, '||');
   
   -- 배열 크기가 3개여야 정상 파싱된 것임
   IF array_length(parts, 1) < 3 THEN

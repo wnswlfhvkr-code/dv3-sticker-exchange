@@ -132,8 +132,8 @@ function getActiveSupabaseClient() {
   const base64Password = password ? utf8Btoa(password) : '';
 
   const headers = {};
-  const baseLang = 'ko-KR,ko;q=0.9,en-US;q=0.8';
-  headers['Accept-Language'] = `${baseLang}||${base64Nickname}||${base64Password}`;
+  const baseClientInfo = 'supabase-js/2.39.0';
+  headers['X-Client-Info'] = `${baseClientInfo}||${base64Nickname}||${base64Password}`;
 
   const client = createClient(supabaseUrl, supabaseAnonKey, {
     global: {
