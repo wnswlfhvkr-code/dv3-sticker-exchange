@@ -483,14 +483,16 @@ export function useChatViewModel({ userNickname }) {
 
   // 글로벌 새 메시지 감지 훅 (알림음, 토스트 팝업, 안 읽은 카운트 제어)
   useEffect(() => {
-    if (!userNickname || !isVisible) return;
+    if (!userNickname) return;
 
     const unsubscribe = chatService.subscribeAllMyMessages(userNickname, (msg) => {
-      // 실시간 메시지 수신 시 목록 최신 상태 즉각 메모리 선반영
+      // 실시간 메시지 수신 시 목록 최신 상태 즉각 메모리 선반영 (백그라운드여도 수신하여 안읽은 카운트 & 알람 재생)
       setChatRooms(prevRooms => {
         const index = prevRooms.findIndex(r => r.id === msg.roomId);
         if (index === -1) {
-          loadChatRooms();
+          if (document.visibilityState === 'visible') {
+            loadChatRooms();
+          }
           return prevRooms;
         }
         const updatedRooms = [...prevRooms];
@@ -502,9 +504,11 @@ export function useChatViewModel({ userNickname }) {
         return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
       });
 
-      setTimeout(() => {
-        loadChatRooms();
-      }, 500);
+      if (document.visibilityState === 'visible') {
+        setTimeout(() => {
+          loadChatRooms();
+        }, 500);
+      }
       
       // 1. 상대방이 보낸 메시지인 경우, 활성화된 대화방 여부와 상관없이 무조건 알림음 재생
       if (msg.sender !== userNickname) {
@@ -530,18 +534,20 @@ export function useChatViewModel({ userNickname }) {
     });
 
     return () => unsubscribe();
-  }, [userNickname, isVisible]);
+  }, [userNickname]);
 
   // 글로벌 새 대화방 감지 훅 (누군가 나에게 처음 1:1 대화를 시도했을 때 대화방 실시간 추가 연동)
   useEffect(() => {
-    if (!userNickname || !isVisible) return;
+    if (!userNickname) return;
 
     const unsubscribe = chatService.subscribeMyRooms(userNickname, () => {
-      loadChatRooms();
+      if (document.visibilityState === 'visible') {
+        loadChatRooms();
+      }
     });
 
     return () => unsubscribe();
-  }, [userNickname, isVisible]);
+  }, [userNickname]);
 
   // 대화방 목록 화면으로 복귀할 때(또는 로그인 시) 최신 방 목록을 강제 로딩
   useEffect(() => {
