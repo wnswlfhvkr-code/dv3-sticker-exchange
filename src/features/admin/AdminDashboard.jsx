@@ -449,33 +449,7 @@ ALTER TABLE visit_logs DISABLE ROW LEVEL SECURITY;`}
 
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1rem', marginTop: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button 
-              onClick={handleMigrateData}
-              disabled={migrationLoading}
-              className="btn"
-              style={{ 
-                padding: '0.55rem 0.9rem', 
-                fontSize: '0.78rem', 
-                background: 'linear-gradient(135deg, #e11d48, #be123c)', // 로즈/레드 톤의 프리미엄 그라데이션
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                boxShadow: '0 4px 12px rgba(225, 29, 72, 0.25)',
-                opacity: migrationLoading ? 0.6 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                transition: 'all 0.2s'
-              }}
-            >
-              💾 이전 로컬 데이터 새 DB로 복구하기
-            </button>
-            {migrationStatus && <span style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 'bold' }}>{migrationStatus}</span>}
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1rem', marginTop: '0.5rem' }}>
           <button 
             onClick={() => setIsAdminTabOpen(false)}
             className="btn btn-outline" 

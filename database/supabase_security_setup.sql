@@ -74,7 +74,8 @@ BEGIN
   decoded_pass := public.decode_header_base64(encoded_pass);
 
   -- 3) 쿼리하려는 데이터의 소유자(p_nickname)와 요청 헤더의 닉네임이 일치하는지 검증
-  IF p_nickname <> decoded_nick THEN
+  -- 단, 요청자가 관리자('간장')인 경우에는 소유자 검증을 면제합니다 (인증/비번 확인은 거침)
+  IF p_nickname <> decoded_nick AND decoded_nick <> '간장' THEN
     RETURN false;
   END IF;
 
