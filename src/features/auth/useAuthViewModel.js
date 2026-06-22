@@ -19,11 +19,21 @@ export function useAuthViewModel() {
   const [showLoginModal, setShowLoginModal] = useState(!userNickname);
   const [loginInput, setLoginInput] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-  const [onlineUsers, setOnlineUsers] = useState([]);
+  const [isVisible, setIsVisible] = useState(document.visibilityState === 'visible');
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsVisible(document.visibilityState === 'visible');
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // 실시간 접속자 목록(Presence) 구독
   useEffect(() => {
-    if (userNickname) {
+    if (userNickname && isVisible) {
       const unsubscribe = chatService.subscribeOnlineUsers(userNickname, (users) => {
         setOnlineUsers(users);
       });
@@ -31,7 +41,7 @@ export function useAuthViewModel() {
     } else {
       setOnlineUsers([]);
     }
-  }, [userNickname]);
+  }, [userNickname, isVisible]);
 
   const handleLogin = async (nickname, password, isGuestMode) => {
     if (!nickname.trim()) {

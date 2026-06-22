@@ -401,10 +401,10 @@ const safeParseArray = (val) => {
   }
 };
 
-// 프론트엔드 Egress 트래픽 절감을 위한 30초 시간 기반 로컬 캐시 시스템
+// 프론트엔드 Egress 트래픽 절감을 위한 60초 시간 기반 로컬 캐시 시스템
 let postsCache = null;
 let lastPostsFetchTime = 0;
-const CACHE_TTL_MS = 30000; // 30초 캐시 유지
+const CACHE_TTL_MS = 60000; // 60초 캐시 유지 (5GB 용량 절약 극대화)
 
 export const clearPostsCache = () => {
   postsCache = null;

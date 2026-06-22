@@ -12,6 +12,17 @@ export function useChatViewModel({ userNickname }) {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatWindowOpen, setChatWindowOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(document.visibilityState === 'visible');
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      setIsVisible(document.visibilityState === 'visible');
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
 
   // 안 읽은 메시지 개수 관리 (로컬스토리지 복구 지원)
   const [unreadCounts, setUnreadCounts] = useState(() => {
@@ -320,39 +331,42 @@ export function useChatViewModel({ userNickname }) {
         console.warn("이전 대화 로드 실패:", e);
       }
     };
-    loadInitialMessages();
 
-    const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (newMsg) => {
-      if (!newMsg) return;
-      
-      setChatMessages(prev => {
-        // 중복 방지 검증
-        if (prev.some(m => String(m.id) === String(newMsg.id))) return prev;
-        return [...prev, newMsg];
-      });
-      
-      setChatRooms(prevRooms => {
-        const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
-        if (index === -1) {
+    if (isVisible) {
+      loadInitialMessages();
+
+      const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (newMsg) => {
+        if (!newMsg) return;
+        
+        setChatMessages(prev => {
+          // 중복 방지 검증
+          if (prev.some(m => String(m.id) === String(newMsg.id))) return prev;
+          return [...prev, newMsg];
+        });
+        
+        setChatRooms(prevRooms => {
+          const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
+          if (index === -1) {
+            loadChatRooms();
+            return prevRooms;
+          }
+          const updatedRooms = [...prevRooms];
+          updatedRooms[index] = {
+            ...updatedRooms[index],
+            lastMessage: newMsg.text,
+            updatedAt: newMsg.timestamp
+          };
+          return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        });
+        
+        setTimeout(() => {
           loadChatRooms();
-          return prevRooms;
-        }
-        const updatedRooms = [...prevRooms];
-        updatedRooms[index] = {
-          ...updatedRooms[index],
-          lastMessage: newMsg.text,
-          updatedAt: newMsg.timestamp
-        };
-        return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+        }, 500);
       });
-      
-      setTimeout(() => {
-        loadChatRooms();
-      }, 500);
-    });
 
-    return () => unsubscribe();
-  }, [chatActiveRoomId]);
+      return () => unsubscribe();
+    }
+  }, [chatActiveRoomId, isVisible]);
 
   // 새 대화 전송/수신 시 스크롤 자동 하단 이동
   useEffect(() => {
@@ -361,7 +375,7 @@ export function useChatViewModel({ userNickname }) {
     }
   }, [chatMessages]);
 
-  // 로그인 상태일 때 45초마다 대화방 목록 리프레시 (화면 활성화 상태에서만 동작하여 Egress 극적으로 아낌)
+  // 로그인 상태일 때 90초마다 대화방 목록 리프레시 (화면 활성화 상태에서만 동작하여 Egress 극적으로 아낌)
   useEffect(() => {
     if (userNickname) {
       runDatabaseMigration(userNickname);
@@ -375,7 +389,7 @@ export function useChatViewModel({ userNickname }) {
           if (document.visibilityState === 'visible') {
             loadChatRooms();
           }
-        }, 45000); // 15초 -> 45초로 최적화 (실시간 WebSocket이 보조하므로 45초로 충분)
+        }, 90000); // 45초 -> 90초로 대폭 늘려 대역폭(Egress) 절약 극대화 (실시간 WebSocket이 보조하므로 충분)
       };
 
       const stopTimer = () => {
@@ -469,7 +483,7 @@ export function useChatViewModel({ userNickname }) {
 
   // 글로벌 새 메시지 감지 훅 (알림음, 토스트 팝업, 안 읽은 카운트 제어)
   useEffect(() => {
-    if (!userNickname) return;
+    if (!userNickname || !isVisible) return;
 
     const unsubscribe = chatService.subscribeAllMyMessages(userNickname, (msg) => {
       // 실시간 메시지 수신 시 목록 최신 상태 즉각 메모리 선반영
@@ -516,18 +530,18 @@ export function useChatViewModel({ userNickname }) {
     });
 
     return () => unsubscribe();
-  }, [userNickname]);
+  }, [userNickname, isVisible]);
 
   // 글로벌 새 대화방 감지 훅 (누군가 나에게 처음 1:1 대화를 시도했을 때 대화방 실시간 추가 연동)
   useEffect(() => {
-    if (!userNickname) return;
+    if (!userNickname || !isVisible) return;
 
     const unsubscribe = chatService.subscribeMyRooms(userNickname, () => {
       loadChatRooms();
     });
 
     return () => unsubscribe();
-  }, [userNickname]);
+  }, [userNickname, isVisible]);
 
   // 대화방 목록 화면으로 복귀할 때(또는 로그인 시) 최신 방 목록을 강제 로딩
   useEffect(() => {
