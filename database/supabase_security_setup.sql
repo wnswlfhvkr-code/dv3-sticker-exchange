@@ -161,7 +161,7 @@ CREATE POLICY chat_rooms_select_policy ON public.chat_rooms FOR SELECT
 USING (public.validate_request_user(buyer_nickname) OR public.validate_request_user(seller_nickname));
 
 CREATE POLICY chat_rooms_insert_policy ON public.chat_rooms FOR INSERT
-WITH CHECK (public.validate_request_user(buyer_nickname) OR public.validate_request_user(seller_nickname));
+WITH CHECK (public.validate_request_user(buyer_nickname));
 
 CREATE POLICY chat_rooms_modify_policy ON public.chat_rooms FOR ALL
 USING (public.validate_request_user(buyer_nickname) OR public.validate_request_user(seller_nickname));
