@@ -184,15 +184,10 @@ USING (
   )
 );
 
--- 자신이 작성한 닉네임 명의로만 메시지 입력 허용
+-- 자신이 작성한 닉네임 명의로만 메시지 입력 허용 (보안 사칭 방지)
 CREATE POLICY chat_messages_insert_policy ON public.chat_messages FOR INSERT
 WITH CHECK (
   public.validate_request_user(sender)
-  AND EXISTS (
-    SELECT 1 FROM public.chat_rooms
-    WHERE chat_rooms.id = chat_messages.room_id
-      AND (chat_rooms.buyer_nickname = sender OR chat_rooms.seller_nickname = sender)
-  )
 );
 
 -- 본인 메시지만 수정/삭제 허용
