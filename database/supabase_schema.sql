@@ -74,6 +74,19 @@ CREATE INDEX IF NOT EXISTS board_posts_type_created_at_idx
 ALTER TABLE IF EXISTS public.board_posts DISABLE ROW LEVEL SECURITY;
 
 
+-- 3.6 독립 게시판 댓글(board_comments) 테이블 생성 DDL
+CREATE TABLE IF NOT EXISTS public.board_comments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    board_post_id UUID REFERENCES public.board_posts(id) ON DELETE CASCADE,
+    nickname TEXT NOT NULL,
+    text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS (Row Level Security) 비활성화
+ALTER TABLE IF EXISTS public.board_comments DISABLE ROW LEVEL SECURITY;
+
+
 -- 4. 신고(reports) 테이블 생성 DDL
 CREATE TABLE IF NOT EXISTS public.reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

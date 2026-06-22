@@ -209,3 +209,15 @@ DROP POLICY IF EXISTS users_modify_policy ON public.users;
 CREATE POLICY users_select_policy ON public.users FOR SELECT USING (true); -- 로그인 매칭 검사용 전체 공개
 CREATE POLICY users_insert_policy ON public.users FOR INSERT WITH CHECK (true); -- 회원가입 전체 허용
 CREATE POLICY users_modify_policy ON public.users FOR ALL USING (public.validate_request_user(nickname)); -- 본인 정보만 수정/삭제
+
+
+-- 3.7 board_comments (독립 게시판 댓글) 테이블 보안 정책
+ALTER TABLE public.board_comments ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS board_comments_select_policy ON public.board_comments;
+DROP POLICY IF EXISTS board_comments_insert_policy ON public.board_comments;
+DROP POLICY IF EXISTS board_comments_modify_policy ON public.board_comments;
+
+CREATE POLICY board_comments_select_policy ON public.board_comments FOR SELECT USING (true); -- 누구나 조회 가능
+CREATE POLICY board_comments_insert_policy ON public.board_comments FOR INSERT WITH CHECK (public.validate_request_user(nickname));
+CREATE POLICY board_comments_modify_policy ON public.board_comments FOR ALL USING (public.validate_request_user(nickname));
