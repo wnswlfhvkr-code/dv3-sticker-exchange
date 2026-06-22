@@ -19,6 +19,7 @@ export function useAuthViewModel() {
   const [showLoginModal, setShowLoginModal] = useState(!userNickname);
   const [loginInput, setLoginInput] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [onlineUsers, setOnlineUsers] = useState([]);
   const [isVisible, setIsVisible] = useState(document.visibilityState === 'visible');
 
   useEffect(() => {
