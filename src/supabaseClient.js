@@ -1137,4 +1137,4 @@ export const dbService = {
   }
 };
 
-export { supabase, isMock };
+export { supabase, isMock, rawSupabase };

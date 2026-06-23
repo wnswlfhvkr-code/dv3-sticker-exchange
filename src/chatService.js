@@ -1,4 +1,4 @@
-import { supabase, isMock } from './supabaseClient';
+import { supabase, rawSupabase, isMock } from './supabaseClient';
 
 // 로컬 스토리지 키 정의
 const CHAT_ROOMS_KEY = 'dv3_chat_rooms';
@@ -46,24 +46,23 @@ const createRoomId = (nicknameA, nicknameB) => {
 
 const getRoomParticipants = (roomId, knownNickname) => {
   if (!roomId || !knownNickname || !roomId.startsWith('room-')) return null;
-  const body = roomId.slice(5);
-  const asPrefix = `${knownNickname}-`;
-  const asSuffix = `-${knownNickname}`;
-
-  if (body.startsWith(asPrefix)) {
-    const other = body.slice(asPrefix.length);
-    return other ? { me: knownNickname, other } : null;
-  }
-
-  if (body.endsWith(asSuffix)) {
-    const other = body.slice(0, -asSuffix.length);
-    return other ? { me: knownNickname, other } : null;
-  }
-
-  return null;
+  const parts = roomId.slice(5).split('-');
+  if (parts.length < 2) return null;
+  
+  const meIndex = parts.indexOf(knownNickname);
+  if (meIndex === -1) return null;
+  
+  const otherIndex = meIndex === 0 ? 1 : 0;
+  const other = parts[otherIndex];
+  
+  return { me: knownNickname, other };
 };
 
-const isMyRoomId = (roomId, nickname) => Boolean(getRoomParticipants(roomId, nickname));
+const isMyRoomId = (roomId, nickname) => {
+  if (!roomId || !nickname || !roomId.startsWith('room-')) return false;
+  const parts = roomId.slice(5).split('-');
+  return parts.includes(nickname);
+};
 
 const getHiddenRoomsKey = (nickname) => `${CHAT_HIDDEN_ROOMS_PREFIX}${nickname}`;
 
@@ -349,28 +348,30 @@ export const chatService = {
   // 5. 실시간 메시지 리스너 구독 설정
   subscribeMessages(roomId, onNewMessage) {
     if (!isMock) {
-      const channel = supabase
+      const channel = rawSupabase
         .channel(`room-messages-${makeSafeChannelName(roomId)}`)
         .on(
           'postgres_changes',
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'chat_messages',
-            filter: `room_id=eq.${roomId}`
+            table: 'chat_messages'
           },
           (payload) => {
-            console.log('실시간 새 메시지 수신:', payload.new);
-            const formatted = formatDbMessage(payload.new);
-            if (formatted) {
-              onNewMessage(formatted);
+            const msg = payload.new;
+            if (msg && String(msg.room_id) === String(roomId)) {
+              console.log('실시간 새 메시지 수신:', msg);
+              const formatted = formatDbMessage(msg);
+              if (formatted) {
+                onNewMessage(formatted);
+              }
             }
           }
         )
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        rawSupabase.removeChannel(channel);
       };
     } else {
       // 탭 간 실시간 통신을 위한 storage 이벤트 리스너
@@ -406,7 +407,7 @@ export const chatService = {
   // 6. 실시간 접속 여부 추적 (Presence)
   subscribeOnlineUsers(myNickname, onUpdate) {
     if (!isMock) {
-      const channel = supabase.channel('online-users', {
+      const channel = rawSupabase.channel('online-users', {
         config: {
           presence: {
             key: myNickname,
@@ -430,7 +431,7 @@ export const chatService = {
         });
 
       return () => {
-        supabase.removeChannel(channel);
+        rawSupabase.removeChannel(channel);
       };
     } else {
       // 로컬 스토리지 기반 온라인 유저 추적 (Heartbeat 방식)
@@ -489,7 +490,7 @@ export const chatService = {
   subscribeAllMyMessages(myNickname, onNewMessage) {
     if (!isMock) {
       // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
-      const channel = supabase
+      const channel = rawSupabase
         .channel(`global-chat-notifications-${makeSafeChannelName(myNickname)}`)
         .on(
           'postgres_changes',
@@ -515,7 +516,7 @@ export const chatService = {
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        rawSupabase.removeChannel(channel);
       };
     } else {
       const handleStorageChange = (e) => {
@@ -572,7 +573,7 @@ export const chatService = {
   subscribeMyRooms(myNickname, onRoomUpdate) {
     if (!isMock) {
       // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
-      const channel = supabase
+      const channel = rawSupabase
         .channel(`realtime-my-chat-rooms-${makeSafeChannelName(myNickname)}`)
         .on(
           'postgres_changes',
@@ -591,7 +592,7 @@ export const chatService = {
         .subscribe();
 
       return () => {
-        supabase.removeChannel(channel);
+        rawSupabase.removeChannel(channel);
       };
     } else {
       const handleStorageChange = (e) => {
