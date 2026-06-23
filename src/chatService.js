@@ -173,8 +173,8 @@ export const chatService = {
         unhideRoomForUser(buyerNickname, roomId);
         return formatDbRoom(newRoom);
       } catch (e) {
-        console.warn('Supabase chat room error, using message-backed room:', e);
-        if (import.meta.env.PROD) throw e;
+        console.error('Supabase chat room error:', e);
+        throw e;
         
         // Supabase의 chat_rooms.id가 아직 숫자 타입인 운영 DB에서도 메시지 기반 방은 계속 작동해야 한다.
         const syntheticRoom = {
@@ -229,8 +229,8 @@ export const chatService = {
           return formatted || room;
         }).filter(r => !isRoomHiddenForUser(nickname, r.id));
       } catch (e) {
-        console.warn('Supabase chat rooms fetch failed:', e);
-        if (import.meta.env.PROD) throw e;
+        console.error('Supabase chat rooms fetch failed:', e);
+        throw e;
         
         const rooms = getLocalRooms();
         return rooms.filter(r => {
@@ -296,8 +296,8 @@ export const chatService = {
 
         return formatDbMessage(data);
       } catch (e) {
-        console.warn('Supabase send message failed, saving locally:', e);
-        if (import.meta.env.PROD) throw e;
+        console.error('Supabase send message failed:', e);
+        throw e;
         
         // 폴백 저장
         const messages = getLocalMessages();
@@ -331,8 +331,8 @@ export const chatService = {
         if (error) throw error;
         return (data || []).map(formatDbMessage);
       } catch (e) {
-        console.warn('Supabase fetch messages failed:', e);
-        if (import.meta.env.PROD) throw e;
+        console.error('Supabase fetch messages failed:', e);
+        throw e;
         
         const messages = getLocalMessages();
         return messages.filter(m => String(m.roomId) === String(roomId));
