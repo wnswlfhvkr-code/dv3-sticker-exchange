@@ -265,8 +265,13 @@ export function useChatViewModel({ userNickname }) {
       const sentMsg = await chatService.sendMessage(chatActiveRoomId, userNickname, sanitizedText);
       setChatInput('');
       
-      // 발송 메시지 메모리 목록 선갱신
+      // 발송 메시지 메모리 목록 선갱신 및 현재 대화방 메인 스레드 즉시 주입
       if (sentMsg) {
+        setChatMessages(prev => {
+          if (prev.some(m => String(m.id) === String(sentMsg.id))) return prev;
+          return [...prev, sentMsg];
+        });
+
         setChatRooms(prevRooms => {
           const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
           if (index === -1) {
@@ -332,41 +337,39 @@ export function useChatViewModel({ userNickname }) {
       }
     };
 
-    if (isVisible) {
-      loadInitialMessages();
+    loadInitialMessages();
 
-      const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (newMsg) => {
-        if (!newMsg) return;
-        
-        setChatMessages(prev => {
-          // 중복 방지 검증
-          if (prev.some(m => String(m.id) === String(newMsg.id))) return prev;
-          return [...prev, newMsg];
-        });
-        
-        setChatRooms(prevRooms => {
-          const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
-          if (index === -1) {
-            loadChatRooms();
-            return prevRooms;
-          }
-          const updatedRooms = [...prevRooms];
-          updatedRooms[index] = {
-            ...updatedRooms[index],
-            lastMessage: newMsg.text,
-            updatedAt: newMsg.timestamp
-          };
-          return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
-        });
-        
-        setTimeout(() => {
-          loadChatRooms();
-        }, 500);
+    const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (newMsg) => {
+      if (!newMsg) return;
+      
+      setChatMessages(prev => {
+        // 중복 방지 검증
+        if (prev.some(m => String(m.id) === String(newMsg.id))) return prev;
+        return [...prev, newMsg];
       });
+      
+      setChatRooms(prevRooms => {
+        const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
+        if (index === -1) {
+          loadChatRooms();
+          return prevRooms;
+        }
+        const updatedRooms = [...prevRooms];
+        updatedRooms[index] = {
+          ...updatedRooms[index],
+          lastMessage: newMsg.text,
+          updatedAt: newMsg.timestamp
+        };
+        return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
+      });
+      
+      setTimeout(() => {
+        loadChatRooms();
+      }, 500);
+    });
 
-      return () => unsubscribe();
-    }
-  }, [chatActiveRoomId, isVisible]);
+    return () => unsubscribe();
+  }, [chatActiveRoomId]);
 
   // 새 대화 전송/수신 시 스크롤 자동 하단 이동
   useEffect(() => {
