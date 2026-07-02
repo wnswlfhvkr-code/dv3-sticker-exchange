@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>드빌3 젬 강화 효율 분석 - 가성비 극대화 가이드</title>
+  <meta name="description" content="드래곤빌리지 3(드빌3) 젬 강화 효율성과 판매 환급가를 고려한 1P당 가성비 분석표입니다. 일반, 영웅, 전설 젬의 최적의 강화 마지노선과 가성비 계산기를 제공합니다.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>">
+  <link rel="stylesheet" href="/static-pages.css">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3489777827665018" crossorigin="anonymous"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "드빌3 젬 강화 효율 분석",
+    "description": "골드 투자 대비 획득 강화 포인트 효율성 및 추천 강화 한계치 분석 자료",
+    "author": {
+      "@type": "Organization",
+      "name": "드빌3 스티커교환소"
+    }
+  }
+  </script>
+  <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 14px;
+      text-align: left;
+    }
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    th {
+      background-color: rgba(255, 255, 255, 0.04);
+      color: #c4b5fd;
+      font-weight: 700;
+    }
+    tr:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-s { background: rgba(167, 139, 250, 0.2); color: #c4b5fd; border: 1px solid rgba(167, 139, 250, 0.3); }
+    .badge-a { background: rgba(96, 165, 250, 0.2); color: #93c5fd; border: 1px solid rgba(96, 165, 250, 0.3); }
+    .badge-b { background: rgba(245, 158, 11, 0.2); color: #fde047; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .badge-c { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-d { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    /* 계산기 스타일 */
+    .calc-container {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 24px;
+      margin: 25px 0;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+    }
+    .calc-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: #c4b5fd;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .calc-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .calc-group label {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 600;
+    }
+    .calc-group select {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: #fff;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .calc-group select:focus {
+      border-color: #a78bfa;
+    }
+    .calc-result-box {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+    }
+    .result-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .result-label {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    .result-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .result-highlight {
+      color: #c4b5fd;
+    }
+  </style>
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-logo">🐉 드빌3 스티커교환소</a>
+    <div class="nav-links">
+      <a href="/about.html">소개</a>
+      <a href="/tips-gem-reinforcement.html" style="color: #a78bfa; font-weight: 700;">젬 강화 효율표</a>
+      <a href="/guide.html">이용 가이드</a>
+      <a href="/faq.html">FAQ</a>
+      <a href="/">메인으로</a>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <h1 class="page-title">젬(Gem) 강화 효율 분석 및 가이드</h1>
+    <p class="page-subtitle">투자 골드 대비 획득하는 강화 포인트(P) 효율을 판매 회수 골드 기준으로 정밀 연산한 가성비 리포트입니다.</p>
+
+    <!-- 실시간 가성비 계산기 탑재 -->
+    <div class="calc-container">
+      <div class="calc-title">
+        <span>💎</span> 실시간 젬 강화 가성비 계산기
+      </div>
+      <div class="calc-grid">
+        <div class="calc-group">
+          <label for="calc-grade">젬 등급 선택</label>
+          <select id="calc-grade" onchange="calculateGem()">
+            <option value="normal">일반 등급</option>
+            <option value="hero">영웅 등급</option>
+            <option value="legend">전설 등급</option>
+          </select>
+        </div>
+        <div class="calc-group">
+          <label for="calc-start">현재 강화 수치</label>
+          <select id="calc-start" onchange="calculateGem()">
+            <option value="0">+0강</option>
+            <option value="1">+1강</option>
+            <option value="2">+2강</option>
+            <option value="3">+3강</option>
+            <option value="4">+4강</option>
+          </select>
+        </div>
+        <div class="calc-group">
+          <label for="calc-target">목표 강화 수치</label>
+          <select id="calc-target" onchange="calculateGem()">
+            <option value="1">+1강</option>
+            <option value="2" selected>+2강</option>
+            <option value="3">+3강</option>
+            <option value="4">+4강</option>
+            <option value="5">+5강</option>
+          </select>
+        </div>
+        <div class="calc-group" id="bonus-group" style="display: none;">
+          <label for="calc-bonus">전설 젬 점수 보너스</label>
+          <select id="calc-bonus" onchange="calculateGem()">
+            <option value="0">보너스 없음 (54점 이하)</option>
+            <option value="55">55점 이상 (+50P)</option>
+            <option value="60">60점 이상 (+100P)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="calc-result-box">
+        <div class="result-grid">
+          <div class="result-item">
+            <span class="result-label">누적 강화 비용</span>
+            <span class="result-value" id="res-cost">0 골드</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">판매 환급 차액</span>
+            <span class="result-value" id="res-refund">0 골드</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">실질 소모 골드</span>
+            <span class="result-value result-highlight" id="res-actual">0 골드</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">획득 포인트 (P)</span>
+            <span class="result-value" id="res-points">0 P</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">1P당 소모 비용</span>
+            <span class="result-value result-highlight" id="res-unit-cost">0 골드</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">가성비 등급 평가</span>
+            <span class="result-value" id="res-rating">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-section">
+      <h2>1. 계산 기준 및 보너스 포인트</h2>
+      <p>강화 수치 상승에 따라 주어지는 기본 포인트와 젬 자체 점수 보너스 포인트 획득 기준입니다.</p>
+      <ul>
+        <li><strong>기본 강화 포인트</strong>: +1 (5P) | +2 (10P) | +3 (15P) | +4 (20P) | +5 (25P)</li>
+        <li><strong>젬 점수 보너스</strong>: 55점 이상 달성 시 (+50P) | 60점 이상 달성 시 (+100P)</li>
+      </ul>
+      <p><strong>실질 소모 골드 계산 공식 (실질 손해 비용 기준)</strong><br>
+      <code style="background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:6px; font-family:monospace; color:#a78bfa;">실질 소모 골드 = 누적 강화 비용 - (판매가 - 0강 판매가)</code><br>
+      * 판매 시 일부 골드가 환급되므로, 실제 회수되는 금액을 차감한 '순수 기회비용 손해액'을 기준으로 효율을 연산하였습니다.</p>
+    </div>
+
+    <div class="content-section">
+      <h2>2. 등급 및 강화 단계별 기초 데이터</h2>
+      
+      <h3>① 강화 비용 (골드)</h3>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>등급</th>
+              <th>0→1</th>
+              <th>1→2</th>
+              <th>2→3</th>
+              <th>3→4</th>
+              <th>4→5</th>
+              <th>누적(+5)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700">일반</td>
+              <td>1,500</td>
+              <td>7,230</td>
+              <td>16,470</td>
+              <td>47,000</td>
+              <td>234,000</td>
+              <td style="color:#f3f4f6">306,200</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:#60a5fa">영웅</td>
+              <td>3,060</td>
+              <td>14,480</td>
+              <td>29,700</td>
+              <td>131,000</td>
+              <td>383,000</td>
+              <td style="color:#f3f4f6">561,240</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:#fbbf24">전설</td>
+              <td>7,640</td>
+              <td>36,230</td>
+              <td>74,520</td>
+              <td>292,000</td>
+              <td>958,000</td>
+              <td style="color:#f3f4f6">1,368,390</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 style="margin-top: 30px;">② 판매가 (골드)</h3>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>등급</th>
+              <th>+0</th>
+              <th>+1</th>
+              <th>+2</th>
+              <th>+3</th>
+              <th>+4</th>
+              <th>+5</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="font-weight:700">일반</td>
+              <td>1,000</td>
+              <td>1,750</td>
+              <td>5,365</td>
+              <td>13,600</td>
+              <td>37,100</td>
+              <td>167,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:#60a5fa">영웅</td>
+              <td>3,000</td>
+              <td>4,530</td>
+              <td>11,770</td>
+              <td>26,620</td>
+              <td>92,370</td>
+              <td>284,000</td>
+            </tr>
+            <tr>
+              <td style="font-weight:700; color:#fbbf24">전설</td>
+              <td>10,000</td>
+              <td>13,820</td>
+              <td>31,935</td>
+              <td>69,195</td>
+              <td>215,195</td>
+              <td>694,000</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:12px; color:rgba(255,255,255,0.45); margin-top:8px;">※ 판매가는 대부분 누적 강화 비용의 약 50%를 보전하여 환급해 주는 규칙을 따릅니다.</p>
+    </div>
+
+    <div class="content-section">
+      <h2>3. 1P당 가성비 기준 누적 효율 순위</h2>
+      <p>1P(포인트)당 소모되는 골드가 적을수록 효율이 높습니다.</p>
+      <div style="overflow-x: auto;">
+        <table>
+          <thead>
+            <tr>
+              <th>순위</th>
+              <th>등급</th>
+              <th>목표</th>
+              <th>실질 소모 골드</th>
+              <th>획득P</th>
+              <th>1P당 비용</th>
+              <th>효율 등급</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="background: rgba(167, 139, 250, 0.05);">
+              <td>1</td>
+              <td style="color:#60a5fa">영웅</td>
+              <td>+1</td>
+              <td>1,530</td>
+              <td>5</td>
+              <td style="color:#a78bfa; font-weight:700">306</td>
+              <td><span class="badge badge-s">S등급 (최우선)</span></td>
+            </tr>
+            <tr style="background: rgba(167, 139, 250, 0.05);">
+              <td>2</td>
+              <td>일반</td>
+              <td>+2</td>
+              <td>4,365</td>
+              <td>10</td>
+              <td style="color:#a78bfa; font-weight:700">437</td>
+              <td><span class="badge badge-s">S등급 (최우선)</span></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td style="color:#fbbf24">전설</td>
+              <td>+1</td>
+              <td>3,820</td>
+              <td>5</td>
+              <td style="font-weight:700">764</td>
+              <td><span class="badge badge-a">A등급 (좋음)</span></td>
+            </tr>
+            <tr style="background: rgba(167, 139, 250, 0.05);">
+              <td>4</td>
+              <td>일반</td>
+              <td>+3</td>
+              <td>12,600</td>
+              <td>15</td>
+              <td style="color:#a78bfa; font-weight:700">840</td>
+              <td><span class="badge badge-a">A등급 (좋음)</span></td>
+            </tr>
+            <tr>
+              <td>5</td>
+              <td style="color:#60a5fa">영웅</td>
+              <td>+2</td>
+              <td>8,770</td>
+              <td>10</td>
+              <td style="font-weight:700">877</td>
+              <td><span class="badge badge-a">A등급 (좋음)</span></td>
+            </tr>
+            <tr>
+              <td>6</td>
+              <td style="color:#60a5fa">영웅</td>
+              <td>+3</td>
+              <td>23,620</td>
+              <td>15</td>
+              <td style="color:#60a5fa; font-weight:700">1,575</td>
+              <td><span class="badge badge-b">B등급 (보통)</span></td>
+            </tr>
+            <tr>
+              <td>7</td>
+              <td>일반</td>
+              <td>+4</td>
+              <td>36,100</td>
+              <td>20</td>
+              <td style="color:#60a5fa; font-weight:700">1,805</td>
+              <td><span class="badge badge-b">B등급 (보통)</span></td>
+            </tr>
+            <tr>
+              <td>8</td>
+              <td style="color:#fbbf24">전설</td>
+              <td>+2</td>
+              <td>21,935</td>
+              <td>10</td>
+              <td>2,194</td>
+              <td><span class="badge badge-b">B등급 (보통)</span></td>
+            </tr>
+            <tr>
+              <td>9</td>
+              <td style="color:#fbbf24">전설</td>
+              <td>+3</td>
+              <td>59,195</td>
+              <td>15</td>
+              <td>3,946</td>
+              <td><span class="badge badge-c">C등급 (낮음)</span></td>
+            </tr>
+            <tr>
+              <td>10</td>
+              <td style="color:#60a5fa">영웅</td>
+              <td>+4</td>
+              <td>85,870</td>
+              <td>20</td>
+              <td>4,294</td>
+              <td><span class="badge badge-c">C등급 (낮음)</span></td>
+            </tr>
+            <tr>
+              <td>11</td>
+              <td style="color:#fbbf24">전설</td>
+              <td>+5 (60점)</td>
+              <td>674,390</td>
+              <td>125</td>
+              <td style="color:#34d399">5,395</td>
+              <td><span class="badge badge-c">C등급 (보너스)</span></td>
+            </tr>
+            <tr>
+              <td>12</td>
+              <td>일반</td>
+              <td>+5</td>
+              <td>139,200</td>
+              <td>25</td>
+              <td>5,568</td>
+              <td><span class="badge badge-d">D등급 (비추천)</span></td>
+            </tr>
+            <tr>
+              <td>13</td>
+              <td style="color:#fbbf24">전설</td>
+              <td>+5 (55점)</td>
+              <td>674,390</td>
+              <td>75</td>
+              <td style="color:#f87171">8,992</td>
+              <td><span class="badge badge-d">D등급 (비추천)</span></td>
+            </tr>
+            <tr>
+              <td>14</td>
+              <td style="color:#60a5fa">영웅</td>
+              <td>+5</td>
+              <td>277,240</td>
+              <td>25</td>
+              <td>11,090</td>
+              <td><span class="badge badge-d">D등급 (비추천)</span></td>
+            </tr>
+            <tr>
+              <td>15</td>
+              <td style="color:#fbbf24">전설</td>
+              <td>+5 (보너스無)</td>
+              <td>674,390</td>
+              <td>25</td>
+              <td style="color:#f87171">26,976</td>
+              <td><span class="badge badge-d">D등급 (비추천)</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="content-section">
+      <h2>4. 효율 분석 및 등급 가이드</h2>
+      
+      <div class="step-card" style="border-left:4px solid #a78bfa">
+        <h3>🟢 S등급 (최우선 순위 - 1P당 500골드 이하)</h3>
+        <p><strong>영웅 +1 / 일반 +2</strong><br>
+        극소량의 골드만으로 엄청난 포인트를 고속 회수하는 절대적 가성비 구간입니다.</p>
+      </div>
+
+      <div class="step-card" style="border-left:4px solid #60a5fa">
+        <h3>🔵 A등급 (효율 좋음 - 1P당 500~1,000골드)</h3>
+        <p><strong>전설 +1 / 일반 +3 / 영웅 +2</strong><br>
+        가성비가 매우 뛰어나며 골드 소모 대비 확실한 효율을 보장합니다.</p>
+      </div>
+
+      <div class="step-card" style="border-left:4px solid #fbbf24">
+        <h3>🟡 B등급 (보통 - 1P당 1,000~2,500골드)</h3>
+        <p><strong>영웅 +3 / 일반 +4 / 전설 +2</strong><br>
+        보통의 효율을 보이며, 도감 및 덱 성장을 위한 가장 안정적인 실질적 강화 마지노선입니다.</p>
+      </div>
+
+      <div class="step-card" style="border-left:4px solid #10b981">
+        <h3>🟣 C등급 (낮음/특정 목적 - 1P당 2,500~5,500골드)</h3>
+        <p><strong>전설 +3 / 영웅 +4 / 전설 +5 (60점 보너스 목적)</strong><br>
+        기본 가성비는 떨어지지만, 전설 젬의 60점 추가 보너스(+100P)가 100% 확정일 때는 포인트 환산 효율이 5,395골드로 복구되므로 고려할 만합니다.</p>
+      </div>
+
+      <div class="step-card" style="border-left:4px solid #ef4444">
+        <h3>🔴 D등급 (비추천/효율 최악 - 1P당 5,500골드 초과)</h3>
+        <p><strong>일반 +5 / 전설 +5 (55점 달성) / 영웅 +5 / 전설 +5 (보너스 없음)</strong><br>
+        <strong>전설 +5 (55점 달성)</strong>은 보너스 포인트(+50P)를 받더라도 1P당 8,992골드라는 극악의 비효율을 보여주므로 <strong>비추천</strong>합니다. 투자 골드 대비 포인트 리턴이 극단적으로 낮으므로 절대 피하시는 것이 좋습니다.</p>
+      </div>
+    </div>
+
+    <div class="content-section">
+      <h2>5. 최종 요약 및 추천 강화 한계선</h2>
+      <ul>
+        <li><strong>순수 효율 기준 추천 한계선</strong>: 일반 젬은 <strong>+4까지</strong>, 영웅 젬은 <strong>+3까지</strong>, 전설 젬은 <strong>+3까지</strong> 투자하는 것이 비용 대 효율 측면에서 가장 유리합니다.</li>
+        <li><strong>전설 +5의 예외성</strong>: 오직 전설 젬의 **60점 보너스**를 확실하게 띄울 수 있는 조건일 때만 투자 가치가 성립됩니다. 55점 보너스는 투입 재화 대비 효율이 너무 낮아 손해입니다.</li>
+        <li><strong>추천 강화 우선순위 테크</strong>: 영웅 +1 ➔ 일반 +2 ➔ 전설 +1 ➔ 일반 +3 ➔ 영웅 +2 ➔ 영웅 +3 ➔ 일반 +4</li>
+      </ul>
+    </div>
+
+    <a href="/" class="back-btn">← 메인 교환소로 이동</a>
+
+    <footer class="page-footer">
+      <p>© 2026 DV3 스티커교환소. All Rights Reserved.</p>
+      <p style="margin-top:8px">
+        <a href="/privacy.html">개인정보처리방침</a> · <a href="/terms.html">이용규칙</a> · <a href="/about.html">소개</a> · <a href="/tips-gem-reinforcement.html">젬 강화 효율표</a>
+      </p>
+    </footer>
+  </div>
+
+  <script>
+    // 젬 강화 기초 DB
+    const gemData = {
+      normal: {
+        costs: [0, 1500, 7230, 16470, 47000, 234000],
+        prices: [1000, 1750, 5365, 13600, 37100, 167000]
+      },
+      hero: {
+        costs: [0, 3060, 14480, 29700, 131000, 383000],
+        prices: [3000, 4530, 11770, 26620, 92370, 284000]
+      },
+      legend: {
+        costs: [0, 7640, 36230, 74520, 292000, 958000],
+        prices: [10000, 13820, 31935, 69195, 215195, 694000]
+      }
+    };
+
+    // 포인트 매핑 (+1~+5 누적 포인트)
+    const pointsData = [0, 5, 10, 15, 20, 25];
+
+    function calculateGem() {
+      const grade = document.getElementById('calc-grade').value;
+      const start = parseInt(document.getElementById('calc-start').value);
+      const target = parseInt(document.getElementById('calc-target').value);
+      const bonusGroup = document.getElementById('bonus-group');
+      const bonusVal = parseInt(document.getElementById('calc-bonus').value);
+
+      // 목표가 시작보다 같거나 작을 수 없도록 제어
+      if (target <= start) {
+        document.getElementById('calc-target').value = start + 1;
+        calculateGem();
+        return;
+      }
+
+      // 전설 등급이면서 목표가 +5강일 때만 보너스 드롭다운 노출
+      if (grade === 'legend' && target === 5) {
+        bonusGroup.style.display = 'flex';
+      } else {
+        bonusGroup.style.display = 'none';
+      }
+
+      const activeData = gemData[grade];
+      
+      // 1. 누적 강화 비용 산정
+      let totalCost = 0;
+      for (let i = start + 1; i <= target; i++) {
+        totalCost += activeData.costs[i];
+      }
+
+      // 2. 판매 환급 차액 계산 (목표 단계 판매가 - 시작 단계 판매가)
+      const refundDiff = activeData.prices[target] - activeData.prices[start];
+
+      // 3. 실질 소모 골드 (누적 비용 - 환급 차액)
+      const actualCost = totalCost - refundDiff;
+
+      // 4. 획득 포인트 계산 (기본 포인트 차액)
+      let pts = pointsData[target] - pointsData[start];
+      
+      // 전설 +5강 보너스 반영
+      if (grade === 'legend' && target === 5) {
+        if (bonusVal === 55) pts += 50;
+        if (bonusVal === 60) pts += 100;
+      }
+
+      // 5. 1P당 소모 비용
+      const unitCost = Math.round(actualCost / pts);
+
+      // 6. 가성비 평가 매핑
+      let rating = '';
+      let ratingClass = '';
+      if (unitCost <= 500) {
+        rating = 'S등급 (최우선)';
+        ratingClass = 'badge badge-s';
+      } else if (unitCost <= 1000) {
+        rating = 'A등급 (좋음)';
+        ratingClass = 'badge badge-a';
+      } else if (unitCost <= 2500) {
+        rating = 'B등급 (보통)';
+        ratingClass = 'badge badge-b';
+      } else if (unitCost <= 5500) {
+        rating = 'C등급 (낮음)';
+        ratingClass = 'badge badge-c';
+      } else {
+        rating = 'D등급 (비추천)';
+        ratingClass = 'badge badge-d';
+      }
+
+      // 화면에 데이터 쓰기
+      document.getElementById('res-cost').innerText = totalCost.toLocaleString() + ' 골드';
+      document.getElementById('res-refund').innerText = refundDiff.toLocaleString() + ' 골드';
+      document.getElementById('res-actual').innerText = actualCost.toLocaleString() + ' 골드';
+      document.getElementById('res-points').innerText = pts + ' P';
+      document.getElementById('res-unit-cost').innerText = unitCost.toLocaleString() + ' 골드';
+      
+      const ratingEl = document.getElementById('res-rating');
+      ratingEl.innerText = rating;
+      ratingEl.className = 'result-value ' + ratingClass;
+    }
+
+    // 초기 연산
+    calculateGem();
+  </script>
+</body>
+</html>

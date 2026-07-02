@@ -321,7 +321,7 @@ export function useChatViewModel({ userNickname }) {
     await loadChatRooms();
   };
 
-  // 활성 대화방 실시간 메시지 구독 및 최초 히스토리 로드
+  // 활성 대화방 최초 히스토리 로드 (실시간 구독은 글로벌 subscribeAllMyMessages에서 통합 처리)
   useEffect(() => {
     if (!chatActiveRoomId) {
       setChatMessages([]);
@@ -338,37 +338,6 @@ export function useChatViewModel({ userNickname }) {
     };
 
     loadInitialMessages();
-
-    const unsubscribe = chatService.subscribeMessages(chatActiveRoomId, (newMsg) => {
-      if (!newMsg) return;
-      
-      setChatMessages(prev => {
-        // 중복 방지 검증
-        if (prev.some(m => String(m.id) === String(newMsg.id))) return prev;
-        return [...prev, newMsg];
-      });
-      
-      setChatRooms(prevRooms => {
-        const index = prevRooms.findIndex(r => r.id === chatActiveRoomId);
-        if (index === -1) {
-          loadChatRooms();
-          return prevRooms;
-        }
-        const updatedRooms = [...prevRooms];
-        updatedRooms[index] = {
-          ...updatedRooms[index],
-          lastMessage: newMsg.text,
-          updatedAt: newMsg.timestamp
-        };
-        return updatedRooms.sort((a, b) => new Date(b.updatedAt || 0) - new Date(a.updatedAt || 0));
-      });
-      
-      setTimeout(() => {
-        loadChatRooms();
-      }, 500);
-    });
-
-    return () => unsubscribe();
   }, [chatActiveRoomId]);
 
   // 새 대화 전송/수신 시 스크롤 자동 하단 이동
@@ -489,6 +458,14 @@ export function useChatViewModel({ userNickname }) {
     if (!userNickname) return;
 
     const unsubscribe = chatService.subscribeAllMyMessages(userNickname, (msg) => {
+      // ★ 핵심: 현재 열려있는 활성 대화방의 메시지이면, chatMessages 상태에 즉시 주입하여 말풍선 렌더링
+      if (chatActiveRoomIdRef.current && String(msg.roomId) === String(chatActiveRoomIdRef.current)) {
+        setChatMessages(prev => {
+          if (prev.some(m => String(m.id) === String(msg.id))) return prev;
+          return [...prev, msg];
+        });
+      }
+
       // 실시간 메시지 수신 시 목록 최신 상태 즉각 메모리 선반영 (백그라운드여도 수신하여 안읽은 카운트 & 알람 재생)
       setChatRooms(prevRooms => {
         const index = prevRooms.findIndex(r => r.id === msg.roomId);

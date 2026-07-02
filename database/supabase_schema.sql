@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.post_comments (
 ALTER TABLE public.post_comments DISABLE ROW LEVEL SECURITY;
 
 -- 3.5 독립 게시판(board_posts) 테이블 생성 DDL
--- 메인 스티커 교환글(posts)과 분리된 공지/자유/드래곤 알 코드 거래 게시판입니다.
+-- 메인 스티커 교환글(posts)과 분리된 공지/자유/거래 게시판입니다.
 CREATE TABLE IF NOT EXISTS public.board_posts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     type TEXT NOT NULL CHECK (type IN ('notice', 'free', 'egg_code')),

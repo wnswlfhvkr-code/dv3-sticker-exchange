@@ -85,7 +85,7 @@ export function BoardSection({ userNickname }) {
           <textarea
             value={boardVM.content}
             onChange={(e) => boardVM.setContent(e.target.value)}
-            placeholder={activeType === 'egg_code' ? '드래곤 알 코드 거래 내용을 작성하세요.' : '내용'}
+            placeholder={activeType === 'egg_code' ? '거래 게시판 내용을 작성하세요.' : '내용'}
             maxLength={1200}
             rows={4}
             style={{ width: '100%', resize: 'vertical' }}

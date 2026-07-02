@@ -1,4 +1,4 @@
-import { supabase, rawSupabase, isMock } from './supabaseClient';
+import { supabase, rawSupabase, isMock, getActiveSupabaseClient } from './supabaseClient';
 
 // 로컬 스토리지 키 정의
 const CHAT_ROOMS_KEY = 'dv3_chat_rooms';
@@ -36,7 +36,12 @@ const saveLocalMessages = (messages) => {
 
 const makeSafeChannelName = (str) => {
   if (!str) return 'channel';
-  return str.replace(/[^a-zA-Z0-9-_]/g, '_');
+  try {
+    const utf8Btoa = (s) => btoa(encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16))));
+    return utf8Btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+  } catch (e) {
+    return str.replace(/[^a-zA-Z0-9-_]/g, '_');
+  }
 };
 
 const createRoomId = (nicknameA, nicknameB) => {
@@ -348,8 +353,17 @@ export const chatService = {
   // 5. 실시간 메시지 리스너 구독 설정
   subscribeMessages(roomId, onNewMessage) {
     if (!isMock) {
-      const channel = rawSupabase
-        .channel(`room-messages-${makeSafeChannelName(roomId)}`)
+      const client = getActiveSupabaseClient() || rawSupabase;
+      if (!client) {
+        console.error('[subscribeMessages] Supabase 클라이언트가 null입니다!');
+        return () => {};
+      }
+
+      const channelName = `room-messages-${makeSafeChannelName(roomId)}`;
+      console.log(`[subscribeMessages] 채널 구독 시작: ${channelName}, roomId: ${roomId}`);
+
+      const channel = client
+        .channel(channelName)
         .on(
           'postgres_changes',
           {
@@ -359,8 +373,9 @@ export const chatService = {
           },
           (payload) => {
             const msg = payload.new;
+            console.log('[subscribeMessages] 실시간 이벤트 수신:', msg);
             if (msg && String(msg.room_id) === String(roomId)) {
-              console.log('실시간 새 메시지 수신:', msg);
+              console.log('[subscribeMessages] 현재 방 메시지 매칭 성공:', msg.text);
               const formatted = formatDbMessage(msg);
               if (formatted) {
                 onNewMessage(formatted);
@@ -368,10 +383,19 @@ export const chatService = {
             }
           }
         )
-        .subscribe();
+        .subscribe((status, err) => {
+          console.log(`[subscribeMessages] 채널 상태: ${status}`, err || '');
+          if (status === 'CHANNEL_ERROR') {
+            console.error('[subscribeMessages] 채널 에러 발생! 3초 후 재연결 시도...');
+            setTimeout(() => {
+              client.removeChannel(channel);
+            }, 3000);
+          }
+        });
 
       return () => {
-        rawSupabase.removeChannel(channel);
+        console.log(`[subscribeMessages] 채널 구독 해제: ${channelName}`);
+        client.removeChannel(channel);
       };
     } else {
       // 탭 간 실시간 통신을 위한 storage 이벤트 리스너
@@ -407,7 +431,10 @@ export const chatService = {
   // 6. 실시간 접속 여부 추적 (Presence)
   subscribeOnlineUsers(myNickname, onUpdate) {
     if (!isMock) {
-      const channel = rawSupabase.channel('online-users', {
+      const client = getActiveSupabaseClient() || rawSupabase;
+      if (!client) return () => {};
+
+      const channel = client.channel('online-users', {
         config: {
           presence: {
             key: myNickname,
@@ -431,7 +458,7 @@ export const chatService = {
         });
 
       return () => {
-        rawSupabase.removeChannel(channel);
+        client.removeChannel(channel);
       };
     } else {
       // 로컬 스토리지 기반 온라인 유저 추적 (Heartbeat 방식)
@@ -489,8 +516,11 @@ export const chatService = {
   // 7. 나에게 오는 모든 메시지 글로벌 실시간 구독 (알림음, 미리보기, 안읽은 개수 추적용)
   subscribeAllMyMessages(myNickname, onNewMessage) {
     if (!isMock) {
+      const client = getActiveSupabaseClient() || rawSupabase;
+      if (!client) return () => {};
+
       // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
-      const channel = rawSupabase
+      const channel = client
         .channel(`global-chat-notifications-${makeSafeChannelName(myNickname)}`)
         .on(
           'postgres_changes',
@@ -516,7 +546,7 @@ export const chatService = {
         .subscribe();
 
       return () => {
-        rawSupabase.removeChannel(channel);
+        client.removeChannel(channel);
       };
     } else {
       const handleStorageChange = (e) => {
@@ -572,8 +602,11 @@ export const chatService = {
   // 8. 나에게 개설되는 1:1 대화방 실시간 감지 구독
   subscribeMyRooms(myNickname, onRoomUpdate) {
     if (!isMock) {
+      const client = getActiveSupabaseClient() || rawSupabase;
+      if (!client) return () => {};
+
       // 다중 접속자/탭 간 채널 충돌을 방지하기 위해 사용자 고유 채널명 사용
-      const channel = rawSupabase
+      const channel = client
         .channel(`realtime-my-chat-rooms-${makeSafeChannelName(myNickname)}`)
         .on(
           'postgres_changes',
@@ -592,7 +625,7 @@ export const chatService = {
         .subscribe();
 
       return () => {
-        rawSupabase.removeChannel(channel);
+        client.removeChannel(channel);
       };
     } else {
       const handleStorageChange = (e) => {

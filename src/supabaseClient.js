@@ -899,63 +899,126 @@ export const dbService = {
       return res;
     }
   },
-  fetchDashboardStats: async () => {
+   fetchDashboardStats: async () => {
     let isDbFailed = false;
     try {
       let posts = [];
       let visitLogs = [];
       let chatMessages = [];
+      
+      let totalPosts = 0;
+      let totalMessages = 0;
+      let totalVisits = 0;
+      let totalUniqueVisitors = 0;
 
       if (!isMock) {
-        // 실서버 데이터베이스 모드: 순수 DB 데이터로만 집계
+        // 1. 전체 개수 수집 (head: true 옵션으로 1000개 한계를 우회하고 데이터 전송을 없앰)
         try {
-          const { data: postsData, error: postsError } = await supabase.from('posts').select('created_at');
-          if (postsError) throw postsError;
-          posts = postsData || [];
+          const { count: postsCount, error: postsCountErr } = await supabase
+            .from('posts')
+            .select('*', { count: 'exact', head: true });
+          if (postsCountErr) throw postsCountErr;
+          totalPosts = postsCount || 0;
         } catch (e) {
-          console.warn("posts 쿼리 실패:", e);
+          console.warn("posts count 실패:", e);
         }
 
         try {
-          const { data: visitsData, error: visitsError } = await supabase.from('visit_logs').select('*');
+          const { count: msgCount, error: msgCountErr } = await supabase
+            .from('chat_messages')
+            .select('*', { count: 'exact', head: true });
+          if (msgCountErr) throw msgCountErr;
+          totalMessages = msgCount || 0;
+        } catch (e) {
+          console.warn("chat_messages count 실패:", e);
+        }
+
+        try {
+          const { count: visitsCount, error: visitsCountErr } = await supabase
+            .from('visit_logs')
+            .select('*', { count: 'exact', head: true });
+          if (visitsCountErr) throw visitsCountErr;
+          totalVisits = visitsCount || 0;
+        } catch (e) {
+          console.warn("visit_logs count 실패:", e);
+        }
+
+        // 2. 전체 고유 방문자 수 (RPC 호출로 DB단에서 고속 연산)
+        try {
+          const { data: uniqueCount, error: uniqueCountErr } = await supabase
+            .rpc('get_unique_visitors_count');
+          if (uniqueCountErr) throw uniqueCountErr;
+          totalUniqueVisitors = Number(uniqueCount) || 0;
+        } catch (e) {
+          console.warn("get_unique_visitors_count RPC 실패:", e);
+        }
+
+        // 3. 일별 통계를 위한 최근 7일치 원시 데이터만 선별해서 가져오기 (Egress 트래픽 최적화)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const sevenDaysAgoISO = sevenDaysAgo.toISOString();
+
+        try {
+          const { data: postsData, error: postsError } = await supabase
+            .from('posts')
+            .select('created_at')
+            .gte('created_at', sevenDaysAgoISO);
+          if (postsError) throw postsError;
+          posts = postsData || [];
+        } catch (e) {
+          console.warn("posts 7일 필터 쿼리 실패:", e);
+        }
+
+        try {
+          const { data: visitsData, error: visitsError } = await supabase
+            .from('visit_logs')
+            .select('created_at, visitor_key')
+            .gte('created_at', sevenDaysAgoISO);
           if (visitsError) throw visitsError;
           visitLogs = visitsData || [];
         } catch (e) {
-          console.warn("visit_logs 쿼리 실패 (테이블 미생성 시 로컬 폴백):", e);
+          console.warn("visit_logs 7일 필터 쿼리 실패 (테이블 미생성 시 로컬 폴백):", e);
           isDbFailed = true;
           const res = await mockDB.getVisitLogs();
           visitLogs = res.data || [];
         }
 
         try {
-          const { data: chatsData, error: chatsError } = await supabase.from('chat_messages').select('timestamp');
+          const { data: chatsData, error: chatsError } = await supabase
+            .from('chat_messages')
+            .select('timestamp')
+            .gte('timestamp', sevenDaysAgoISO);
           if (chatsError) throw chatsError;
           chatMessages = chatsData || [];
         } catch (e) {
-          console.warn("chat_messages 쿼리 실패:", e);
+          console.warn("chat_messages 7일 필터 쿼리 실패:", e);
         }
       } else {
         // 로컬 모드: 로컬스토리지만 조회
         const postsRaw = localStorage.getItem('dv3_exchange_posts');
         posts = postsRaw ? JSON.parse(postsRaw) : [];
+        totalPosts = posts.length;
 
         const logsRes = await mockDB.getVisitLogs();
         visitLogs = logsRes.data || [];
+        totalVisits = visitLogs.length;
 
         const chatsRaw = localStorage.getItem('dv3_chat_messages');
         chatMessages = chatsRaw ? JSON.parse(chatsRaw) : [];
+        totalMessages = chatMessages.length;
+
+        const allVisitorKeys = new Set();
+        visitLogs.forEach(log => {
+          allVisitorKeys.add(log.visitor_key || log.visitorKey);
+        });
+        totalUniqueVisitors = allVisitorKeys.size;
       }
 
-      const allVisitorKeys = new Set();
-      visitLogs.forEach(log => {
-        allVisitorKeys.add(log.visitor_key || log.visitorKey);
-      });
-
       const stats = {
-        totalVisits: visitLogs.length,
-        totalUniqueVisitors: allVisitorKeys.size,
-        totalPosts: posts.length,
-        totalMessages: chatMessages.length,
+        totalVisits: totalVisits,
+        totalUniqueVisitors: totalUniqueVisitors,
+        totalPosts: totalPosts,
+        totalMessages: totalMessages,
         dailyStats: {}
       };
 
@@ -1137,4 +1200,4 @@ export const dbService = {
   }
 };
 
-export { supabase, isMock, rawSupabase };
+export { supabase, isMock, rawSupabase, getActiveSupabaseClient };

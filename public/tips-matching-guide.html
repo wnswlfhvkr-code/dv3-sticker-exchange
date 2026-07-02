@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>자동 매칭 엔진 원리 가이드 - 양방향 및 부분 매칭 활용법</title>
+  <meta name="description" content="드빌3 카드교환소만의 독창적인 자동 카드 매칭 엔진 알고리즘의 원리와, 100% 양방향 매칭 및 부분 매칭을 활용해 교환 성사율을 극대화하는 방법입니다.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐉</text></svg>">
+  <link rel="stylesheet" href="/static-pages.css">
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3489777827665018" crossorigin="anonymous"></script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "드빌3 카드교환소 매칭 엔진 가이드",
+    "description": "교환 성사율을 극대화하는 자동 카드 매칭 원리 및 데이터 알고리즘 분석",
+    "author": {
+      "@type": "Organization",
+      "name": "드빌3 스티커교환소"
+    }
+  }
+  </script>
+</head>
+<body>
+  <nav class="top-nav">
+    <a href="/" class="nav-logo">🐉 드빌3 스티커교환소</a>
+    <div class="nav-links">
+      <a href="/about.html">소개</a>
+      <a href="/about-stickers.html">스티커 백과사전</a>
+      <a href="/guide.html">이용 가이드</a>
+      <a href="/faq.html">FAQ</a>
+      <a href="/">메인으로</a>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+    <h1 class="page-title">자동 매칭 알고리즘의 원리와 100% 활용법</h1>
+    <p class="page-subtitle">본 교환소가 자랑하는 실시간 매칭 엔진이 최적의 거래 상대를 찾아내는 논리적 원리를 설명합니다.</p>
+
+    <div class="content-section">
+      <h2>1. 자동 매칭 엔진(Matching Engine) 설계 배경</h2>
+      <p>기존의 일반적인 게임 커뮤니티나 카페 게시판에서 스티커 교환 글을 올리면, 매번 수많은 글들 속에서 나와 이해관계가 맞는 사람을 일일이 수작업으로 대조해야 했습니다. 이는 엄청난 시간 낭비이자 스트레스였습니다. 본 교환소는 이러한 문제를 해결하기 위해 유저들이 등록한 **Haves(줄 수 있는 카드)** 목록과 **Wants(받고 싶은 카드)** 데이터셋을 실시간으로 비교하여 맞춤 파트너를 자동으로 짝지어 주는 '매칭 알고리즘'을 자체 개발하여 이식하였습니다.</p>
+    </div>
+
+    <div class="content-section">
+      <h2>2. 두 가지 핵심 매칭 모드의 논리적 원리</h2>
+      <p>매칭 엔진은 매칭의 조건 강도에 따라 **'양방향 매칭'**과 **'부분 매칭'** 두 가지 신호로 분류하여 제공합니다.</p>
+
+      <div class="step-card" style="border-left: 4px solid #10b981;">
+        <h3>🟢 100% 양방향 매칭 (Perfect Matching)</h3>
+        <p>양방향 매칭은 나와 상대방의 이해관계가 완벽하게 일치하는 최상의 매칭 상태입니다. 수학적 합집합과 교집합 개념을 활용하여 다음과 같이 작동합니다.</p>
+        <div style="background: rgba(0,0,0,0.25); padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 1.5; margin: 12px 0;">
+          나의 Haves ∩ 상대방의 Wants ≠ ∅ (공집합이 아님)<br>
+          AND<br>
+          나의 Wants ∩ 상대방의 Haves ≠ ∅ (공집합이 아님)
+        </div>
+        <p>즉, 내가 남아서 줄 수 있는 카드 중 하나를 상대가 간절히 원하고, 동시에 상대가 남아서 줄 수 있는 카드 중 하나를 내가 간절히 원할 때 이 녹색 배지가 활성화됩니다. 이 상태는 대화를 시도하면 **거래 성공률이 99%**에 수렴하므로, 발견하는 즉시 채팅을 시도하시는 것이 유리합니다.</p>
+      </div>
+
+      <div class="step-card" style="border-left: 4px solid #f59e0b;">
+        <h3>🟡 부분 매칭 (Partial Matching)</h3>
+        <p>부분 매칭은 절반의 일치 상태를 뜻하며, 다음과 같이 단방향적 요구 충족 상황에서 노란색 배지로 표시됩니다.</p>
+        <div style="background: rgba(0,0,0,0.25); padding: 16px; border-radius: 8px; font-family: monospace; font-size: 13px; line-height: 1.5; margin: 12px 0;">
+          나의 Haves ∩ 상대방의 Wants ≠ ∅ (상대가 내 카드를 원함)<br>
+          OR<br>
+          나의 Wants ∩ 상대방의 Haves ≠ ∅ (내가 상대 카드를 원함)
+        </div>
+        <p>예를 들어, 나는 상대가 보유한 카드를 원하지만 상대는 내가 가진 카드를 원하지 않을 때, 또는 반대로 상대가 내 카드를 원하지만 상대의 보유 리스트에 내가 필요한 카드가 없을 때 활성화됩니다. 비록 완전한 일치는 아니지만, 유저 간 추가적인 스티커 조율이나 '알 코드', 또는 다른 카드를 제안하여 협상할 수 있는 훌륭한 교두보가 됩니다.</p>
+      </div>
+    </div>
+
+    <div class="content-section">
+      <h2>3. 매칭 매니저를 통한 성사율 200% 올리기</h2>
+      <p>매칭 엔진의 효율성을 극대화하기 위한 두 가지 노하우를 공개합니다.</p>
+      <ol>
+        <li><strong>바구니 데이터의 적극적 최신화</strong>: 교환이 완료되어 소모된 카드는 즉시 바구니에서 제외해 주세요. 잘못된 정보가 바구니에 방치되면 다른 유저와의 헛된 매칭 신호가 잡혀 매칭 엔진의 신뢰도를 저하시킵니다.</li>
+        <li><strong>Wants 리스트의 점진적 다각화</strong>: 내가 당장 갖고 싶은 전설 등급 카드만 Wants에 채워넣지 말고, 틈틈이 도감을 채워야 하는 희귀/영웅 등급 카드도 여러 장 추가해 두세요. 리스트가 다양할수록 더 많은 유저들과 매칭 교차점이 형성되어 거래 문의 횟수가 획기적으로 상승합니다.</li>
+      </ol>
+    </div>
+
+    <div class="content-section">
+      <h2>4. 결론: 똑똑한 데이터 교환 플랫폼</h2>
+      <p>드빌3 스티커교환소는 단순한 텍스트 나열형 게시판을 넘어, 데이터 알고리즘을 통해 유저의 시간과 노력을 획기적으로 절약해 주는 스마트 플랫폼입니다. 본 매칭 엔진의 작동 원리를 명확히 이해하고 자신의 스티커 컬렉션 데이터셋을 영리하게 관리한다면, 서버 내 어떤 수집가들보다도 빠르고 합리적으로 드빌3 스티커 도감을 완성해 나갈 수 있을 것입니다.</p>
+    </div>
+
+    <a href="/" class="back-btn">← 매칭 엔진 테스트하러 가기</a>
+
+    <footer class="page-footer">
+      <p>© 2026 DV3 스티커교환소. All Rights Reserved.</p>
+      <p style="margin-top:8px">
+        <a href="/privacy.html">개인정보처리방침</a> · <a href="/terms.html">이용규칙</a> · <a href="/about.html">소개</a> · <a href="/about-stickers.html">스티커 백과사전</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>

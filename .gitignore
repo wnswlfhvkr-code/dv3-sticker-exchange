@@ -38,3 +38,9 @@ backup_before_enhancements/
 # Data outputs exclusion
 data/*.json
 data/*.txt
+
+# Scripts and DB logs/backups
+scripts/
+database/*.json
+database/backup/
+database/supabase_schema_backup.sql

@@ -6,7 +6,7 @@ const BOARD_COMMENTS_KEY = 'dv3_board_comments';
 export const BOARD_TYPES = [
   { id: 'notice', label: '공지 게시판' },
   { id: 'free', label: '자유게시판' },
-  { id: 'egg_code', label: '드래곤 알 코드 거래' }
+  { id: 'egg_code', label: '거래 게시판' }
 ];
 
 const getLocalBoardPosts = () => {

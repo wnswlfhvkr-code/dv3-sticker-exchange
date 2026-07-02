@@ -145,6 +145,117 @@ function App() {
         unreadCounts={chatVM.unreadCounts}
       />
 
+      {/* 1.5. 공략 가이드북 및 백과사전 퀵 배너 */}
+      <div style={{
+        maxWidth: '1200px',
+        margin: '20px auto 10px auto',
+        padding: '24px',
+        background: 'linear-gradient(135deg, rgba(88, 28, 135, 0.4) 0%, rgba(30, 58, 138, 0.4) 100%)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '24px',
+        border: '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        textAlign: 'left',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '16px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '24px' }}>🐉</span>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#f3f4f6', letterSpacing: '-0.025em' }}>
+              드빌3 도감 공략 & 젬 강화 효율표
+            </h2>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'rgba(255, 255, 255, 0.65)' }}>
+              효율적인 젬 강화 가이드와 수집 팁, 안전 거래 수칙, 자동 매칭 엔진 원리를 한눈에 확인해 보세요!
+            </p>
+          </div>
+        </div>
+        <div style={{
+          display: 'flex',
+          gap: '10px',
+          flexWrap: 'wrap',
+          marginTop: '4px'
+        }}>
+          <a href="/tips-gem-reinforcement.html" target="_blank" rel="noopener noreferrer" style={{
+            textDecoration: 'none',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            background: 'rgba(167, 139, 250, 0.15)',
+            border: '1px solid rgba(167, 139, 250, 0.3)',
+            color: '#c4b5fd',
+            fontSize: '13px',
+            fontWeight: '700',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = '#a78bfa'; e.currentTarget.style.color = '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(167, 139, 250, 0.15)'; e.currentTarget.style.color = '#c4b5fd'; }}
+          >
+            💎 젬 강화 효율표
+          </a>
+          <a href="/tips-sticker-collection.html" target="_blank" rel="noopener noreferrer" style={{
+            textDecoration: 'none',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            background: 'rgba(96, 165, 250, 0.15)',
+            border: '1px solid rgba(96, 165, 250, 0.3)',
+            color: '#93c5fd',
+            fontSize: '13px',
+            fontWeight: '700',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = '#60a5fa'; e.currentTarget.style.color = '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(96, 165, 250, 0.15)'; e.currentTarget.style.color = '#93c5fd'; }}
+          >
+            ⚡ 수집 효율 공략집
+          </a>
+          <a href="/tips-safe-trading.html" target="_blank" rel="noopener noreferrer" style={{
+            textDecoration: 'none',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            background: 'rgba(245, 158, 11, 0.15)',
+            border: '1px solid rgba(245, 158, 11, 0.3)',
+            color: '#fde047',
+            fontSize: '13px',
+            fontWeight: '700',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = '#f59e0b'; e.currentTarget.style.color = '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'; e.currentTarget.style.color = '#fde047'; }}
+          >
+            🛡️ 안전 거래 수칙
+          </a>
+          <a href="/tips-matching-guide.html" target="_blank" rel="noopener noreferrer" style={{
+            textDecoration: 'none',
+            padding: '10px 16px',
+            borderRadius: '12px',
+            background: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid rgba(16, 185, 129, 0.3)',
+            color: '#6ee7b7',
+            fontSize: '13px',
+            fontWeight: '700',
+            transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = '#10b981'; e.currentTarget.style.color = '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)'; e.currentTarget.style.color = '#6ee7b7'; }}
+          >
+            ⚙️ 매칭 엔진 작동원리
+          </a>
+        </div>
+      </div>
+
       {/* 2. 로그인 모달 */}
       <LoginModal 
         showLoginModal={authVM.showLoginModal}
