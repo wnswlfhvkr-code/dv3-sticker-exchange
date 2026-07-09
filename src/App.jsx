@@ -157,6 +157,8 @@ function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [postVM.isEditModalOpen, basketVM.setSelectedCategoryId, postVM.setEditCurrentCategoryId]);
 
+  const isLight = theme === 'light';
+
   return (
     <div className="app-container">
       {/* 화면 제일 끝쪽 데스크톱 전용 사이드 광고 배너 */}
@@ -272,9 +274,9 @@ function App() {
             textDecoration: 'none',
             padding: '10px 16px',
             borderRadius: '12px',
-            background: 'rgba(167, 139, 250, 0.15)',
-            border: '1px solid rgba(167, 139, 250, 0.3)',
-            color: '#c4b5fd',
+            background: isLight ? '#f3e8ff' : 'rgba(167, 139, 250, 0.15)',
+            border: isLight ? '1px solid #d8b4fe' : '1px solid rgba(167, 139, 250, 0.3)',
+            color: isLight ? '#6b21a8' : '#c4b5fd',
             fontSize: '13px',
             fontWeight: '700',
             transition: 'all 0.2s',
@@ -282,8 +284,8 @@ function App() {
             alignItems: 'center',
             gap: '6px'
           }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = '#a78bfa'; e.currentTarget.style.color = '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(167, 139, 250, 0.15)'; e.currentTarget.style.color = '#c4b5fd'; }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#6b21a8' : '#a78bfa'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#f3e8ff' : 'rgba(167, 139, 250, 0.15)'; e.currentTarget.style.color = isLight ? '#6b21a8' : '#c4b5fd'; }}
           >
             💎 젬 강화 효율표
           </a>
@@ -291,9 +293,9 @@ function App() {
             textDecoration: 'none',
             padding: '10px 16px',
             borderRadius: '12px',
-            background: 'rgba(96, 165, 250, 0.15)',
-            border: '1px solid rgba(96, 165, 250, 0.3)',
-            color: '#93c5fd',
+            background: isLight ? '#eff6ff' : 'rgba(96, 165, 250, 0.15)',
+            border: isLight ? '1px solid #bfdbfe' : '1px solid rgba(96, 165, 250, 0.3)',
+            color: isLight ? '#1e40af' : '#93c5fd',
             fontSize: '13px',
             fontWeight: '700',
             transition: 'all 0.2s',
@@ -301,8 +303,8 @@ function App() {
             alignItems: 'center',
             gap: '6px'
           }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = '#60a5fa'; e.currentTarget.style.color = '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(96, 165, 250, 0.15)'; e.currentTarget.style.color = '#93c5fd'; }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#1e40af' : '#60a5fa'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#eff6ff' : 'rgba(96, 165, 250, 0.15)'; e.currentTarget.style.color = isLight ? '#1e40af' : '#93c5fd'; }}
           >
             ⚡ 수집 효율 공략집
           </a>
@@ -310,9 +312,9 @@ function App() {
             textDecoration: 'none',
             padding: '10px 16px',
             borderRadius: '12px',
-            background: 'rgba(245, 158, 11, 0.15)',
-            border: '1px solid rgba(245, 158, 11, 0.3)',
-            color: '#fde047',
+            background: isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)',
+            border: isLight ? '1px solid #fde68a' : '1px solid rgba(245, 158, 11, 0.3)',
+            color: isLight ? '#b45309' : '#fde047',
             fontSize: '13px',
             fontWeight: '700',
             transition: 'all 0.2s',
@@ -320,8 +322,8 @@ function App() {
             alignItems: 'center',
             gap: '6px'
           }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = '#f59e0b'; e.currentTarget.style.color = '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)'; e.currentTarget.style.color = '#fde047'; }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#b45309' : '#f59e0b'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)'; e.currentTarget.style.color = isLight ? '#b45309' : '#fde047'; }}
           >
             🛡️ 안전 거래 수칙
           </a>
@@ -329,9 +331,9 @@ function App() {
             textDecoration: 'none',
             padding: '10px 16px',
             borderRadius: '12px',
-            background: 'rgba(16, 185, 129, 0.15)',
-            border: '1px solid rgba(16, 185, 129, 0.3)',
-            color: '#6ee7b7',
+            background: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)',
+            border: isLight ? '1px solid #a7f3d0' : '1px solid rgba(16, 185, 129, 0.3)',
+            color: isLight ? '#065f46' : '#6ee7b7',
             fontSize: '13px',
             fontWeight: '700',
             transition: 'all 0.2s',
@@ -339,8 +341,8 @@ function App() {
             alignItems: 'center',
             gap: '6px'
           }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = '#10b981'; e.currentTarget.style.color = '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(16, 185, 129, 0.15)'; e.currentTarget.style.color = '#6ee7b7'; }}
+             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#065f46' : '#10b981'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)'; e.currentTarget.style.color = isLight ? '#065f46' : '#6ee7b7'; }}
           >
             ⚙️ 매칭 엔진 작동원리
           </a>

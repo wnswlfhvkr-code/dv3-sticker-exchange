@@ -41,33 +41,33 @@
 [data-theme="light"] {
   --bg-gradient: #FAF8F3; /* 드빌 느낌 살린 밝고 세련된 판타지 양피지빛 미색 */
   --card-bg: #ffffff;
-  --card-hover-bg: #fcfbfa;
-  --border-color: #e5e3d7; /* 고풍스러운 골드/모래빛 연한 테두리 */
-  --border-hover-color: #c4beaa;
-  --text-primary: #1a202c;
-  --text-secondary: #4a5568;
-  --text-muted: #a0aec0;
+  --card-hover-bg: #fbfaf5;
+  --border-color: #dcd9c6; /* 더 뚜렷하고 고풍스러운 모래빛 테두리 */
+  --border-hover-color: #b5ae96;
+  --text-primary: #151d2a;
+  --text-secondary: #334155; /* 훨씬 더 짙은 슬레이트 톤으로 가독성 대폭 향상 */
+  --text-muted: #57657a; /* 연한 노랑/연두/회색 대신 확실히 식별되는 짙은 회색 */
 
-  --primary-color: #72b000;
-  --primary-gradient: linear-gradient(135deg, #72b000 0%, #92d61b 100%);
-  --secondary-gradient: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
-  --accent-gradient: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+  --primary-color: #1b5e20; /* 가독성이 극대화된 짙은 포레스트 그린 */
+  --primary-gradient: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+  --secondary-gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  --accent-gradient: linear-gradient(135deg, #9a3412 0%, #c2410c 100%);
 
-  --shadow-main: 0 10px 30px rgba(180, 170, 150, 0.12);
-  --shadow-glow: 0 0 20px rgba(114, 176, 0, 0.12);
-  --shadow-glow-hover: 0 0 30px rgba(146, 214, 27, 0.22);
+  --shadow-main: 0 10px 30px rgba(130, 120, 100, 0.16);
+  --shadow-glow: 0 0 20px rgba(27, 94, 32, 0.15);
+  --shadow-glow-hover: 0 0 30px rgba(46, 125, 50, 0.3);
 
   --input-bg: #fdfdfb;
   --modal-bg: #ffffff;
-  --overlay-gradient: linear-gradient(to top, rgba(255, 255, 255, 0.98) 80%, rgba(255, 255, 255, 0));
+  --overlay-gradient: linear-gradient(to top, rgba(255, 255, 255, 1) 90%, rgba(255, 255, 255, 0));
 
-  --perfect-match-border: #8b5cf6;
-  --perfect-match-bg: rgba(139, 92, 246, 0.05);
-  --perfect-match-shadow: 0 8px 24px rgba(139, 92, 246, 0.1);
+  --perfect-match-border: #7c3aed;
+  --perfect-match-bg: #f5f3ff; /* 연한 색 대신 완전히 칠해진 연보라 solid */
+  --perfect-match-shadow: 0 8px 24px rgba(124, 58, 237, 0.08);
   
-  --partial-match-border: #f97316;
-  --partial-match-bg: rgba(249, 115, 22, 0.03);
-  --partial-match-shadow: 0 8px 20px rgba(249, 115, 22, 0.08);
+  --partial-match-border: #ea580c;
+  --partial-match-bg: #fffbeb; /* 완전히 칠해진 연노랑/오렌지 solid */
+  --partial-match-shadow: 0 8px 20px rgba(234, 88, 12, 0.06);
 
   color-scheme: light;
 }
@@ -746,5 +746,14 @@ input:focus, select:focus, textarea:focus {
   box-sizing: border-box !important;
 }
 
+/* 라이트 모드일 때 투명 효과(글래스모피즘)를 없애고 완전 불투명 처리하여 텍스트 겹침 방지 */
+[data-theme="light"] .glass-card {
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
 
-
+[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.5) !important;
+  backdrop-filter: none !important;
+}
