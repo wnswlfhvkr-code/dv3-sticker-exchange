@@ -142,26 +142,17 @@ export function Header({
         ) : (
           <button
             onClick={() => setShowLoginModal(true)}
+            className="btn btn-primary"
             style={{
-              background: 'var(--primary-color)',
-              border: 'none',
-              color: '#1e1b4b',
-              cursor: 'pointer',
               padding: '0.45rem 1rem',
               borderRadius: '12px',
               fontSize: '0.8rem',
-              fontWeight: 'bold',
               display: 'flex',
               alignItems: 'center',
               gap: '4px',
               transition: 'all 0.2s',
-              outline: 'none'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.filter = 'brightness(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.filter = 'none';
+              outline: 'none',
+              boxShadow: 'none'
             }}
             title="로그인 또는 회원가입하기"
           >

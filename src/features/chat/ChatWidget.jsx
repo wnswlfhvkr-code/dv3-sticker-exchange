@@ -325,7 +325,7 @@ export function ChatWidget({
           }}
         >
           <div style={{ background: 'var(--primary-color)', borderRadius: '50%', padding: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <MessageSquare size={16} color="#1e293b" />
+            <MessageSquare size={16} color="#ffffff" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflow: 'hidden' }}>
             <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>새로운 메시지</span>
@@ -352,7 +352,7 @@ export function ChatWidget({
         onClick={() => setChatWindowOpen(prev => !prev)}
         style={{
           background: 'var(--primary-color)',
-          color: '#1e293b',
+          color: '#ffffff',
           border: 'none',
           borderRadius: '50%',
           width: '56px',
@@ -361,7 +361,7 @@ export function ChatWidget({
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(133, 195, 0, 0.45)',
+          boxShadow: '0 8px 24px var(--shadow-glow)',
           position: 'relative',
           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           transform: 'scale(1)'
