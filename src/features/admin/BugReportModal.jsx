@@ -36,11 +36,11 @@ export function BugReportModal({
       <div className="glass-card" style={{
         width: '100%',
         maxWidth: '480px',
-        background: 'rgba(18, 15, 28, 0.95)',
-        border: '1px solid rgba(133, 195, 0, 0.2)',
+        background: 'var(--modal-bg)',
+        border: '1px solid var(--border-color)',
         borderRadius: '24px',
         padding: '1.75rem',
-        boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(133, 195, 0, 0.1)',
+        boxShadow: 'var(--shadow-main)',
         display: 'flex',
         flexDirection: 'column',
         gap: '1.25rem',
@@ -60,7 +60,7 @@ export function BugReportModal({
             padding: '4px',
             transition: 'color 0.2s'
           }}
-          onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
           onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
         >
           <X size={20} />
@@ -80,7 +80,7 @@ export function BugReportModal({
             <Bug size={24} color="var(--primary-color)" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: '#fff' }}>🐛 스티커교환소 버그 제보하기</h2>
+            <h2 style={{ fontSize: '1.2rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>🐛 스티커교환소 버그 제보하기</h2>
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>발견하신 오류나 개선 요청사항을 상세히 남겨주세요.</p>
           </div>
         </div>
@@ -88,12 +88,12 @@ export function BugReportModal({
         <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
           {/* 제보자 표시 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#94a3b8' }}>제보 유저</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>제보 유저</label>
             <div style={{
               padding: '0.65rem 0.85rem',
-              background: 'rgba(255,255,255,0.03)',
+              background: 'var(--card-bg)',
               borderRadius: '8px',
-              border: '1px solid rgba(255,255,255,0.06)',
+              border: '1px solid var(--border-color)',
               fontSize: '0.85rem',
               color: 'var(--primary-color)',
               fontWeight: 'bold'
@@ -104,7 +104,7 @@ export function BugReportModal({
 
           {/* 제목 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#94a3b8' }}>버그 제목</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>버그 제목</label>
             <input
               type="text"
               required
@@ -117,8 +117,8 @@ export function BugReportModal({
                 borderRadius: '8px',
                 fontSize: '0.85rem',
                 border: '1px solid var(--border-color)',
-                color: '#fff',
-                background: '#191b20',
+                color: 'var(--text-primary)',
+                background: 'var(--input-bg)',
                 transition: 'border-color 0.2s'
               }}
               onFocus={(e) => e.currentTarget.style.borderColor = 'var(--primary-color)'}
@@ -128,7 +128,7 @@ export function BugReportModal({
 
           {/* 상세 내용 */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: '#94a3b8' }}>상세 내용</label>
+            <label style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>상세 내용</label>
             <textarea
               required
               rows={4}
@@ -141,8 +141,8 @@ export function BugReportModal({
                 borderRadius: '8px',
                 fontSize: '0.85rem',
                 border: '1px solid var(--border-color)',
-                color: '#fff',
-                background: '#191b20',
+                color: 'var(--text-primary)',
+                background: 'var(--input-bg)',
                 resize: 'none',
                 lineHeight: '1.4',
                 transition: 'border-color 0.2s'

@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Info, LogOut } from 'lucide-react';
+import { User, Info, LogOut, Sun, Moon } from 'lucide-react';
 
 export function Header({ 
   userNickname, 
@@ -10,7 +10,9 @@ export function Header({
   handleLogout, 
   setSelectedCategoryId,
   setIsBugModalOpen,
-  unreadCounts = {}
+  unreadCounts = {},
+  theme,
+  toggleTheme
 }) {
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
@@ -27,6 +29,35 @@ export function Header({
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* 테마 토글 버튼 */}
+        <button
+          onClick={toggleTheme}
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            padding: '0.45rem',
+            borderRadius: '12px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s',
+            outline: 'none'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          }}
+          title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+        >
+          {theme === 'dark' ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="#60a5fa" />}
+        </button>
+
         {/* 버그 제보 버튼 */}
         <button
           onClick={() => setIsBugModalOpen(true)}
@@ -63,7 +94,7 @@ export function Header({
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
             <User size={14} color="var(--primary-color)" />
             <span 
-              style={{ fontSize: '0.85rem', fontWeight: '600', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+              style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
               onClick={() => setIsMyInfoOpen(true)}
               title="내 정보 열기"
             >

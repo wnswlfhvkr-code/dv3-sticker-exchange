@@ -36,10 +36,10 @@ export function ReportModal({
       <div className="glass-card" style={{
         width: '100%',
         maxWidth: '380px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: '1px solid var(--border-color)',
         padding: '1.8rem',
         borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+        boxShadow: 'var(--shadow-main)',
         position: 'relative',
         animation: 'fadeIn 0.2s ease-out'
       }}>
@@ -67,7 +67,7 @@ export function ReportModal({
               🚨 게시글/댓글 신고하기
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
-              신고 대상: <span style={{ color: '#fff', fontWeight: 'bold' }}>{reportingTarget.details}</span>
+              신고 대상: <span style={{ color: 'var(--text-primary)', fontWeight: 'bold' }}>{reportingTarget.details}</span>
             </p>
           </div>
 
@@ -76,19 +76,19 @@ export function ReportModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
               {reasons.map((r) => (
                 <label 
-                  key={r} 
-                  style={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '8px', 
-                    fontSize: '0.82rem', 
-                    color: '#fff', 
-                    cursor: 'pointer',
-                    background: 'rgba(255,255,255,0.02)',
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '8px',
-                    border: '1px solid rgba(255,255,255,0.05)'
-                  }}
+                   key={r} 
+                   style={{ 
+                     display: 'flex', 
+                     alignItems: 'center', 
+                     gap: '8px', 
+                     fontSize: '0.82rem', 
+                     color: 'var(--text-primary)', 
+                     cursor: 'pointer',
+                     background: 'var(--card-bg)',
+                     padding: '0.5rem 0.75rem',
+                     borderRadius: '8px',
+                     border: '1px solid var(--border-color)'
+                   }}
                 >
                   <input 
                     type="radio" 

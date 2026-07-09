@@ -39,6 +39,30 @@ export function useBoardViewModel({ userNickname, activeType }) {
     };
   }, [activeType]);
 
+  // --- 글 쓰기 임시 저장 (Draft Auto-save) 로직 ---
+  useEffect(() => {
+    const savedTitle = localStorage.getItem(`dv3_draft_title_${activeType}`) || '';
+    const savedContent = localStorage.getItem(`dv3_draft_content_${activeType}`) || '';
+    setTitle(savedTitle);
+    setContent(savedContent);
+  }, [activeType]);
+
+  useEffect(() => {
+    if (title) {
+      localStorage.setItem(`dv3_draft_title_${activeType}`, title);
+    } else {
+      localStorage.removeItem(`dv3_draft_title_${activeType}`);
+    }
+  }, [title, activeType]);
+
+  useEffect(() => {
+    if (content) {
+      localStorage.setItem(`dv3_draft_content_${activeType}`, content);
+    } else {
+      localStorage.removeItem(`dv3_draft_content_${activeType}`);
+    }
+  }, [content, activeType]);
+
   const createPost = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!userNickname) {

@@ -75,7 +75,7 @@ export function CategoryList({
                   />
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
-                    <HelpCircle size={32} color="rgba(255,255,255,0.15)" />
+                    <HelpCircle size={32} color="var(--text-muted)" />
                   </div>
                 )}
               </div>
@@ -85,7 +85,7 @@ export function CategoryList({
                 <span style={{ 
                   fontWeight: '700', 
                   fontSize: '0.88rem', 
-                  color: '#fff',
+                  color: 'var(--text-primary)',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',

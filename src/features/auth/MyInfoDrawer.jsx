@@ -39,18 +39,18 @@ export function MyInfoDrawer({
           height: '100vh',
           width: '380px',
           maxWidth: '90%',
-          background: 'rgba(15, 12, 25, 0.98)',
-          boxShadow: '-4px 0 24px rgba(0,0,0,0.5)',
+          background: 'var(--modal-bg)',
+          boxShadow: '-4px 0 24px rgba(0,0,0,0.2)',
           zIndex: 9991,
           display: 'flex',
           flexDirection: 'column',
           padding: '1.5rem',
-          borderLeft: '1px solid rgba(255, 255, 255, 0.08)',
+          borderLeft: '1px solid var(--border-color)',
           transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.75rem' }}>
-          <h3 style={{ fontSize: '1.2rem', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>
+          <h3 style={{ fontSize: '1.2rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px', margin: 0 }}>
             <User size={18} color="var(--primary-color)" /> 내 정보 및 등록 내역
           </h3>
           <button 
@@ -65,7 +65,7 @@ export function MyInfoDrawer({
           {/* 유저 프로필 카드 */}
           <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>로그인 계정</div>
-            <div style={{ fontSize: '1.1rem', fontWeight: '800', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
               {userNickname} 
               {isGuest && <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: '400' }}>(임시 게스트)</span>}
             </div>
@@ -83,7 +83,7 @@ export function MyInfoDrawer({
                   }}
                   placeholder="예: 카톡 오픈채팅 주소"
                   className="input-field"
-                  style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.8rem', borderRadius: '6px', background: '#1d2025', border: '1px solid rgba(255,255,255,0.1)', color: '#fff' }}
+                  style={{ flex: 1, padding: '0.45rem 0.6rem', fontSize: '0.8rem', borderRadius: '6px', background: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
                 />
                 <button 
                   onClick={() => alert("내 연락처 정보가 수정되었습니다! 새로운 글 작성 시 자동으로 적용됩니다.")}
@@ -98,7 +98,7 @@ export function MyInfoDrawer({
 
           {/* 내 등록 내역 리스트 */}
           <div>
-            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: '#fff', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
               <span>내 교환 등록글</span>
               <span style={{ color: 'var(--primary-color)' }}>
                 {posts.filter(p => p.nickname === userNickname).length}개
@@ -113,8 +113,8 @@ export function MyInfoDrawer({
                   <div 
                     key={post.id}
                     style={{
-                      background: 'rgba(255,255,255,0.02)',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--border-color)',
                       borderRadius: '10px',
                       padding: '0.85rem',
                       display: 'flex',

@@ -19,11 +19,41 @@
   --shadow-glow: 0 0 15px rgba(133, 195, 0, 0.25);
   --shadow-glow-hover: 0 0 25px rgba(163, 230, 53, 0.45);
 
+  --input-bg: rgba(10, 8, 20, 0.8);
+  --modal-bg: #0f0c1b;
+  --overlay-gradient: linear-gradient(to top, rgba(10, 8, 20, 0.95) 80%, rgba(10, 8, 20, 0));
+
   font-family: 'Outfit', 'Noto Sans KR', sans-serif;
   color-scheme: dark;
   color: var(--text-primary);
   background: var(--bg-gradient);
   min-height: 100vh;
+}
+
+[data-theme="light"] {
+  --bg-gradient: #f8fafc;
+  --card-bg: #ffffff;
+  --card-hover-bg: #f1f5f9;
+  --border-color: #cbd5e1;
+  --border-hover-color: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --primary-color: #6da300;
+  --primary-gradient: linear-gradient(135deg, #6da300 0%, #8bc31f 100%);
+  --secondary-gradient: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  --accent-gradient: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+
+  --shadow-main: 0 8px 24px 0 rgba(0, 0, 0, 0.06);
+  --shadow-glow: 0 0 15px rgba(109, 163, 0, 0.15);
+  --shadow-glow-hover: 0 0 25px rgba(140, 195, 31, 0.25);
+
+  --input-bg: rgba(255, 255, 255, 0.95);
+  --modal-bg: #ffffff;
+  --overlay-gradient: linear-gradient(to top, rgba(255, 255, 255, 0.95) 80%, rgba(255, 255, 255, 0));
+
+  color-scheme: light;
 }
 
 body {
@@ -157,7 +187,7 @@ label {
 }
 
 input, select, textarea {
-  background: rgba(10, 8, 20, 0.8);
+  background: var(--input-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
   padding: 0.75rem 1rem;
@@ -273,7 +303,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 .modal-content {
-  background: #0f0c1b;
+  background: var(--modal-bg);
   border: 1px solid var(--border-hover-color);
   border-radius: 20px;
   max-width: 600px;

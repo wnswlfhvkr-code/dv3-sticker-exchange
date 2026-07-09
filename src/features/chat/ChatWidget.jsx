@@ -66,22 +66,22 @@ export function ChatWidget({
         <div className="glass-card chat-panel" style={{
           width: '380px',
           height: '500px',
-          border: '1px solid rgba(255, 255, 255, 0.12)',
-          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.6)',
+          border: '1px solid var(--border-color)',
+          boxShadow: '0 12px 36px rgba(0, 0, 0, 0.2)',
           borderRadius: '20px',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          background: 'rgba(15, 12, 25, 0.95)',
+          background: 'var(--modal-bg)',
           backdropFilter: 'blur(20px)',
           animation: 'fadeIn 0.2s ease-out'
         }}>
           {/* 헤더 */}
-          <div style={{ background: 'rgba(255,255,255,0.03)', padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ background: 'rgba(0,0,0,0.03)', padding: '1rem', borderBottom: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <MessageSquare size={18} color="var(--primary-color)" />
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontWeight: '700', fontSize: '0.95rem', color: '#fff' }}>
+                <span style={{ fontWeight: '700', fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                   {chatActiveRoomId ? `${chatActiveRoomNickname} 님과의 대화` : '💬 실시간 1:1 채팅방 목록'}
                 </span>
                 {chatActiveRoomId && (
@@ -141,7 +141,7 @@ export function ChatWidget({
                     >
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                          <span style={{ fontWeight: '700', fontSize: '0.9rem', color: '#fff' }}>{room.otherUser}</span>
+                          <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-primary)' }}>{room.otherUser}</span>
                           <span style={{ 
                             width: '6px', 
                             height: '6px', 
@@ -239,9 +239,9 @@ export function ChatWidget({
                           }}
                         >
                           <div style={{
-                            background: isMe ? 'rgba(133, 195, 0, 0.25)' : 'rgba(255,255,255,0.08)',
-                            border: isMe ? '1px solid rgba(133, 195, 0, 0.4)' : '1px solid rgba(255,255,255,0.1)',
-                            color: '#fff',
+                            background: isMe ? 'rgba(133, 195, 0, 0.25)' : 'var(--card-bg)',
+                            border: isMe ? '1px solid rgba(133, 195, 0, 0.4)' : '1px solid var(--border-color)',
+                            color: 'var(--text-primary)',
                             padding: '0.55rem 0.85rem',
                             borderRadius: isMe ? '14px 14px 2px 14px' : '14px 14px 14px 2px',
                             fontSize: '0.85rem',
@@ -278,7 +278,7 @@ export function ChatWidget({
                     placeholder="메시지를 입력하세요..."
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    style={{ flex: 1, padding: '0.55rem', borderRadius: '8px', fontSize: '0.85rem', border: '1px solid var(--border-color)', color: '#fff', background: '#191b20' }}
+                    style={{ flex: 1, padding: '0.55rem', borderRadius: '8px', fontSize: '0.85rem', border: '1px solid var(--border-color)', color: 'var(--text-primary)', background: 'var(--input-bg)' }}
                     required
                   />
                   <button 
@@ -307,7 +307,7 @@ export function ChatWidget({
             setChatNotification(null);
           }}
           style={{
-            background: 'rgba(20, 16, 35, 0.95)',
+            background: 'var(--modal-bg)',
             border: '1.5px solid var(--primary-color)',
             boxShadow: '0 8px 32px rgba(133, 195, 0, 0.25), 0 0 15px rgba(133, 195, 0, 0.15)',
             borderRadius: '16px',
@@ -328,8 +328,8 @@ export function ChatWidget({
             <MessageSquare size={16} color="#1e293b" />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flex: 1, overflow: 'hidden' }}>
-            <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>새로운 메시지</span>
-            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>새로운 메시지</span>
+            <span style={{ fontSize: '0.82rem', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {chatNotification.text}
             </span>
           </div>
@@ -382,7 +382,7 @@ export function ChatWidget({
             fontWeight: '800',
             borderRadius: '10px',
             padding: '2px 6px',
-            border: '2px solid #100c19',
+            border: '2px solid var(--bg-gradient)',
             boxShadow: '0 0 8px rgba(239, 68, 68, 0.8)'
           }}>
             {totalUnread}

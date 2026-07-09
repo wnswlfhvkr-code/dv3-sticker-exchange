@@ -151,7 +151,7 @@ export function BoardSection({ userNickname }) {
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
                         <div style={{ minWidth: 0 }}>
-                          <h3 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: '#fff', wordBreak: 'break-word' }}>
+                          <h3 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
                             {decodeHTML(post.title)}
                           </h3>
                           <div style={{ display: 'flex', gap: '0.55rem', color: 'var(--text-muted)', fontSize: '0.72rem', flexWrap: 'wrap' }}>
@@ -182,7 +182,7 @@ export function BoardSection({ userNickname }) {
                           </div>
                         )}
                       </div>
-                      <p style={{ margin: '0.75rem 0 0', color: 'rgba(255,255,255,0.86)', fontSize: '0.86rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.55 }}>
+                      <p style={{ margin: '0.75rem 0 0', color: 'var(--text-secondary)', fontSize: '0.86rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.55 }}>
                         {decodeHTML(post.content)}
                       </p>
                     </>
@@ -206,12 +206,12 @@ export function BoardSection({ userNickname }) {
                               <div key={comment.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.5rem', borderRadius: '6px', fontSize: '0.78rem' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                    <span style={{ fontWeight: '700', color: comment.nickname === post.nickname ? 'var(--primary-color)' : '#fff' }}>{comment.nickname}</span>
+                                    <span style={{ fontWeight: '700', color: comment.nickname === post.nickname ? 'var(--primary-color)' : 'var(--text-primary)' }}>{comment.nickname}</span>
                                     <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                                       {new Date(comment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                   </div>
-                                  <span style={{ color: 'rgba(255,255,255,0.85)', wordBreak: 'break-all' }}>{decodeHTML(comment.text)}</span>
+                                  <span style={{ color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{decodeHTML(comment.text)}</span>
                                 </div>
                                 <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                   {(isCommentOwner || userNickname === '간장') && (

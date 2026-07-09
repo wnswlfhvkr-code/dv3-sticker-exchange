@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import './App.css';
 
 // 정적 데이터
-import { categories } from './stickersData';
+import { categories, stickersData } from './stickersData';
 
 // ViewModels & Components (Features)
 import { useAuthViewModel } from './features/auth/useAuthViewModel';
@@ -40,6 +40,23 @@ function App() {
   // 1. 사용자 인증 및 세션 정보
   const authVM = useAuthViewModel();
 
+  // 테마 상태 관리 (다크 / 라이트)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('dv3_theme') || 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('dv3_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  // 퀵 서치(빠른 검색) 상태 관리
+  const [quickSearchQuery, setQuickSearchQuery] = useState('');
+
   // 2. 스티커 바구니 상태 관리 (onBasketChange 콜백을 통해 포스트 실시간 동기화)
   const basketVM = useBasketViewModel({
     userNickname: authVM.userNickname,
@@ -59,6 +76,23 @@ function App() {
     setMyHaves: basketVM.setMyHaves,
     setMyWants: basketVM.setMyWants
   });
+
+  // 퀵 서치 필터링 로직
+  const getFilteredPosts = () => {
+    if (!quickSearchQuery.trim()) return postVM.posts;
+    const query = quickSearchQuery.trim().toLowerCase();
+    
+    // 1. 검색어가 포함된 모든 스티커의 ID 목록 찾기
+    const matchingStickerIds = stickersData
+      .filter(s => s.name.toLowerCase().includes(query))
+      .map(s => s.id);
+      
+    // 2. 해당 스티커 중 하나라도 haves에 들어있는 게시글 필터링
+    return postVM.posts.filter(post => {
+      const postHaves = post.haves || [];
+      return postHaves.some(haveId => matchingStickerIds.includes(haveId));
+    });
+  };
 
   // 4. 1:1 실시간 채팅 관리
   const chatVM = useChatViewModel({
@@ -143,6 +177,8 @@ function App() {
         setIsMyInfoOpen={postVM.setIsMyInfoOpen}
         setIsBugModalOpen={adminVM.setIsBugModalOpen}
         unreadCounts={chatVM.unreadCounts}
+        theme={theme}
+        toggleTheme={toggleTheme}
       />
 
       {/* 1.5. 공략 가이드북 및 백과사전 퀵 배너 */}
@@ -150,11 +186,11 @@ function App() {
         maxWidth: '1200px',
         margin: '20px auto 10px auto',
         padding: '24px',
-        background: 'linear-gradient(135deg, rgba(88, 28, 135, 0.4) 0%, rgba(30, 58, 138, 0.4) 100%)',
+        background: 'var(--card-bg)',
         backdropFilter: 'blur(12px)',
         borderRadius: '24px',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-main)',
         textAlign: 'left',
         display: 'flex',
         flexDirection: 'column',
@@ -163,10 +199,10 @@ function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '24px' }}>🐉</span>
           <div>
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: '#f3f4f6', letterSpacing: '-0.025em' }}>
+            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.025em' }}>
               드빌3 도감 공략 & 젬 강화 효율표
             </h2>
-            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'rgba(255, 255, 255, 0.65)' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
               효율적인 젬 강화 가이드와 수집 팁, 안전 거래 수칙, 자동 매칭 엔진 원리를 한눈에 확인해 보세요!
             </p>
           </div>
@@ -289,9 +325,71 @@ function App() {
 
       {/* 바구니 요약 및 등록 버튼 섹션 제거 */}
 
+      {/* 5.5 퀵 서치 (스티커 빠른 검색) */}
+      <div style={{
+        maxWidth: '800px',
+        width: '100%',
+        margin: '1.5rem auto 1.5rem auto',
+        padding: '1.5rem',
+        background: 'var(--card-bg)',
+        border: '1px solid var(--border-color)',
+        borderRadius: '20px',
+        boxShadow: 'var(--shadow-main)',
+        textAlign: 'left'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '18px' }}>🔍</span>
+          <h3 style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)', fontWeight: '700' }}>
+            스티커 빠른 검색 (퀵 서치)
+          </h3>
+        </div>
+        <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+          내가 필요한 스티커의 이름을 입력해 보세요. 해당 스티커를 보유한 유저들의 교환글만 즉시 필터링하여 보여줍니다.
+        </p>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <input 
+            type="text"
+            placeholder="예: 사방에서 슉슉, 달빛 아래, 여의주..."
+            value={quickSearchQuery}
+            onChange={(e) => setQuickSearchQuery(e.target.value)}
+            style={{
+              flex: 1,
+              background: 'rgba(0, 0, 0, 0.25)',
+              border: '1px solid var(--border-color)',
+              color: 'var(--text-primary)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              fontSize: '13.5px',
+              outline: 'none',
+              transition: 'all 0.2s'
+            }}
+          />
+          {quickSearchQuery && (
+            <button
+              onClick={() => setQuickSearchQuery('')}
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.25)',
+                color: '#f87171',
+                borderRadius: '12px',
+                padding: '0 16px',
+                cursor: 'pointer',
+                fontSize: '13px',
+                fontWeight: 'bold',
+                transition: 'all 0.2s'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+            >
+              초기화
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* 6. 교환글 피드 목록 */}
       <PostFeed 
-        posts={postVM.posts}
+        posts={getFilteredPosts()}
         loading={postVM.loading}
         userNickname={authVM.userNickname}
         myPostIds={postVM.myPostIds}

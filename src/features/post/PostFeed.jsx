@@ -78,7 +78,7 @@ export function PostFeed({
           return (
             <div key={stars} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px', fontSize: '0.74rem' }}>
               <span style={{ color: '#fbbf24', fontWeight: 'bold', flexShrink: 0 }}>★{stars}성:</span>
-              <span style={{ color: '#d1d5db' }}>{cardNames}</span>
+              <span style={{ color: 'var(--text-secondary)' }}>{cardNames}</span>
             </div>
           );
         })}
@@ -250,7 +250,7 @@ export function PostFeed({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
                     <div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: '800', fontSize: '1.05rem', color: '#fff' }}>{post.nickname}</span>
+                        <span style={{ fontWeight: '800', fontSize: '1.05rem', color: 'var(--text-primary)' }}>{post.nickname}</span>
                         
                         {/* 접속 정보 */}
                         {onlineUsers.includes(post.nickname) ? (
@@ -330,7 +330,7 @@ export function PostFeed({
                           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
                           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'}
                         >
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#fff', fontWeight: '600' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-primary)', fontWeight: '600' }}>
                             📦 교환 스티커 목록 ({post.haves.length + post.wants.length}개)
                           </span>
                           <span style={{ fontSize: '0.7rem', color: isExpanded ? '#fca5a5' : '#86efac' }}>
@@ -511,12 +511,12 @@ export function PostFeed({
                             <div key={comment.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', background: 'rgba(255,255,255,0.02)', padding: '0.4rem 0.5rem', borderRadius: '6px', fontSize: '0.78rem' }}>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flex: 1 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                  <span style={{ fontWeight: '700', color: comment.nickname === post.nickname ? 'var(--primary-color)' : '#fff' }}>{comment.nickname}</span>
+                                  <span style={{ fontWeight: '700', color: comment.nickname === post.nickname ? 'var(--primary-color)' : 'var(--text-primary)' }}>{comment.nickname}</span>
                                   <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
                                     {new Date(comment.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
                                   </span>
                                 </div>
-                                <span style={{ color: 'rgba(255,255,255,0.85)', wordBreak: 'break-all' }}>{decodeHTML(comment.text)}</span>
+                                <span style={{ color: 'var(--text-secondary)', wordBreak: 'break-all' }}>{decodeHTML(comment.text)}</span>
                               </div>
                               <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
                                 {!isCommentOwner && (
