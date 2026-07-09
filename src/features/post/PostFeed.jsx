@@ -424,29 +424,8 @@ export function PostFeed({
                           handleStartChat(post);
                         }
                       }}
-                      className="btn"
-                      style={{ 
-                        flex: 1, 
-                        padding: '0.5rem 1rem', 
-                        fontSize: '0.85rem', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        gap: '4px',
-                        background: isLight ? '#f0fdf4' : 'rgba(133, 195, 0, 0.1)',
-                        border: isLight ? '1px solid #bbf7d0' : '1px solid rgba(133, 195, 0, 0.25)',
-                        color: isLight ? '#166534' : '#a3e635',
-                        fontWeight: 'bold',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = isLight ? '#166534' : '#85c300';
-                        e.currentTarget.style.color = isLight ? '#ffffff' : '#1e293b';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = isLight ? '#f0fdf4' : 'rgba(133, 195, 0, 0.1)';
-                        e.currentTarget.style.color = isLight ? '#166534' : '#a3e635';
-                      }}
+                      className="btn btn-primary"
+                      style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                     >
                       <MessageSquare size={14} /> 1:1 채팅
                     </button>

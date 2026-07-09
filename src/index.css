@@ -10,14 +10,14 @@
   --text-secondary: #a1a8b5;
   --text-muted: #6b7280;
   
-  --primary-color: #85c300;
-  --primary-gradient: linear-gradient(135deg, #85c300 0%, #a3e635 100%);
+  --primary-color: #689f38;
+  --primary-gradient: linear-gradient(135deg, #689f38 0%, #8bc34a 100%);
   --secondary-gradient: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
   --accent-gradient: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
   
   --shadow-main: 0 8px 24px 0 rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 15px rgba(133, 195, 0, 0.25);
-  --shadow-glow-hover: 0 0 25px rgba(163, 230, 53, 0.45);
+  --shadow-glow: 0 0 15px rgba(104, 159, 56, 0.25);
+  --shadow-glow-hover: 0 0 25px rgba(139, 195, 74, 0.45);
 
   --input-bg: rgba(10, 8, 20, 0.8);
   --modal-bg: #0f0c1b;
@@ -48,14 +48,14 @@
   --text-secondary: #334155; /* 훨씬 더 짙은 슬레이트 톤으로 가독성 대폭 향상 */
   --text-muted: #57657a; /* 연한 노랑/연두/회색 대신 확실히 식별되는 짙은 회색 */
 
-  --primary-color: #1b5e20; /* 가독성이 극대화된 짙은 포레스트 그린 */
-  --primary-gradient: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
+  --primary-color: #33691e; /* 너무 짙지도 않고 눈이 아프지도 않은 중간 허브 그린 */
+  --primary-gradient: linear-gradient(135deg, #33691e 0%, #558b2f 100%);
   --secondary-gradient: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
   --accent-gradient: linear-gradient(135deg, #9a3412 0%, #c2410c 100%);
 
   --shadow-main: 0 10px 30px rgba(130, 120, 100, 0.16);
-  --shadow-glow: 0 0 20px rgba(27, 94, 32, 0.15);
-  --shadow-glow-hover: 0 0 30px rgba(46, 125, 50, 0.3);
+  --shadow-glow: 0 0 20px rgba(51, 105, 30, 0.15);
+  --shadow-glow-hover: 0 0 30px rgba(85, 139, 47, 0.25);
 
   --input-bg: #fdfdfb;
   --modal-bg: #ffffff;
