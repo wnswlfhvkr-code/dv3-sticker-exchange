@@ -93,10 +93,10 @@ export function PostFeed({
       return false;
     }
 
-    // 교환 가능(매칭되는 항목 존재) 글만 필터링
+    // 교환 가능(완전 매칭) 글만 필터링
     if (filterExchangeableOnly) {
-      const { isPerfectMatch, isPartialMatch } = checkMatching(post);
-      if (!isPerfectMatch && !isPartialMatch) {
+      const { isPerfectMatch } = checkMatching(post);
+      if (!isPerfectMatch) {
         return false;
       }
     }
@@ -157,7 +157,7 @@ export function PostFeed({
             }}
             style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
-            <Sparkles size={14} color={filterExchangeableOnly ? 'var(--primary-color)' : '#fff'} />
+            <Sparkles size={14} color={filterExchangeableOnly ? 'var(--primary-color)' : 'var(--text-primary)'} />
             교환 가능 글만 보기
           </button>
         </div>
@@ -215,18 +215,18 @@ export function PostFeed({
             const hasHaves = post.haves && post.haves.length > 0;
             const hasWants = post.wants && post.wants.length > 0;
 
-            let cardBorder = '1px solid rgba(255, 255, 255, 0.08)';
-            let cardShadow = 'none';
+            let cardBorder = '1px solid var(--border-color)';
+            let cardShadow = 'var(--shadow-main)';
             let cardBackground = 'var(--card-bg)';
             
             if (isPerfectMatch) {
-              cardBorder = '2px solid #a855f7';
-              cardShadow = '0 0 20px rgba(168, 85, 247, 0.3)';
-              cardBackground = 'rgba(168, 85, 247, 0.05)';
+              cardBorder = '2px solid var(--perfect-match-border)';
+              cardShadow = 'var(--perfect-match-shadow)';
+              cardBackground = 'var(--perfect-match-bg)';
             } else if (isPartialMatch) {
-              cardBorder = '1.5px solid rgba(245, 158, 11, 0.6)';
-              cardShadow = '0 0 12px rgba(245, 158, 11, 0.15)';
-              cardBackground = 'rgba(245, 158, 11, 0.03)';
+              cardBorder = '1.5px solid var(--partial-match-border)';
+              cardShadow = 'var(--partial-match-shadow)';
+              cardBackground = 'var(--partial-match-bg)';
             }
 
             return (
