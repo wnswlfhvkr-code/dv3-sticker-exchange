@@ -12,7 +12,8 @@ export function Header({
   setIsBugModalOpen,
   unreadCounts = {},
   theme,
-  toggleTheme
+  toggleTheme,
+  setShowLoginModal
 }) {
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
@@ -90,7 +91,7 @@ export function Header({
           🐛 버그 제보
         </button>
 
-        {userNickname && (
+        {userNickname ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
             <User size={14} color="var(--primary-color)" />
             <span 
@@ -138,6 +139,34 @@ export function Header({
               <LogOut size={14} />
             </button>
           </div>
+        ) : (
+          <button
+            onClick={() => setShowLoginModal(true)}
+            style={{
+              background: 'var(--primary-color)',
+              border: 'none',
+              color: '#1e1b4b',
+              cursor: 'pointer',
+              padding: '0.45rem 1rem',
+              borderRadius: '12px',
+              fontSize: '0.8rem',
+              fontWeight: 'bold',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s',
+              outline: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.filter = 'brightness(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.filter = 'none';
+            }}
+            title="로그인 또는 회원가입하기"
+          >
+            🔐 로그인 / 가입
+          </button>
         )}
         <div className="badge badge-have" style={{ textTransform: 'none', margin: 0 }}>
           {dbMode}
