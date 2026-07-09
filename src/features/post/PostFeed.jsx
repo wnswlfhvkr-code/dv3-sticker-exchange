@@ -349,15 +349,15 @@ export function PostFeed({
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem', borderLeft: '2px solid rgba(255, 255, 255, 0.05)', paddingLeft: '0.75rem', marginLeft: '0.2rem' }}>
                             {hasHaves && (
                               <div>
-                                <div style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>🟢 줄 수 있는 스티커</div>
+                                <div style={{ fontSize: '0.78rem', color: isLight ? '#047857' : '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>🟢 줄 수 있는 스티커</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
                                   {post.haves.map(id => {
                                     const [catId, s] = id.split('-');
                                     const cat = categories.find(c => String(c.id) === catId);
                                     const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
                                     const tagStyle = isStickerGolden 
-                                      ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
-                                      : { background: 'rgba(16, 185, 129, 0.1)', borderColor: 'rgba(16, 185, 129, 0.25)', color: '#a7f3d0', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
+                                      ? { background: isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)', borderColor: isLight ? '#fde68a' : 'rgba(245, 158, 11, 0.45)', color: isLight ? '#b45309' : '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: isLight ? '0 1px 3px rgba(180, 83, 9, 0.1)' : '0 0 6px rgba(245, 158, 11, 0.25)' }
+                                      : { background: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.1)', borderColor: isLight ? '#a7f3d0' : 'rgba(16, 185, 129, 0.25)', color: isLight ? '#047857' : '#a7f3d0', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: isLight ? '600' : 'normal' };
                                     return (
                                       <span key={id} className="sticker-tag" style={tagStyle}>
                                         {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
@@ -370,15 +370,15 @@ export function PostFeed({
 
                             {hasWants && (
                               <div>
-                                <div style={{ fontSize: '0.78rem', color: '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>🔴 받고 싶은 스티커</div>
+                                <div style={{ fontSize: '0.78rem', color: isLight ? '#b91c1c' : '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>🔴 받고 싶은 스티커</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
                                   {post.wants.map(id => {
                                     const [catId, s] = id.split('-');
                                     const cat = categories.find(c => String(c.id) === catId);
                                     const isStickerGolden = stickersData.find(st => st.id === id)?.isGolden;
                                     const tagStyle = isStickerGolden 
-                                      ? { background: 'rgba(245, 158, 11, 0.15)', borderColor: 'rgba(245, 158, 11, 0.45)', color: '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: '0 0 6px rgba(245, 158, 11, 0.25)' }
-                                      : { background: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.25)', color: '#fca5a5', fontSize: '0.72rem', padding: '0.25rem 0.45rem' };
+                                      ? { background: isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)', borderColor: isLight ? '#fde68a' : 'rgba(245, 158, 11, 0.45)', color: isLight ? '#b45309' : '#fbbf24', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: '700', boxShadow: isLight ? '0 1px 3px rgba(180, 83, 9, 0.1)' : '0 0 6px rgba(245, 158, 11, 0.25)' }
+                                      : { background: isLight ? '#fff5f5' : 'rgba(239, 68, 68, 0.1)', borderColor: isLight ? '#fecaca' : 'rgba(239, 68, 68, 0.25)', color: isLight ? '#b91c1c' : '#fca5a5', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: isLight ? '600' : 'normal' };
                                     return (
                                       <span key={id} className="sticker-tag" style={tagStyle}>
                                         {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
@@ -396,16 +396,16 @@ export function PostFeed({
 
                   {/* 매칭 요약 */}
                   {(isPerfectMatch || isPartialMatch) && (
-                    <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '8px', padding: '0.5rem 0.65rem', marginBottom: '0.85rem', fontSize: '0.76rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <div style={{ background: isLight ? '#f9fafb' : 'rgba(255, 255, 255, 0.03)', border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '8px', padding: '0.5rem 0.65rem', marginBottom: '0.85rem', fontSize: '0.76rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {myWantsMatch.length > 0 && (
                         <div>
-                          <div style={{ fontWeight: '700', color: '#34d399', marginBottom: '2px' }}>🎁 내가 받을 수 있는 스티커: </div>
+                          <div style={{ fontWeight: '700', color: isLight ? '#047857' : '#34d399', marginBottom: '2px' }}>🎁 내가 받을 수 있는 스티커: </div>
                           {renderMatchCardsByStars(myWantsMatch)}
                         </div>
                       )}
                       {myHavesMatch.length > 0 && (
                         <div style={{ marginTop: myWantsMatch.length > 0 ? '4px' : '0' }}>
-                          <div style={{ fontWeight: '700', color: '#f87171', marginBottom: '2px' }}>✅ 내가 줄 수 있는 스티커: </div>
+                          <div style={{ fontWeight: '700', color: isLight ? '#b91c1c' : '#f87171', marginBottom: '2px' }}>✅ 내가 줄 수 있는 스티커: </div>
                           {renderMatchCardsByStars(myHavesMatch)}
                         </div>
                       )}
