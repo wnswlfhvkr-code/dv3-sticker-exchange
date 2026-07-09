@@ -28,6 +28,24 @@ export function PostFormModal({
         </div>
 
         <form onSubmit={handleSubmitPost} style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          {/* ⚠️ UGC 안전 규정 고지 배너 */}
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.18)',
+            borderRadius: '12px',
+            padding: '12px 14px',
+            fontSize: '11.5px',
+            color: 'var(--primary-color)',
+            lineHeight: '1.5',
+            textAlign: 'left'
+          }}>
+            <strong>⚠️ 커뮤니티 등록 주의사항</strong>
+            <ul style={{ margin: '5px 0 0 0', paddingLeft: '16px', color: 'var(--text-muted)' }}>
+              <li>현금 거래, 계정 매매, 유료 대리 등 금전이 개입되는 모든 거래글은 즉시 삭제되며 영구 차단 조치됩니다.</li>
+              <li>연락처에 전화번호, 이메일 등의 민감정보 노출은 자제해주시기 바랍니다.</li>
+            </ul>
+          </div>
+
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
             <label style={{ fontSize: '0.82rem', fontWeight: 'bold', color: 'var(--text-secondary)' }}>작성자</label>
             <input type="text" className="input-field" value={userNickname} disabled style={{ opacity: 0.6 }} />

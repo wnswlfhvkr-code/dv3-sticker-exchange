@@ -59,3 +59,30 @@ export function validateNickname(nickname) {
   
   return nicknameRegex.test(nickname);
 }
+
+// ⚠️ 구글 애드센스 UGC(사용자 생성 콘텐츠) 규정 준수를 위한 금칙어(금전 거래, 상업적 유도) 목록
+const BANNED_WORDS = [
+  '현거래', '현금', '계좌', '계정 거래', '계정 판매', '계정 구매', 
+  '문상', '구글 기프트', '구글기프트', '카뱅', '토스', '돈거래', 
+  '팝니다', '삽니다', '문상거래', '구기', '실현금', '입금', '문화상품권'
+];
+
+/**
+ * 입력된 텍스트에 금칙어(현금 거래, 계정 매매 등)가 포함되어 있는지 검사합니다.
+ * 
+ * @param {string} text 검사할 문자열
+ * @returns {string|null} 검출된 금칙어가 있으면 해당 단어 반환, 없으면 null
+ */
+export function detectBannedWord(text) {
+  if (typeof text !== 'string') return null;
+  const lowerText = text.toLowerCase().replace(/\s+/g, ''); // 공백 제거하여 비교 우회 방지
+  
+  for (const word of BANNED_WORDS) {
+    const cleanedWord = word.replace(/\s+/g, '');
+    if (lowerText.includes(cleanedWord)) {
+      return word;
+    }
+  }
+  return null;
+}
+

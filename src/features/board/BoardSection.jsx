@@ -91,6 +91,24 @@ export function BoardSection({ userNickname, setShowLoginModal }) {
         </div>
       ) : canWrite ? (
         <form onSubmit={boardVM.createPost} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', padding: '1rem', borderRadius: '10px', marginBottom: '0.9rem' }}>
+          {/* ⚠️ UGC 게시판 안전 규정 고지 배너 */}
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.07)',
+            border: '1px solid rgba(239, 68, 68, 0.15)',
+            borderRadius: '8px',
+            padding: '10px 12px',
+            fontSize: '11px',
+            color: 'var(--primary-color)',
+            lineHeight: '1.45',
+            textAlign: 'left'
+          }}>
+            <strong>⚠️ 게시판 이용 주의사항</strong>
+            <ul style={{ margin: '4px 0 0 0', paddingLeft: '14px', color: 'var(--text-muted)' }}>
+              <li>현금 거래 유도, 계정 매매, 홍보성 도배글, 욕설/비방글은 예고 없이 삭제 및 영구 이용 정지됩니다.</li>
+              <li>건전한 커뮤니티 공간을 위해 서로 예의를 지켜주시기 바랍니다.</li>
+            </ul>
+          </div>
+
           <input
             type="text"
             value={boardVM.title}
