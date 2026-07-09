@@ -351,6 +351,7 @@ function App() {
 
       {/* 2. 로그인 모달 */}
       <LoginModal 
+        theme={theme}
         showLoginModal={authVM.showLoginModal}
         setShowLoginModal={authVM.setShowLoginModal}
         loginInput={authVM.loginInput}
@@ -462,6 +463,8 @@ function App() {
         handleAdminDeletePost={adminVM.handleAdminDeletePost}
         setIsFormOpen={postVM.setIsFormOpen}
         setShowLoginModal={authVM.setShowLoginModal}
+        theme={theme}
+        
         
         comments={postVM.comments}
         commentInputs={postVM.commentInputs}

@@ -20,6 +20,7 @@ export function PostFeed({
   handleOpenReportModal,
   handleAdminDeletePost,
   setShowLoginModal,
+  theme,
   
   // 댓글 관련
   comments,
@@ -37,6 +38,7 @@ export function PostFeed({
   handleTogglePostComplete,
   setIsFormOpen
 }) {
+  const isLight = theme === 'light';
   const [filterMatchedOnly, setFilterMatchedOnly] = useState(false);
   const [filterExchangeableOnly, setFilterExchangeableOnly] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -422,8 +424,29 @@ export function PostFeed({
                           handleStartChat(post);
                         }
                       }}
-                      className="btn btn-primary"
-                      style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
+                      className="btn"
+                      style={{ 
+                        flex: 1, 
+                        padding: '0.5rem 1rem', 
+                        fontSize: '0.85rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '4px',
+                        background: isLight ? '#f0fdf4' : 'rgba(133, 195, 0, 0.1)',
+                        border: isLight ? '1px solid #bbf7d0' : '1px solid rgba(133, 195, 0, 0.25)',
+                        color: isLight ? '#166534' : '#a3e635',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isLight ? '#166534' : '#85c300';
+                        e.currentTarget.style.color = isLight ? '#ffffff' : '#1e293b';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = isLight ? '#f0fdf4' : 'rgba(133, 195, 0, 0.1)';
+                        e.currentTarget.style.color = isLight ? '#166534' : '#a3e635';
+                      }}
                     >
                       <MessageSquare size={14} /> 1:1 채팅
                     </button>
@@ -437,8 +460,30 @@ export function PostFeed({
                         const url = decodedContact.startsWith('http') ? decodedContact : `https://${decodedContact}`;
                         window.open(url, '_blank', 'noopener,noreferrer');
                       }}
-                      className="btn btn-secondary"
-                      style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', border: 'none', cursor: 'pointer' }}
+                      className="btn"
+                      style={{ 
+                        flex: 1, 
+                        padding: '0.5rem 1rem', 
+                        fontSize: '0.85rem', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '4px', 
+                        background: isLight ? '#eff6ff' : 'rgba(59, 130, 246, 0.1)',
+                        border: isLight ? '1px solid #bfdbfe' : '1px solid rgba(59, 130, 246, 0.25)',
+                        color: isLight ? '#1e40af' : '#60a5fa',
+                        fontWeight: 'bold',
+                        transition: 'all 0.2s',
+                        cursor: 'pointer'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isLight ? '#1e40af' : '#3b82f6';
+                        e.currentTarget.style.color = '#ffffff';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = isLight ? '#eff6ff' : 'rgba(59, 130, 246, 0.1)';
+                        e.currentTarget.style.color = isLight ? '#1e40af' : '#60a5fa';
+                      }}
                     >
                       <MessageCircle size={14} /> 연락하기
                     </button>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 
 export function LoginModal({ 
+  theme,
   showLoginModal, 
   setShowLoginModal,
   loginInput, 
@@ -11,6 +12,7 @@ export function LoginModal({
   handleLogin 
 }) {
   const [isGuestTab, setIsGuestTab] = useState(false);
+  const isLight = theme === 'light';
 
   if (!showLoginModal) return null;
 
@@ -50,12 +52,12 @@ export function LoginModal({
         <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', textAlign: 'center', marginBottom: '1.5rem' }}>
           교환글 등록 및 1:1 채팅을 위해 로그인해주세요.
         </p>
-        <p style={{ color: '#a7f3d0', fontSize: '0.74rem', textAlign: 'center', margin: '-0.85rem 0 1.2rem 0', lineHeight: 1.45 }}>
+        <p style={{ color: isLight ? '#065f46' : '#a7f3d0', fontSize: '0.74rem', textAlign: 'center', margin: '-0.85rem 0 1.2rem 0', lineHeight: 1.45 }}>
           원활한 교환 확인을 위해 가급적 실제 게임 닉네임으로 설정하는 것을 추천합니다.
         </p>
 
         {/* 정식로그인 vs 게스트 로그인 탭 분할 */}
-        <div style={{ display: 'flex', background: 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '3px', marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.04)', borderRadius: '10px', padding: '3px', marginBottom: '1.5rem' }}>
           <button 
             type="button"
             onClick={() => {
@@ -70,7 +72,7 @@ export function LoginModal({
               borderRadius: '8px', 
               border: 'none', 
               background: !isGuestTab ? 'var(--primary-color)' : 'transparent', 
-              color: !isGuestTab ? '#1e293b' : 'var(--text-secondary)',
+              color: !isGuestTab ? '#ffffff' : 'var(--text-secondary)',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
@@ -91,7 +93,7 @@ export function LoginModal({
               borderRadius: '8px', 
               border: 'none', 
               background: isGuestTab ? 'var(--primary-color)' : 'transparent', 
-              color: isGuestTab ? '#1e293b' : 'var(--text-secondary)',
+              color: isGuestTab ? '#ffffff' : 'var(--text-secondary)',
               cursor: 'pointer',
               transition: 'all 0.2s ease'
             }}
@@ -133,12 +135,12 @@ export function LoginModal({
 
           {isGuestTab && (
             <div style={{ 
-              background: 'rgba(239, 68, 68, 0.08)', 
-              border: '1px solid rgba(239, 68, 68, 0.2)', 
+              background: isLight ? 'rgba(239, 68, 68, 0.05)' : 'rgba(239, 68, 68, 0.08)', 
+              border: isLight ? '1px solid rgba(239, 68, 68, 0.15)' : '1px solid rgba(239, 68, 68, 0.2)', 
               borderRadius: '8px', 
               padding: '0.65rem 0.8rem', 
               fontSize: '0.72rem', 
-              color: '#fca5a5', 
+              color: isLight ? '#991b1b' : '#fca5a5', 
               lineHeight: 1.4 
             }}>
               ⚠️ <strong>게스트(임시) 모드 주의사항:</strong><br />
