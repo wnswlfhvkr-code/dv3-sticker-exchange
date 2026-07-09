@@ -16,7 +16,7 @@ export function useAuthViewModel() {
     }
   });
 
-  const [showLoginModal, setShowLoginModal] = useState(!userNickname);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginInput, setLoginInput] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [onlineUsers, setOnlineUsers] = useState([]);
@@ -129,7 +129,6 @@ export function useAuthViewModel() {
     localStorage.removeItem('dv3_my_wants');
     setUserNickname('');
     setIsGuest(false);
-    setShowLoginModal(true);
   };
 
   return {

@@ -11,7 +11,7 @@ const boardIcons = {
   egg_code: KeyRound
 };
 
-export function BoardSection({ userNickname }) {
+export function BoardSection({ userNickname, setShowLoginModal }) {
   const [activeType, setActiveType] = useState('notice');
   const activeBoard = BOARD_TYPES.find(board => board.id === activeType) || BOARD_TYPES[0];
   const BoardIcon = boardIcons[activeType] || MessageCircle;
@@ -69,8 +69,25 @@ export function BoardSection({ userNickname }) {
       </div>
 
       {!userNickname ? (
-        <div className="glass-card" style={{ padding: '0.9rem 1rem', color: 'var(--text-secondary)', textAlign: 'center', borderRadius: '10px', marginBottom: '0.9rem', fontSize: '0.85rem' }}>
-          게시글을 작성하려면 로그인이 필요합니다.
+        <div 
+          className="glass-card" 
+          onClick={() => setShowLoginModal(true)}
+          style={{ 
+            padding: '1.2rem', 
+            color: 'var(--primary-color)', 
+            textAlign: 'center', 
+            borderRadius: '10px', 
+            marginBottom: '0.9rem', 
+            fontSize: '0.86rem',
+            cursor: 'pointer',
+            fontWeight: 'bold',
+            transition: 'all 0.2s',
+            border: '1px dashed var(--primary-color)'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(133, 195, 0, 0.08)'}
+          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+        >
+          🔐 게시판 글을 작성하려면 여기를 클릭하여 로그인해 주세요.
         </div>
       ) : canWrite ? (
         <form onSubmit={boardVM.createPost} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', padding: '1rem', borderRadius: '10px', marginBottom: '0.9rem' }}>
@@ -235,15 +252,25 @@ export function BoardSection({ userNickname }) {
                         <form onSubmit={(e) => boardVM.handleAddBoardComment(e, post.id)} style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
                           <input 
                             type="text" 
-                            placeholder={userNickname ? "댓글을 작성하세요..." : "로그인 후 댓글을 작성할 수 있습니다."}
-                            disabled={!userNickname}
+                            placeholder="댓글을 작성하세요... (로그인 필요)"
+                            readOnly={!userNickname}
+                            onClick={() => {
+                              if (!userNickname) {
+                                setShowLoginModal(true);
+                              }
+                            }}
                             value={boardVM.commentInputs[post.id] || ''}
                             onChange={(e) => boardVM.setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                            style={{ flex: 1, padding: '0.35rem 0.65rem', fontSize: '0.78rem', height: '32px' }}
+                            style={{ flex: 1, padding: '0.35rem 0.65rem', fontSize: '0.78rem', height: '32px', cursor: !userNickname ? 'pointer' : 'text' }}
                           />
                           <button 
                             type="submit" 
-                            disabled={!userNickname}
+                            onClick={(e) => {
+                              if (!userNickname) {
+                                e.preventDefault();
+                                setShowLoginModal(true);
+                              }
+                            }}
                             className="btn btn-primary" 
                             style={{ padding: '0 0.75rem', fontSize: '0.78rem', height: '32px', display: 'flex', alignItems: 'center' }}
                           >

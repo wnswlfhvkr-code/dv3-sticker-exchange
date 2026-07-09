@@ -179,7 +179,62 @@ function App() {
         unreadCounts={chatVM.unreadCounts}
         theme={theme}
         toggleTheme={toggleTheme}
+        setSelectedCategoryId={basketVM.setSelectedCategoryId}
       />
+
+      {/* 1.2. 비공식 안내 및 안전 거래 수칙 정보성 콘텐츠 (AdSense 콘텐츠 가치 보강) */}
+      <div style={{
+        maxWidth: '1200px',
+        margin: '20px auto 10px auto',
+        padding: '24px',
+        background: 'var(--card-bg)',
+        backdropFilter: 'blur(12px)',
+        borderRadius: '24px',
+        border: '1px solid var(--border-color)',
+        boxShadow: 'var(--shadow-main)',
+        textAlign: 'left'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+          <span style={{ fontSize: '22px' }}>🛡️</span>
+          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--primary-color)' }}>
+            드빌3 스티커교환소 안전 거래 수칙 & 비공식 도구 고지
+          </h2>
+        </div>
+        <p style={{ margin: '0 0 16px 0', fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+          본 사이트는 드래곤빌리지 3(드빌3) 게임 내 스티커 도감을 유저들이 보다 안전하고 편리하게 맞교환할 수 있도록 제작된 <strong>비공식 팬 도구</strong>입니다. 
+          상표권을 보유한 하이브로(Highbrow) 공식 서비스 및 상표권과는 무관하며, 순수 공익적 목적으로 운영됩니다.
+        </p>
+        
+        <div style={{ 
+          display: 'grid', 
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+          gap: '16px', 
+          borderTop: '1px solid var(--border-color)', 
+          paddingTop: '16px' 
+        }}>
+          <div>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>🔒 1. 커뮤니티 이용 수칙</h4>
+            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+              <li>현금 거래, 계정 판매, 유료 대리 등 상업적 거래 행위를 엄격히 금지합니다.</li>
+              <li>타인을 비방하거나 사기를 유도하는 부적절한 게시물은 신고 즉시 삭제 및 차단됩니다.</li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>🤝 2. 안전한 교환 가이드</h4>
+            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+              <li>교환 거래 전에 상대방의 닉네임이 실제 인게임 닉네임과 일치하는지 항상 교차 검증하십시오.</li>
+              <li>1:1 채팅 기능을 이용하여 교환 스티커의 상태를 다시 한번 투명하게 상호 확인하세요.</li>
+            </ul>
+          </div>
+          <div>
+            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>⚙️ 3. 자동 매칭 엔진 안내</h4>
+            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+              <li>바구니에 내가 가진 것(Haves)과 바라는 것(Wants)을 등록해 두면 시스템이 즉시 완전 매칭을 식별합니다.</li>
+              <li>매칭된 글은 보라색 ⚡교환 가능 배너로 우선 정렬되어 빠르게 물꼬를 틀 수 있습니다.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
 
       {/* 1.5. 공략 가이드북 및 백과사전 퀵 배너 */}
       <div style={{
@@ -404,6 +459,7 @@ function App() {
         handleOpenReportModal={postVM.handleOpenReportModal}
         handleAdminDeletePost={adminVM.handleAdminDeletePost}
         setIsFormOpen={postVM.setIsFormOpen}
+        setShowLoginModal={authVM.setShowLoginModal}
         
         comments={postVM.comments}
         commentInputs={postVM.commentInputs}
@@ -421,7 +477,7 @@ function App() {
       <div className="divider" style={{ margin: '2.5rem 0' }} />
 
       {/* 6.5 로그인 전용 독립 게시판 */}
-      <BoardSection userNickname={authVM.userNickname} />
+      <BoardSection userNickname={authVM.userNickname} setShowLoginModal={authVM.setShowLoginModal} />
 
       {/* 7. 신규 게시글 등록 모달 */}
       <PostFormModal 

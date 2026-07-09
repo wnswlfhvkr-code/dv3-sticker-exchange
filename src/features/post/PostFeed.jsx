@@ -19,6 +19,7 @@ export function PostFeed({
   handleStartChat,
   handleOpenReportModal,
   handleAdminDeletePost,
+  setShowLoginModal,
   
   // 댓글 관련
   comments,
@@ -174,16 +175,20 @@ export function PostFeed({
             <Search size={18} style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           </div>
 
-          {/* 로그인 시에만 노출되는 교환글 등록 버튼 */}
-          {userNickname && (
-            <button 
-              className="btn btn-primary"
-              onClick={() => setIsFormOpen(true)}
-              style={{ padding: '0.72rem 1.1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-            >
-              + 글쓰기
-            </button>
-          )}
+          {/* 교환글 등록 버튼 */}
+          <button 
+            className="btn btn-primary"
+            onClick={() => {
+              if (!userNickname) {
+                setShowLoginModal(true);
+              } else {
+                setIsFormOpen(true);
+              }
+            }}
+            style={{ padding: '0.72rem 1.1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+          >
+            + 글쓰기
+          </button>
 
           <button 
             className="btn btn-outline" 
@@ -410,7 +415,13 @@ export function PostFeed({
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: 'auto', flexWrap: 'wrap' }}>
                   {!isMyPost && (
                     <button 
-                      onClick={() => handleStartChat(post)}
+                      onClick={() => {
+                        if (!userNickname) {
+                          setShowLoginModal(true);
+                        } else {
+                          handleStartChat(post);
+                        }
+                      }}
                       className="btn btn-primary"
                       style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                     >
@@ -549,15 +560,25 @@ export function PostFeed({
                       <form onSubmit={(e) => handleAddComment(e, post.id)} style={{ display: 'flex', gap: '4px', marginTop: '2px' }}>
                         <input 
                           type="text" 
-                          placeholder={userNickname ? "댓글을 작성하세요..." : "로그인 후 댓글을 작성할 수 있습니다."}
-                          disabled={!userNickname}
+                          placeholder="댓글을 작성하세요... (로그인 필요)"
+                          readOnly={!userNickname}
+                          onClick={() => {
+                            if (!userNickname) {
+                              setShowLoginModal(true);
+                            }
+                          }}
                           value={commentInputs[post.id] || ''}
                           onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                          style={{ flex: 1, padding: '0.35rem 0.65rem', fontSize: '0.78rem', height: '32px' }}
+                          style={{ flex: 1, padding: '0.35rem 0.65rem', fontSize: '0.78rem', height: '32px', cursor: !userNickname ? 'pointer' : 'text' }}
                         />
                         <button 
                           type="submit" 
-                          disabled={!userNickname}
+                          onClick={(e) => {
+                            if (!userNickname) {
+                              e.preventDefault();
+                              setShowLoginModal(true);
+                            }
+                          }}
                           className="btn btn-primary" 
                           style={{ padding: '0 0.75rem', fontSize: '0.78rem', height: '32px', display: 'flex', alignItems: 'center' }}
                         >

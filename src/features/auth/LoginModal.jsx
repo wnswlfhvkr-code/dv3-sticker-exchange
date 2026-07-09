@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { X } from 'lucide-react';
 
 export function LoginModal({ 
   showLoginModal, 
+  setShowLoginModal,
   loginInput, 
   setLoginInput, 
   loginPassword, 
@@ -19,7 +21,29 @@ export function LoginModal({
 
   return (
     <div className="modal-overlay" style={{ display: 'flex', zIndex: 1000 }}>
-      <div className="modal-content glass-card" style={{ maxWidth: '400px', width: '90%', padding: '2rem' }}>
+      <div className="modal-content glass-card" style={{ maxWidth: '400px', width: '90%', padding: '2.25rem 2rem 2rem 2rem', position: 'relative' }}>
+        <button 
+          type="button"
+          onClick={() => setShowLoginModal(false)}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-secondary)',
+            cursor: 'pointer',
+            padding: '4px',
+            transition: 'color 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+        >
+          <X size={20} />
+        </button>
         <h2 style={{ fontSize: '1.4rem', fontWeight: 'bold', marginBottom: '0.5rem', textAlign: 'center', color: 'var(--primary-color)' }}>
           드래곤빌리지3 스티커교환소
         </h2>
