@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sanitizeInput, decodeHTML, detectBannedWord } from '../../utils/security';
+import { sanitizeInput, decodeHTML } from '../../utils/security';
 import { boardService } from './boardService';
 
 export function useBoardViewModel({ userNickname, activeType }) {
@@ -78,13 +78,7 @@ export function useBoardViewModel({ userNickname, activeType }) {
       return;
     }
 
-    const bannedTitle = detectBannedWord(title);
-    const bannedContent = detectBannedWord(content);
-    if (bannedTitle || bannedContent) {
-      const bannedWord = bannedTitle || bannedContent;
-      alert(`커뮤니티 이용규칙 준수를 위해 금전 거래 유도 단어 및 금칙어(예: ${bannedWord})는 게시글에 포함할 수 없습니다.`);
-      return;
-    }
+
 
     const { error } = await boardService.createPost({
       type: activeType,
@@ -138,13 +132,7 @@ export function useBoardViewModel({ userNickname, activeType }) {
       return;
     }
 
-    const bannedTitle = detectBannedWord(editTitle);
-    const bannedContent = detectBannedWord(editContent);
-    if (bannedTitle || bannedContent) {
-      const bannedWord = bannedTitle || bannedContent;
-      alert(`커뮤니티 이용규칙 준수를 위해 금전 거래 유도 단어 및 금칙어(예: ${bannedWord})는 게시글에 포함할 수 없습니다.`);
-      return;
-    }
+
 
     const { error } = await boardService.updatePost(
       postId,
@@ -189,11 +177,7 @@ export function useBoardViewModel({ userNickname, activeType }) {
       return;
     }
 
-    const bannedComment = detectBannedWord(commentText);
-    if (bannedComment) {
-      alert(`커뮤니티 이용규칙 준수를 위해 금칙어(예: ${bannedComment})는 댓글에 포함할 수 없습니다.`);
-      return;
-    }
+
 
     const { error } = await boardService.addComment(
       postId,

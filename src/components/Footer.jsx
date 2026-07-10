@@ -1,7 +1,10 @@
 import React from 'react';
 import { ShieldCheck, Scale, Mail, Info, BookOpen, HelpCircle, Book } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
-export function Footer() {
+export function Footer({ onNavigate }) {
+  const { t } = useLanguage();
+
   return (
     <footer style={{
         marginTop: '60px',
@@ -47,7 +50,7 @@ export function Footer() {
               onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.55)'}
             >
               <ShieldCheck size={15} />
-              개인정보처리방침
+              {t('privacyPolicy')}
             </a>
 
             <a 
@@ -68,7 +71,7 @@ export function Footer() {
               onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.55)'}
             >
               <Scale size={15} />
-              커뮤니티 이용규칙
+              {t('communityRules')}
             </a>
 
             <a 
@@ -89,13 +92,15 @@ export function Footer() {
               onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.55)'}
             >
               <Info size={15} />
-              사이트 소개
+              {t('siteAbout')}
             </a>
 
             <a 
-              href="/tips-gem-reinforcement.html"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#gem-table"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onNavigate) onNavigate('gemTable');
+              }}
               style={{
                 textDecoration: 'none',
                 color: 'rgba(255, 255, 255, 0.55)',
@@ -110,13 +115,15 @@ export function Footer() {
               onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.55)'}
             >
               <Book size={15} />
-              젬 강화 효율표
+              {t('gemTableBtn')}
             </a>
 
             <a 
-              href="/guide.html"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="#guide"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onNavigate) onNavigate('colGuide');
+              }}
               style={{
                 textDecoration: 'none',
                 color: 'rgba(255, 255, 255, 0.55)',
@@ -131,7 +138,7 @@ export function Footer() {
               onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.55)'}
             >
               <BookOpen size={15} />
-              이용 가이드
+              {t('userGuide')}
             </a>
 
             <a 
@@ -152,7 +159,7 @@ export function Footer() {
               onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.55)'}
             >
               <HelpCircle size={15} />
-              자주 묻는 질문
+              {t('faq')}
             </a>
 
             <span style={{
@@ -162,7 +169,7 @@ export function Footer() {
               color: 'rgba(255, 255, 255, 0.4)',
             }}>
               <Mail size={15} />
-              문의: helper.dv3sticker@gmail.com
+              {t('contactMail')}: helper.dv3sticker@gmail.com
             </span>
           </div>
  
@@ -176,9 +183,9 @@ export function Footer() {
             flexDirection: 'column',
             gap: '4px'
           }}>
-            <p>본 서비스는 유저 편의를 위해 자발적으로 구축된 비공식 개별 정보 교환 도구입니다.</p>
-            <p>드래곤빌리지 및 관련 스티커 아트워크, 상표권은 원 저작권사(highbrow 등)에 귀속되어 있습니다.</p>
-            <p>© 2026 DV3 스티커교환소. All Rights Reserved.</p>
+            <p>{t('disclaimer1')}</p>
+            <p>{t('disclaimer2')}</p>
+            <p>{t('copyright')}</p>
           </div>
         </div>
       </footer>

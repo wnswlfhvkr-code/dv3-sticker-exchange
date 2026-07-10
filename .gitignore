@@ -34,6 +34,8 @@ src_backup_*
 Thumbs.db
 coverage
 backup_before_enhancements/
+backup_before_rollback_bannedword/
+backup_before_translation_feature/
 
 # Data outputs exclusion
 data/*.json

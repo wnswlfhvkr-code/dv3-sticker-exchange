@@ -1,5 +1,6 @@
 import React from 'react';
 import { User, Info, LogOut, Sun, Moon } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function Header({ 
   userNickname, 
@@ -9,27 +10,64 @@ export function Header({
   handleOpenAdminTab, 
   handleLogout, 
   setSelectedCategoryId,
+  setCurrentView,
   setIsBugModalOpen,
   unreadCounts = {},
   theme,
   toggleTheme,
   setShowLoginModal
 }) {
+  const { language, setLanguage, t } = useLanguage();
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
   return (
     <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto', flexWrap: 'wrap', gap: '1rem' }}>
       <div 
         className="logo-container" 
-        onClick={() => setSelectedCategoryId(null)}
+        onClick={() => {
+          setSelectedCategoryId(null);
+          if (setCurrentView) setCurrentView('main');
+        }}
         style={{ cursor: 'pointer', userSelect: 'none' }}
-        title="카테고리 홈으로 이동"
+        title={language === 'ko' ? '카테고리 홈으로 이동' : 'Go to Categories Home'}
       >
         <h1 className="logo-text">DRAGON VILLAGE 3</h1>
         <div className="sub-logo-text">STICKER BOOK MATCHING CENTER</div>
       </div>
       
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        {/* 언어 전환 버튼 */}
+        <button
+          onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            padding: '0.45rem 0.65rem',
+            borderRadius: '12px',
+            fontSize: '0.78rem',
+            fontWeight: 'bold',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.2s',
+            outline: 'none',
+            gap: '4px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+          }}
+          title={language === 'ko' ? 'Switch to English' : '한국어로 변경'}
+        >
+          🌐 {language === 'ko' ? 'EN' : 'KR'}
+        </button>
+
         {/* 테마 토글 버튼 */}
         <button
           onClick={toggleTheme}
@@ -54,7 +92,7 @@ export function Header({
             e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
             e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
           }}
-          title={theme === 'dark' ? '라이트 모드로 전환' : '다크 모드로 전환'}
+          title={theme === 'dark' ? (language === 'ko' ? '라이트 모드로 전환' : 'Switch to Light Mode') : (language === 'ko' ? '다크 모드로 전환' : 'Switch to Dark Mode')}
         >
           {theme === 'dark' ? <Sun size={15} color="#fbbf24" /> : <Moon size={15} color="#60a5fa" />}
         </button>
@@ -86,9 +124,9 @@ export function Header({
             e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
             e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)';
           }}
-          title="오류/버그 제보하기"
+          title={language === 'ko' ? '오류/버그 제보하기' : 'Report bugs or errors'}
         >
-          🐛 버그 제보
+          {t('bugReport')}
         </button>
 
         {userNickname ? (
@@ -97,9 +135,9 @@ export function Header({
             <span 
               style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
               onClick={() => setIsMyInfoOpen(true)}
-              title="내 정보 열기"
+              title={t('myInfo')}
             >
-              {userNickname} {isGuest ? <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>(게스트)</span> : null}
+              {userNickname} {isGuest ? <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('guest')}</span> : null}
               {totalUnread > 0 && (
                 <span style={{
                   background: '#ef4444',
@@ -118,7 +156,7 @@ export function Header({
             <button
               onClick={() => setIsMyInfoOpen(true)}
               style={{ background: 'none', border: 'none', color: 'var(--primary-color)', cursor: 'pointer', padding: '0 2px', display: 'flex', alignItems: 'center' }}
-              title="내 정보 및 등록글 보기"
+              title={t('myInfo')}
             >
               <Info size={14} />
             </button>
@@ -134,7 +172,7 @@ export function Header({
             <button 
               onClick={handleLogout} 
               style={{ background: 'none', border: 'none', color: '#f87171', cursor: 'pointer', padding: '0 0 0 4px', display: 'flex', alignItems: 'center' }}
-              title="로그아웃"
+              title={t('logout')}
             >
               <LogOut size={14} />
             </button>
@@ -154,9 +192,9 @@ export function Header({
               outline: 'none',
               boxShadow: 'none'
             }}
-            title="로그인 또는 회원가입하기"
+            title={language === 'ko' ? '로그인 또는 회원가입하기' : 'Login or Sign Up'}
           >
-            🔐 로그인 / 가입
+            {t('login')}
           </button>
         )}
         <div className="badge badge-have" style={{ textTransform: 'none', margin: 0 }}>
@@ -166,3 +204,4 @@ export function Header({
     </header>
   );
 }
+

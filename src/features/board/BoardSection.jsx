@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { KeyRound, Megaphone, MessageCircle, RefreshCw, Send, Trash2 } from 'lucide-react';
+import { KeyRound, Megaphone, MessageCircle, RefreshCw, Send, Trash2, Globe } from 'lucide-react';
 import { BOARD_TYPES } from './boardService';
 import { useBoardViewModel } from './useBoardViewModel';
 import { decodeHTML } from '../../utils/security';
 import { AdBanner } from '../../components/AdBanner';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { dbService } from '../../supabaseClient';
 
 const boardIcons = {
   notice: Megaphone,
@@ -12,6 +14,55 @@ const boardIcons = {
 };
 
 export function BoardSection({ userNickname, setShowLoginModal }) {
+  const { language, t } = useLanguage();
+  const [translatedPosts, setTranslatedPosts] = useState({}); // { [postId]: { title: string, content: string, isTranslating: boolean, showTranslated: boolean } }
+
+  const handleTranslateBoardPost = async (postId, title, content) => {
+    if (translatedPosts[postId]?.title) {
+      setTranslatedPosts(prev => ({
+        ...prev,
+        [postId]: { ...prev[postId], showTranslated: !prev[postId].showTranslated }
+      }));
+      return;
+    }
+
+    setTranslatedPosts(prev => ({
+      ...prev,
+      [postId]: { title: '', content: '', isTranslating: true, showTranslated: true }
+    }));
+
+    try {
+      const targetLang = language === 'ko' ? 'English' : 'Korean';
+      const prompt = `You are a professional translator. Translate the following bulletin board post into ${targetLang}. 
+Keep the tone and style natural. You MUST reply ONLY with a valid JSON format containing exactly "title" and "content" as keys. Do not write any markdown code block formatting or explanations.
+
+Post Title: "${title}"
+Post Content: "${content}"`;
+
+      const resultText = await dbService.callOpenAI(prompt);
+      
+      let parsed = { title: 'Translation failed.', content: 'Translation failed.' };
+      try {
+        const cleanedJson = resultText.replace(/```json/gi, '').replace(/```/g, '').trim();
+        parsed = JSON.parse(cleanedJson);
+      } catch (jsonErr) {
+        console.error('Failed to parse translation JSON, fallback directly:', jsonErr);
+        parsed = { title: 'Translated', content: resultText };
+      }
+
+      setTranslatedPosts(prev => ({
+        ...prev,
+        [postId]: { title: parsed.title, content: parsed.content, isTranslating: false, showTranslated: true }
+      }));
+    } catch (err) {
+      console.error(err);
+      setTranslatedPosts(prev => ({
+        ...prev,
+        [postId]: { title: 'Error', content: 'Error occurred during translation.', isTranslating: false, showTranslated: true }
+      }));
+    }
+  };
+
   const [activeType, setActiveType] = useState('notice');
   const activeBoard = BOARD_TYPES.find(board => board.id === activeType) || BOARD_TYPES[0];
   const BoardIcon = boardIcons[activeType] || MessageCircle;
@@ -34,9 +85,9 @@ export function BoardSection({ userNickname, setShowLoginModal }) {
       <AdBanner type="horizontal" />
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', marginBottom: '0.85rem', flexWrap: 'wrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
           <BoardIcon size={20} color="var(--primary-color)" />
-          <h2 style={{ margin: 0, fontSize: '1.15rem' }}>{activeBoard.label}</h2>
+          <h2 style={{ margin: 0, fontSize: '1.15rem' }}>{t(activeBoard.id + 'Board')}</h2>
         </div>
         <button
           type="button"
@@ -45,7 +96,7 @@ export function BoardSection({ userNickname, setShowLoginModal }) {
           style={{ padding: '0.45rem 0.75rem', fontSize: '0.8rem' }}
         >
           <RefreshCw size={14} className={boardVM.loading ? 'spin-anim' : ''} />
-          새로고침
+          {t('refresh')}
         </button>
       </div>
 
@@ -62,7 +113,7 @@ export function BoardSection({ userNickname, setShowLoginModal }) {
               style={{ padding: '0.5rem 0.8rem', fontSize: '0.82rem' }}
             >
               <Icon size={14} />
-              {board.label}
+              {t(board.id + 'Board')}
             </button>
           );
         })}
@@ -87,59 +138,43 @@ export function BoardSection({ userNickname, setShowLoginModal }) {
           onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(133, 195, 0, 0.08)'}
           onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
         >
-          🔐 게시판 글을 작성하려면 여기를 클릭하여 로그인해 주세요.
+          🔐 {t('boardLoginPrompt')}
         </div>
       ) : canWrite ? (
         <form onSubmit={boardVM.createPost} className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', padding: '1rem', borderRadius: '10px', marginBottom: '0.9rem' }}>
-          {/* ⚠️ UGC 게시판 안전 규정 고지 배너 */}
-          <div style={{
-            background: 'rgba(239, 68, 68, 0.07)',
-            border: '1px solid rgba(239, 68, 68, 0.15)',
-            borderRadius: '8px',
-            padding: '10px 12px',
-            fontSize: '11px',
-            color: 'var(--primary-color)',
-            lineHeight: '1.45',
-            textAlign: 'left'
-          }}>
-            <strong>⚠️ 게시판 이용 주의사항</strong>
-            <ul style={{ margin: '4px 0 0 0', paddingLeft: '14px', color: 'var(--text-muted)' }}>
-              <li>현금 거래 유도, 계정 매매, 홍보성 도배글, 욕설/비방글은 예고 없이 삭제 및 영구 이용 정지됩니다.</li>
-              <li>건전한 커뮤니티 공간을 위해 서로 예의를 지켜주시기 바랍니다.</li>
-            </ul>
-          </div>
+
 
           <input
             type="text"
             value={boardVM.title}
             onChange={(e) => boardVM.setTitle(e.target.value)}
-            placeholder="제목"
+            placeholder={t('boardTitle')}
             maxLength={80}
             style={{ width: '100%' }}
           />
           <textarea
             value={boardVM.content}
             onChange={(e) => boardVM.setContent(e.target.value)}
-            placeholder={activeType === 'egg_code' ? '거래 게시판 내용을 작성하세요.' : '내용'}
+            placeholder={activeType === 'egg_code' ? t('tradeBoardPlaceholder') : t('boardContent')}
             maxLength={1200}
             rows={4}
             style={{ width: '100%', resize: 'vertical' }}
           />
           <button type="submit" className="btn btn-primary" style={{ alignSelf: 'flex-end', padding: '0.55rem 0.95rem', fontSize: '0.84rem' }}>
             <Send size={14} />
-            게시글 등록
+            {t('submitPost')}
           </button>
         </form>
       ) : (
         <div className="glass-card" style={{ padding: '0.9rem 1rem', color: 'var(--text-muted)', borderRadius: '10px', marginBottom: '0.9rem', fontSize: '0.85rem' }}>
-          공지 게시글은 관리자만 작성할 수 있습니다.
+          {t('noticeAdminOnly')}
         </div>
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
             {boardVM.posts.length === 0 ? (
               <div className="glass-card" style={{ padding: '1.2rem', color: 'var(--text-secondary)', textAlign: 'center', borderRadius: '10px' }}>
-                아직 등록된 게시글이 없습니다.
+                {t('noPost')}
               </div>
             ) : (
               boardVM.posts.map(post => (
@@ -185,10 +220,45 @@ export function BoardSection({ userNickname, setShowLoginModal }) {
                   ) : (
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.75rem', alignItems: 'flex-start' }}>
-                        <div style={{ minWidth: 0 }}>
-                          <h3 style={{ margin: '0 0 0.35rem', fontSize: '1rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
-                            {decodeHTML(post.title)}
-                          </h3>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1rem', color: 'var(--text-primary)', wordBreak: 'break-word' }}>
+                              {translatedPosts[post.id]?.showTranslated && !translatedPosts[post.id]?.isTranslating
+                                ? translatedPosts[post.id]?.title
+                                : decodeHTML(post.title)}
+                            </h3>
+                            
+                            {/* AI 번역 토글 버튼 */}
+                            <button
+                              type="button"
+                              onClick={() => handleTranslateBoardPost(post.id, post.title, post.content)}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                                color: 'var(--primary-color)',
+                                cursor: 'pointer',
+                                padding: '2px 6px',
+                                borderRadius: '6px',
+                                fontSize: '0.68rem',
+                                fontWeight: 'bold',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px',
+                                transition: 'all 0.2s',
+                                outline: 'none'
+                              }}
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                              }}
+                            >
+                              <Globe size={10} />
+                              {translatedPosts[post.id]?.showTranslated ? t('showOriginal') : t('translate')}
+                            </button>
+                          </div>
+                          
                           <div style={{ display: 'flex', gap: '0.55rem', color: 'var(--text-muted)', fontSize: '0.72rem', flexWrap: 'wrap' }}>
                             <span>{post.nickname}</span>
                             <span>{formatTime(post.created_at)}</span>
@@ -217,9 +287,20 @@ export function BoardSection({ userNickname, setShowLoginModal }) {
                           </div>
                         )}
                       </div>
-                      <p style={{ margin: '0.75rem 0 0', color: 'var(--text-secondary)', fontSize: '0.86rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.55 }}>
-                        {decodeHTML(post.content)}
-                      </p>
+                      
+                      <div style={{ marginTop: '0.75rem' }}>
+                        {translatedPosts[post.id]?.showTranslated && translatedPosts[post.id]?.isTranslating ? (
+                          <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', padding: '0.5rem 0' }}>
+                            {t('translating')}
+                          </div>
+                        ) : (
+                          <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.86rem', whiteSpace: 'pre-wrap', wordBreak: 'break-word', lineHeight: 1.55 }}>
+                            {translatedPosts[post.id]?.showTranslated
+                              ? translatedPosts[post.id]?.content
+                              : decodeHTML(post.content)}
+                          </p>
+                        )}
+                      </div>
                     </>
                   )}
 

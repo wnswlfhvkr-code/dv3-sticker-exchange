@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Analytics } from '@vercel/analytics/react';
 import './App.css';
+import { useLanguage } from './contexts/LanguageContext';
 
 // 정적 데이터
 import { categories, stickersData } from './stickersData';
+
 
 // ViewModels & Components (Features)
 import { useAuthViewModel } from './features/auth/useAuthViewModel';
@@ -35,8 +37,10 @@ import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AdBanner } from './components/AdBanner';
 import { dbService } from './supabaseClient';
+import { GuideSection } from './components/GuideSection';
 
 function App() {
+  const { language, t } = useLanguage();
   // 1. 사용자 인증 및 세션 정보
   const authVM = useAuthViewModel();
 
@@ -53,6 +57,10 @@ function App() {
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
+
+  // SPA 네비게이션 상태 관리
+  const [currentView, setCurrentView] = useState('main'); // 'main' | 'guide'
+  const [guideActiveTab, setGuideActiveTab] = useState('gemTable'); // 'gemTable' | 'colGuide' | 'safetyRules' | 'matchEngine'
 
   // 퀵 서치(빠른 검색) 상태 관리
   const [quickSearchQuery, setQuickSearchQuery] = useState('');
@@ -182,172 +190,327 @@ function App() {
         theme={theme}
         toggleTheme={toggleTheme}
         setSelectedCategoryId={basketVM.setSelectedCategoryId}
+        setCurrentView={setCurrentView}
       />
 
-      {/* 1.2. 비공식 안내 및 안전 거래 수칙 정보성 콘텐츠 (AdSense 콘텐츠 가치 보강) */}
-      <div style={{
-        maxWidth: '1200px',
-        margin: '20px auto 10px auto',
-        padding: '24px',
-        background: 'var(--card-bg)',
-        backdropFilter: 'blur(12px)',
-        borderRadius: '24px',
-        border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-main)',
-        textAlign: 'left'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-          <span style={{ fontSize: '22px' }}>🛡️</span>
-          <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--primary-color)' }}>
-            드빌3 스티커교환소 안전 거래 수칙 & 비공식 도구 고지
-          </h2>
-        </div>
-        <p style={{ margin: '0 0 16px 0', fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-          본 사이트는 드래곤빌리지 3(드빌3) 게임 내 스티커 도감을 유저들이 보다 안전하고 편리하게 맞교환할 수 있도록 제작된 <strong>비공식 팬 도구</strong>입니다. 
-          상표권을 보유한 하이브로(Highbrow) 공식 서비스 및 상표권과는 무관하며, 순수 공익적 목적으로 운영됩니다.
-        </p>
-        
-        <div style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-          gap: '16px', 
-          borderTop: '1px solid var(--border-color)', 
-          paddingTop: '16px' 
-        }}>
-          <div>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>🔒 1. 커뮤니티 이용 수칙</h4>
-            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-              <li>현금 거래, 계정 판매, 유료 대리 등 상업적 거래 행위를 엄격히 금지합니다.</li>
-              <li>타인을 비방하거나 사기를 유도하는 부적절한 게시물은 신고 즉시 삭제 및 차단됩니다.</li>
-            </ul>
-          </div>
-          <div>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>🤝 2. 안전한 교환 가이드</h4>
-            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-              <li>교환 거래 전에 상대방의 닉네임이 실제 인게임 닉네임과 일치하는지 항상 교차 검증하십시오.</li>
-              <li>1:1 채팅 기능을 이용하여 교환 스티커의 상태를 다시 한번 투명하게 상호 확인하세요.</li>
-            </ul>
-          </div>
-          <div>
-            <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>⚙️ 3. 자동 매칭 엔진 안내</h4>
-            <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-              <li>바구니에 내가 가진 것(Haves)과 바라는 것(Wants)을 등록해 두면 시스템이 즉시 완전 매칭을 식별합니다.</li>
-              <li>매칭된 글은 보라색 ⚡교환 가능 배너로 우선 정렬되어 빠르게 물꼬를 틀 수 있습니다.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* 1.5. 공략 가이드북 및 백과사전 퀵 배너 */}
-      <div style={{
-        maxWidth: '1200px',
-        margin: '20px auto 10px auto',
-        padding: '24px',
-        background: 'var(--card-bg)',
-        backdropFilter: 'blur(12px)',
-        borderRadius: '24px',
-        border: '1px solid var(--border-color)',
-        boxShadow: 'var(--shadow-main)',
-        textAlign: 'left',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '16px'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '24px' }}>🐉</span>
-          <div>
-            <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.025em' }}>
-              드빌3 도감 공략 & 젬 강화 효율표
-            </h2>
-            <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-              효율적인 젬 강화 가이드와 수집 팁, 안전 거래 수칙, 자동 매칭 엔진 원리를 한눈에 확인해 보세요!
+      {currentView === 'main' ? (
+        <>
+          {/* 1.2. 비공식 안내 및 안전 거래 수칙 정보성 콘텐츠 (AdSense 콘텐츠 가치 보강) */}
+          <div style={{
+            maxWidth: '1200px',
+            margin: '20px auto 10px auto',
+            padding: '24px',
+            background: 'var(--card-bg)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '24px',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-main)',
+            textAlign: 'left'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+              <span style={{ fontSize: '22px' }}>🛡️</span>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--primary-color)' }}>
+                {t('safetyTitle')}
+              </h2>
+            </div>
+            <p style={{ margin: '0 0 16px 0', fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              {t('safetyDesc')}
             </p>
+            
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
+              gap: '16px', 
+              borderTop: '1px solid var(--border-color)', 
+              paddingTop: '16px' 
+            }}>
+              <div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule1Title')}</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  <li>{t('rule1Desc1')}</li>
+                  <li>{t('rule1Desc2')}</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule2Title')}</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  <li>{t('rule2Desc1')}</li>
+                  <li>{t('rule2Desc2')}</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule3Title')}</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  <li>{t('rule3Desc1')}</li>
+                  <li>{t('rule3Desc2')}</li>
+                </ul>
+              </div>
+            </div>
           </div>
-        </div>
-        <div style={{
-          display: 'flex',
-          gap: '10px',
-          flexWrap: 'wrap',
-          marginTop: '4px'
-        }}>
-          <a href="/tips-gem-reinforcement.html" target="_blank" rel="noopener noreferrer" style={{
-            textDecoration: 'none',
-            padding: '10px 16px',
-            borderRadius: '12px',
-            background: isLight ? '#f3e8ff' : 'rgba(167, 139, 250, 0.15)',
-            border: isLight ? '1px solid #d8b4fe' : '1px solid rgba(167, 139, 250, 0.3)',
-            color: isLight ? '#6b21a8' : '#c4b5fd',
-            fontSize: '13px',
-            fontWeight: '700',
-            transition: 'all 0.2s',
+
+          {/* 1.5. 공략 가이드북 및 백과사전 퀵 배너 */}
+          <div style={{
+            maxWidth: '1200px',
+            margin: '20px auto 10px auto',
+            padding: '24px',
+            background: 'var(--card-bg)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '24px',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-main)',
+            textAlign: 'left',
             display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#6b21a8' : '#a78bfa'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#f3e8ff' : 'rgba(167, 139, 250, 0.15)'; e.currentTarget.style.color = isLight ? '#6b21a8' : '#c4b5fd'; }}
-          >
-            💎 젬 강화 효율표
-          </a>
-          <a href="/tips-sticker-collection.html" target="_blank" rel="noopener noreferrer" style={{
-            textDecoration: 'none',
-            padding: '10px 16px',
-            borderRadius: '12px',
-            background: isLight ? '#eff6ff' : 'rgba(96, 165, 250, 0.15)',
-            border: isLight ? '1px solid #bfdbfe' : '1px solid rgba(96, 165, 250, 0.3)',
-            color: isLight ? '#1e40af' : '#93c5fd',
-            fontSize: '13px',
-            fontWeight: '700',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#1e40af' : '#60a5fa'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#eff6ff' : 'rgba(96, 165, 250, 0.15)'; e.currentTarget.style.color = isLight ? '#1e40af' : '#93c5fd'; }}
-          >
-            ⚡ 수집 효율 공략집
-          </a>
-          <a href="/tips-safe-trading.html" target="_blank" rel="noopener noreferrer" style={{
-            textDecoration: 'none',
-            padding: '10px 16px',
-            borderRadius: '12px',
-            background: isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)',
-            border: isLight ? '1px solid #fde68a' : '1px solid rgba(245, 158, 11, 0.3)',
-            color: isLight ? '#b45309' : '#fde047',
-            fontSize: '13px',
-            fontWeight: '700',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#b45309' : '#f59e0b'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)'; e.currentTarget.style.color = isLight ? '#b45309' : '#fde047'; }}
-          >
-            🛡️ 안전 거래 수칙
-          </a>
-          <a href="/tips-matching-guide.html" target="_blank" rel="noopener noreferrer" style={{
-            textDecoration: 'none',
-            padding: '10px 16px',
-            borderRadius: '12px',
-            background: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)',
-            border: isLight ? '1px solid #a7f3d0' : '1px solid rgba(16, 185, 129, 0.3)',
-            color: isLight ? '#065f46' : '#6ee7b7',
-            fontSize: '13px',
-            fontWeight: '700',
-            transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
-             onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#065f46' : '#10b981'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
-             onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)'; e.currentTarget.style.color = isLight ? '#065f46' : '#6ee7b7'; }}
-          >
-            ⚙️ 매칭 엔진 작동원리
-          </a>
-        </div>
-      </div>
+            flexDirection: 'column',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '24px' }}>🐉</span>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', letterSpacing: '-0.025em' }}>
+                  {t('guideTitle')}
+                </h2>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                  {t('guideDesc')}
+                </p>
+              </div>
+            </div>
+            <div style={{
+              display: 'flex',
+              gap: '10px',
+              flexWrap: 'wrap',
+              marginTop: '4px'
+            }}>
+              <button 
+                onClick={() => {
+                  setCurrentView('guide');
+                  setGuideActiveTab('gemTable');
+                }}
+                style={{
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '12px',
+                  background: isLight ? '#f3e8ff' : 'rgba(167, 139, 250, 0.15)',
+                  border: isLight ? '1px solid #d8b4fe' : '1px solid rgba(167, 139, 250, 0.3)',
+                  color: isLight ? '#6b21a8' : '#c4b5fd',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#6b21a8' : '#a78bfa'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#f3e8ff' : 'rgba(167, 139, 250, 0.15)'; e.currentTarget.style.color = isLight ? '#6b21a8' : '#c4b5fd'; }}
+              >
+                {t('gemTable')}
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentView('guide');
+                  setGuideActiveTab('colGuide');
+                }}
+                style={{
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '12px',
+                  background: isLight ? '#eff6ff' : 'rgba(96, 165, 250, 0.15)',
+                  border: isLight ? '1px solid #bfdbfe' : '1px solid rgba(96, 165, 250, 0.3)',
+                  color: isLight ? '#1e40af' : '#93c5fd',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#1e40af' : '#60a5fa'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#eff6ff' : 'rgba(96, 165, 250, 0.15)'; e.currentTarget.style.color = isLight ? '#1e40af' : '#93c5fd'; }}
+              >
+                {t('colGuide')}
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentView('guide');
+                  setGuideActiveTab('safetyRules');
+                }}
+                style={{
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '12px',
+                  background: isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)',
+                  border: isLight ? '1px solid #fde68a' : '1px solid rgba(245, 158, 11, 0.3)',
+                  color: isLight ? '#b45309' : '#fde047',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#b45309' : '#f59e0b'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)'; e.currentTarget.style.color = isLight ? '#b45309' : '#fde047'; }}
+              >
+                {t('safetyRules')}
+              </button>
+              <button 
+                onClick={() => {
+                  setCurrentView('guide');
+                  setGuideActiveTab('matchEngine');
+                }}
+                style={{
+                  border: 'none',
+                  padding: '10px 16px',
+                  borderRadius: '12px',
+                  background: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)',
+                  border: isLight ? '1px solid #a7f3d0' : '1px solid rgba(16, 185, 129, 0.3)',
+                  color: isLight ? '#065f46' : '#6ee7b7',
+                  fontSize: '13px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = isLight ? '#065f46' : '#10b981'; e.currentTarget.style.color = isLight ? '#fff' : '#1e1b4b'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)'; e.currentTarget.style.color = isLight ? '#065f46' : '#6ee7b7'; }}
+              >
+                {t('matchEngine')}
+              </button>
+            </div>
+          </div>
+
+          {/* 3. 스티커 카테고리 탭 목록 및 4. 스티커북 상세 그리드 (메인 도감) 교환 렌더링 */}
+          {basketVM.selectedCategoryId === null ? (
+            <CategoryList 
+              selectedCategoryId={basketVM.selectedCategoryId}
+              setSelectedCategoryId={basketVM.setSelectedCategoryId}
+              getHavesCountInPage={basketVM.getHavesCountInPage}
+              getWantsCountInPage={basketVM.getWantsCountInPage}
+            />
+          ) : (
+            <StickerDetailGrid 
+              selectedCategoryId={basketVM.selectedCategoryId}
+              setSelectedCategoryId={basketVM.setSelectedCategoryId}
+              myHaves={basketVM.myHaves}
+              myWants={basketVM.myWants}
+              toggleStickerSelection={basketVM.toggleStickerSelection}
+              basketMode={basketVM.basketMode}
+              setBasketMode={basketVM.setBasketMode}
+            />
+          )}
+
+          {/* 5.5 퀵 서치 (스티커 빠른 검색) */}
+          <div style={{
+            maxWidth: '800px',
+            width: '100%',
+            margin: '1.5rem auto 1.5rem auto',
+            padding: '1.5rem',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '20px',
+            boxShadow: 'var(--shadow-main)',
+            textAlign: 'left'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '18px' }}>🔍</span>
+              <h3 style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)', fontWeight: '700' }}>
+                {t('quickSearchTitle')}
+              </h3>
+            </div>
+            <p style={{ margin: '0 0 12px 0', fontSize: '12.5px', color: 'var(--text-muted)' }}>
+              {t('quickSearchDesc')}
+            </p>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input 
+                type="text"
+                placeholder={t('quickSearchPlaceholder')}
+                value={quickSearchQuery}
+                onChange={(e) => setQuickSearchQuery(e.target.value)}
+                style={{
+                  flex: 1,
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  fontSize: '13.5px',
+                  outline: 'none',
+                  transition: 'all 0.2s'
+                }}
+              />
+              {quickSearchQuery && (
+                <button
+                  onClick={() => setQuickSearchQuery('')}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    color: '#f87171',
+                    borderRadius: '12px',
+                    padding: '0 16px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
+                >
+                  {t('resetBtn')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 6. 교환글 피드 목록 */}
+          <PostFeed 
+            posts={getFilteredPosts()}
+            loading={postVM.loading}
+            userNickname={authVM.userNickname}
+            myPostIds={postVM.myPostIds}
+            myHaves={basketVM.myHaves}
+            myWants={basketVM.myWants}
+            onlineUsers={authVM.onlineUsers}
+            fetchData={postVM.fetchData}
+            handleBumpPost={postVM.handleBumpPost}
+            handleDeletePost={postVM.handleDeletePost}
+            handleOpenEditModal={postVM.handleOpenEditModal}
+            handleStartChat={chatVM.handleStartChat}
+            handleOpenReportModal={postVM.handleOpenReportModal}
+            handleAdminDeletePost={adminVM.handleAdminDeletePost}
+            setIsFormOpen={postVM.setIsFormOpen}
+            setShowLoginModal={authVM.setShowLoginModal}
+            theme={theme}
+            
+            
+            comments={postVM.comments}
+            commentInputs={postVM.commentInputs}
+            setCommentInputs={postVM.setCommentInputs}
+            expandedComments={postVM.expandedComments}
+            toggleComments={postVM.toggleComments}
+            handleAddComment={postVM.handleAddComment}
+            handleDeleteComment={postVM.handleDeleteComment}
+
+            checkMatching={postVM.checkMatching}
+            expandedPostIds={postVM.expandedPostIds}
+            togglePostExpand={postVM.togglePostExpand}
+          />
+
+          <div className="divider" style={{ margin: '2.5rem 0' }} />
+
+          {/* 6.5 로그인 전용 독립 게시판 */}
+          <BoardSection userNickname={authVM.userNickname} setShowLoginModal={authVM.setShowLoginModal} />
+        </>
+      ) : (
+        <GuideSection 
+          activeTab={guideActiveTab} 
+          setActiveTab={setGuideActiveTab} 
+          onBack={() => setCurrentView('main')} 
+        />
+      )}
 
       {/* 2. 로그인 모달 */}
       <LoginModal 
@@ -360,129 +523,6 @@ function App() {
         setLoginPassword={authVM.setLoginPassword}
         handleLogin={authVM.handleLogin}
       />
-
-      {/* 3. 스티커 카테고리 탭 목록 및 4. 스티커북 상세 그리드 (메인 도감) 교환 렌더링 */}
-      {basketVM.selectedCategoryId === null ? (
-        <CategoryList 
-          selectedCategoryId={basketVM.selectedCategoryId}
-          setSelectedCategoryId={basketVM.setSelectedCategoryId}
-          getHavesCountInPage={basketVM.getHavesCountInPage}
-          getWantsCountInPage={basketVM.getWantsCountInPage}
-        />
-      ) : (
-        <StickerDetailGrid 
-          selectedCategoryId={basketVM.selectedCategoryId}
-          setSelectedCategoryId={basketVM.setSelectedCategoryId}
-          myHaves={basketVM.myHaves}
-          myWants={basketVM.myWants}
-          toggleStickerSelection={basketVM.toggleStickerSelection}
-          basketMode={basketVM.basketMode}
-          setBasketMode={basketVM.setBasketMode}
-        />
-      )}
-
-      {/* 바구니 요약 및 등록 버튼 섹션 제거 */}
-
-      {/* 5.5 퀵 서치 (스티커 빠른 검색) */}
-      <div style={{
-        maxWidth: '800px',
-        width: '100%',
-        margin: '1.5rem auto 1.5rem auto',
-        padding: '1.5rem',
-        background: 'var(--card-bg)',
-        border: '1px solid var(--border-color)',
-        borderRadius: '20px',
-        boxShadow: 'var(--shadow-main)',
-        textAlign: 'left'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '18px' }}>🔍</span>
-          <h3 style={{ margin: 0, fontSize: '15px', color: 'var(--text-primary)', fontWeight: '700' }}>
-            스티커 빠른 검색 (퀵 서치)
-          </h3>
-        </div>
-        <p style={{ margin: '0 0 16px 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
-          내가 필요한 스티커의 이름을 입력해 보세요. 해당 스티커를 보유한 유저들의 교환글만 즉시 필터링하여 보여줍니다.
-        </p>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <input 
-            type="text"
-            placeholder="예: 사방에서 슉슉, 달빛 아래, 여의주..."
-            value={quickSearchQuery}
-            onChange={(e) => setQuickSearchQuery(e.target.value)}
-            style={{
-              flex: 1,
-              background: 'rgba(0, 0, 0, 0.25)',
-              border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)',
-              borderRadius: '12px',
-              padding: '10px 14px',
-              fontSize: '13.5px',
-              outline: 'none',
-              transition: 'all 0.2s'
-            }}
-          />
-          {quickSearchQuery && (
-            <button
-              onClick={() => setQuickSearchQuery('')}
-              style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                color: '#f87171',
-                borderRadius: '12px',
-                padding: '0 16px',
-                cursor: 'pointer',
-                fontSize: '13px',
-                fontWeight: 'bold',
-                transition: 'all 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-              onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-            >
-              초기화
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* 6. 교환글 피드 목록 */}
-      <PostFeed 
-        posts={getFilteredPosts()}
-        loading={postVM.loading}
-        userNickname={authVM.userNickname}
-        myPostIds={postVM.myPostIds}
-        myHaves={basketVM.myHaves}
-        myWants={basketVM.myWants}
-        onlineUsers={authVM.onlineUsers}
-        fetchData={postVM.fetchData}
-        handleBumpPost={postVM.handleBumpPost}
-        handleDeletePost={postVM.handleDeletePost}
-        handleOpenEditModal={postVM.handleOpenEditModal}
-        handleStartChat={chatVM.handleStartChat}
-        handleOpenReportModal={postVM.handleOpenReportModal}
-        handleAdminDeletePost={adminVM.handleAdminDeletePost}
-        setIsFormOpen={postVM.setIsFormOpen}
-        setShowLoginModal={authVM.setShowLoginModal}
-        theme={theme}
-        
-        
-        comments={postVM.comments}
-        commentInputs={postVM.commentInputs}
-        setCommentInputs={postVM.setCommentInputs}
-        expandedComments={postVM.expandedComments}
-        toggleComments={postVM.toggleComments}
-        handleAddComment={postVM.handleAddComment}
-        handleDeleteComment={postVM.handleDeleteComment}
-
-        checkMatching={postVM.checkMatching}
-        expandedPostIds={postVM.expandedPostIds}
-        togglePostExpand={postVM.togglePostExpand}
-      />
-
-      <div className="divider" style={{ margin: '2.5rem 0' }} />
-
-      {/* 6.5 로그인 전용 독립 게시판 */}
-      <BoardSection userNickname={authVM.userNickname} setShowLoginModal={authVM.setShowLoginModal} />
 
       {/* 7. 신규 게시글 등록 모달 */}
       <PostFormModal 
@@ -598,7 +638,11 @@ function App() {
       />
 
       {/* 하단 푸터 및 이용약관 모달 */}
-      <Footer />
+      <Footer onNavigate={(tab) => {
+        setCurrentView('guide');
+        setGuideActiveTab(tab);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }} />
 
       {/* Vercel Web Analytics */}
       <Analytics />

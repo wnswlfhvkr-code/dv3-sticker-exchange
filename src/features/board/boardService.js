@@ -177,10 +177,8 @@ export const boardService = {
       if (error) throw error;
       return { error: null };
     } catch (error) {
-      console.warn('board_posts 삭제 실패, 로컬 게시판만 정리:', error);
-      const posts = getLocalBoardPosts().filter(post => String(post.id) !== String(id));
-      saveLocalBoardPosts(posts);
-      return { error: null };
+      console.error('board_posts 삭제 실패:', error);
+      return { error };
     }
   },
 
@@ -267,10 +265,8 @@ export const boardService = {
       if (error) throw error;
       return { error: null };
     } catch (error) {
-      console.warn('board_comments 삭제 실패, 로컬만 삭제:', error);
-      const allComments = getLocalBoardComments().filter(c => String(c.id) !== String(commentId));
-      saveLocalBoardComments(allComments);
-      return { error: null };
+      console.error('board_comments 삭제 실패:', error);
+      return { error };
     }
   },
 

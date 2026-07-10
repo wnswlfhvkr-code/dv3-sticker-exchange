@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { dbService, supabase, isMock } from '../../supabaseClient';
 import { stickersData } from '../../stickersData';
-import { sanitizeInput, decodeHTML, detectBannedWord } from '../../utils/security';
+import { sanitizeInput, decodeHTML } from '../../utils/security';
 
 export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, setMyWants }) {
   const [posts, setPosts] = useState([]);
@@ -146,11 +146,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
       return;
     }
 
-    const bannedWord = detectBannedWord(myContact);
-    if (bannedWord) {
-      alert(`커뮤니티 이용규칙 준수를 위해 금전 거래 유도 단어 및 금칙어(예: ${bannedWord})는 연락처 정보에 포함할 수 없습니다.`);
-      return;
-    }
+
 
     const sanitizedContact = sanitizeInput(myContact);
     let removedPostIds = [];
@@ -266,11 +262,7 @@ export function usePostViewModel({ userNickname, myHaves, myWants, setMyHaves, s
     if (e && e.preventDefault) e.preventDefault();
     if (!editingPost) return;
 
-    const bannedWord = detectBannedWord(editContact);
-    if (bannedWord) {
-      alert(`커뮤니티 이용규칙 준수를 위해 금전 거래 유도 단어 및 금칙어(예: ${bannedWord})는 연락처 정보에 포함할 수 없습니다.`);
-      return;
-    }
+
 
     const sanitizedEditContact = sanitizeInput(editContact);
     const { error } = await dbService.updatePost(editingPost.id, sanitizedEditContact, editHaves, editWants);

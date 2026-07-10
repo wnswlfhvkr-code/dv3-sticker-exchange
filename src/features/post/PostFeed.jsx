@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, RefreshCw, Sparkles, Trash2, MessageSquare, MessageCircle } from 'lucide-react';
+import { Search, RefreshCw, Sparkles, Trash2, MessageSquare, MessageCircle, Globe } from 'lucide-react';
 import { stickersData, categories } from '../../stickersData';
 import { decodeHTML } from '../../utils/security';
 import { AdBanner } from '../../components/AdBanner';
+import { useLanguage } from '../../contexts/LanguageContext';
+import { dbService } from '../../supabaseClient';
 
 export function PostFeed({
   posts,
@@ -38,6 +40,42 @@ export function PostFeed({
   handleTogglePostComplete,
   setIsFormOpen
 }) {
+  const { language, t } = useLanguage();
+  const [translatedPosts, setTranslatedPosts] = useState({}); // { [postId]: { text: string, isTranslating: boolean, showTranslated: boolean } }
+  
+  const handleTranslatePost = async (postId, textToTranslate) => {
+    if (translatedPosts[postId]?.text) {
+      setTranslatedPosts(prev => ({
+        ...prev,
+        [postId]: { ...prev[postId], showTranslated: !prev[postId].showTranslated }
+      }));
+      return;
+    }
+
+    setTranslatedPosts(prev => ({
+      ...prev,
+      [postId]: { text: '', isTranslating: true, showTranslated: true }
+    }));
+
+    try {
+      const targetLang = language === 'ko' ? 'English' : 'Korean';
+      const prompt = `Translate the following text into ${targetLang}. Keep the style natural and friendly. Only return the translated text without any explanations.\n\nText: "${textToTranslate}"`;
+      
+      const result = await dbService.callOpenAI(prompt);
+      
+      setTranslatedPosts(prev => ({
+        ...prev,
+        [postId]: { text: result || 'Translation failed.', isTranslating: false, showTranslated: true }
+      }));
+    } catch (err) {
+      console.error(err);
+      setTranslatedPosts(prev => ({
+        ...prev,
+        [postId]: { text: 'Error occurred during translation.', isTranslating: false, showTranslated: true }
+      }));
+    }
+  };
+
   const isLight = theme === 'light';
   const [filterMatchedOnly, setFilterMatchedOnly] = useState(false);
   const [filterExchangeableOnly, setFilterExchangeableOnly] = useState(false);
@@ -141,7 +179,7 @@ export function PostFeed({
               setFilterExchangeableOnly(false);
             }}
           >
-            전체 등록글 보기
+            {t('viewAllPosts')}
           </button>
           <button 
             className={`btn ${filterMatchedOnly ? 'btn-secondary' : 'btn-outline'}`}
@@ -151,7 +189,7 @@ export function PostFeed({
             style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#34d399', display: 'inline-block' }}></span> 
-            접속중인 유저 글만 보기
+            {t('onlineUsersOnly')}
           </button>
           <button 
             className={`btn ${filterExchangeableOnly ? 'btn-secondary' : 'btn-outline'}`}
@@ -161,7 +199,7 @@ export function PostFeed({
             style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >
             <Sparkles size={14} color={filterExchangeableOnly ? 'var(--primary-color)' : 'var(--text-primary)'} />
-            교환 가능 글만 보기
+            {t('exchangeableOnly')}
           </button>
         </div>
 
@@ -169,7 +207,7 @@ export function PostFeed({
           <div style={{ position: 'relative', width: '100%' }}>
             <input 
               type="text" 
-              placeholder="닉네임 또는 카테고리 검색..." 
+              placeholder={t('searchByNicknameOrCategory')} 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{ width: '100%', paddingRight: '2.5rem' }}
@@ -189,13 +227,13 @@ export function PostFeed({
             }}
             style={{ padding: '0.72rem 1.1rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
           >
-            + 글쓰기
+            {t('writePost')}
           </button>
 
           <button 
             className="btn btn-outline" 
             onClick={fetchData} 
-            title="새로고침"
+            title={t('refresh')}
             style={{ padding: '0.75rem' }}
           >
             <RefreshCw size={18} className={loading ? 'spin-anim' : ''} />
@@ -207,12 +245,11 @@ export function PostFeed({
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 0', gap: '1rem', width: '100%' }}>
           <RefreshCw size={32} className="spin-anim" />
-          <p>교환 피드 데이터 로딩 중...</p>
+          <p>{t('loadingExchangeFeeds')}</p>
         </div>
       ) : filteredPosts.length === 0 ? (
         <div className="glass-card" style={{ padding: '4rem 2rem', color: 'var(--text-secondary)', textAlign: 'center', width: '100%', maxWidth: '800px', margin: '0 auto' }}>
-          조건에 맞는 교환 글이 존재하지 않습니다.<br />
-          상단의 버튼을 눌러 스티커 정보를 올리고 기다려보세요!
+          {t('noExchangePosts')}
         </div>
       ) : (
         <div className="grid-container" style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
@@ -312,6 +349,85 @@ export function PostFeed({
                     ) : null}
                   </div>
 
+                  {/* 연락처 정보 텍스트 직접 노출 & AI 번역 */}
+                  {post.contact && post.contact.trim() && (
+                    <div style={{ 
+                      margin: '0 0 0.85rem 0', 
+                      fontSize: '0.82rem', 
+                      color: 'var(--text-secondary)',
+                      lineHeight: '1.4',
+                      padding: '0.65rem 0.85rem',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                      borderRadius: '12px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--text-muted)', fontSize: '0.74rem' }}>
+                          💬 {t('contact')}
+                        </span>
+                        
+                        {/* AI 번역 토글 버튼 */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleTranslatePost(post.id, post.contact);
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'var(--primary-color)',
+                            cursor: 'pointer',
+                            fontSize: '0.72rem',
+                            fontWeight: 'bold',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '3px',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                            transition: 'all 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                          onMouseLeave={(e) => e.currentTarget.style.textDecoration = 'none'}
+                        >
+                          <Globe size={11} /> 
+                          {translatedPosts[post.id]?.showTranslated ? t('showOriginal') : t('translate')}
+                        </button>
+                      </div>
+                      
+                      <div style={{ wordBreak: 'break-all', fontWeight: '500' }}>
+                        {decodeHTML(post.contact)}
+                      </div>
+
+                      {/* AI 번역 결과 패널 */}
+                      {translatedPosts[post.id]?.showTranslated && (
+                        <div style={{ 
+                          marginTop: '4px', 
+                          paddingTop: '6px', 
+                          borderTop: '1.5px dashed rgba(255, 255, 255, 0.06)',
+                          fontSize: '0.8rem',
+                          color: 'var(--text-primary)',
+                          background: 'rgba(133, 195, 0, 0.03)',
+                          padding: '6px 8px',
+                          borderRadius: '8px',
+                          border: '1px dashed rgba(133, 195, 0, 0.15)',
+                          transition: 'all 0.3s ease'
+                        }}>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--primary-color)', fontWeight: 'bold', marginBottom: '2px' }}>
+                            {t('translationResult')}
+                          </div>
+                          {translatedPosts[post.id]?.isTranslating ? (
+                            <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>{t('translating')}</span>
+                          ) : (
+                            <span style={{ fontWeight: '500' }}>{translatedPosts[post.id]?.text}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* 아코디언 토글 헤더 */}
                   {(() => {
                     const isExpanded = expandedPostIds.includes(post.id);
@@ -338,10 +454,10 @@ export function PostFeed({
                           onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)'}
                         >
                           <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--text-primary)', fontWeight: '600' }}>
-                            📦 교환 스티커 목록 ({post.haves.length + post.wants.length}개)
+                            {t('exchangeStickersList')} ({post.haves.length + post.wants.length}{language === 'ko' ? '개' : ''})
                           </span>
                           <span style={{ fontSize: '0.7rem', color: isExpanded ? '#fca5a5' : '#86efac' }}>
-                            {isExpanded ? '접기 ▲' : '자세히 보기 ▼'}
+                            {isExpanded ? t('collapse') : t('viewDetails')}
                           </span>
                         </div>
 
@@ -349,7 +465,7 @@ export function PostFeed({
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginBottom: '1rem', borderLeft: '2px solid rgba(255, 255, 255, 0.05)', paddingLeft: '0.75rem', marginLeft: '0.2rem' }}>
                             {hasHaves && (
                               <div>
-                                <div style={{ fontSize: '0.78rem', color: isLight ? '#047857' : '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>🟢 줄 수 있는 스티커</div>
+                                <div style={{ fontSize: '0.78rem', color: isLight ? '#047857' : '#34d399', fontWeight: '700', marginBottom: '0.2rem' }}>{t('stickersToGive')}</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
                                   {post.haves.map(id => {
                                     const [catId, s] = id.split('-');
@@ -360,7 +476,10 @@ export function PostFeed({
                                       : { background: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.1)', borderColor: isLight ? '#a7f3d0' : 'rgba(16, 185, 129, 0.25)', color: isLight ? '#047857' : '#a7f3d0', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: isLight ? '600' : 'normal' };
                                     return (
                                       <span key={id} className="sticker-tag" style={tagStyle}>
-                                        {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
+                                        {isStickerGolden && '👑 '}
+                                        {cat 
+                                          ? (language === 'ko' ? `${cat.name} ${s}번` : `${cat.name} #${s}`)
+                                          : (language === 'ko' ? `${catId}페이지 ${s}번` : `${t('pageWord')} ${catId} #${s}`)}
                                       </span>
                                     );
                                   })}
@@ -370,7 +489,7 @@ export function PostFeed({
 
                             {hasWants && (
                               <div>
-                                <div style={{ fontSize: '0.78rem', color: isLight ? '#b91c1c' : '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>🔴 받고 싶은 스티커</div>
+                                <div style={{ fontSize: '0.78rem', color: isLight ? '#b91c1c' : '#f87171', fontWeight: '700', marginBottom: '0.2rem' }}>{t('stickersToGet')}</div>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.2rem' }}>
                                   {post.wants.map(id => {
                                     const [catId, s] = id.split('-');
@@ -381,7 +500,10 @@ export function PostFeed({
                                       : { background: isLight ? '#fff5f5' : 'rgba(239, 68, 68, 0.1)', borderColor: isLight ? '#fecaca' : 'rgba(239, 68, 68, 0.25)', color: isLight ? '#b91c1c' : '#fca5a5', fontSize: '0.72rem', padding: '0.25rem 0.45rem', fontWeight: isLight ? '600' : 'normal' };
                                     return (
                                       <span key={id} className="sticker-tag" style={tagStyle}>
-                                        {isStickerGolden && '👑 '}{cat ? cat.name : `${catId}페이지`} {s}번
+                                        {isStickerGolden && '👑 '}
+                                        {cat 
+                                          ? (language === 'ko' ? `${cat.name} ${s}번` : `${cat.name} #${s}`)
+                                          : (language === 'ko' ? `${catId}페이지 ${s}번` : `${t('pageWord')} ${catId} #${s}`)}
                                       </span>
                                     );
                                   })}
@@ -399,13 +521,13 @@ export function PostFeed({
                     <div style={{ background: isLight ? '#f9fafb' : 'rgba(255, 255, 255, 0.03)', border: isLight ? '1px solid #e5e7eb' : '1px solid rgba(255, 255, 255, 0.05)', borderRadius: '8px', padding: '0.5rem 0.65rem', marginBottom: '0.85rem', fontSize: '0.76rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {myWantsMatch.length > 0 && (
                         <div>
-                          <div style={{ fontWeight: '700', color: isLight ? '#047857' : '#34d399', marginBottom: '2px' }}>🎁 내가 받을 수 있는 스티커: </div>
+                          <div style={{ fontWeight: '700', color: isLight ? '#047857' : '#34d399', marginBottom: '2px' }}>{t('myWantsMatchText')}</div>
                           {renderMatchCardsByStars(myWantsMatch)}
                         </div>
                       )}
                       {myHavesMatch.length > 0 && (
                         <div style={{ marginTop: myWantsMatch.length > 0 ? '4px' : '0' }}>
-                          <div style={{ fontWeight: '700', color: isLight ? '#b91c1c' : '#f87171', marginBottom: '2px' }}>✅ 내가 줄 수 있는 스티커: </div>
+                          <div style={{ fontWeight: '700', color: isLight ? '#b91c1c' : '#f87171', marginBottom: '2px' }}>{t('myHavesMatchText')}</div>
                           {renderMatchCardsByStars(myHavesMatch)}
                         </div>
                       )}
@@ -427,7 +549,7 @@ export function PostFeed({
                       className="btn btn-primary"
                       style={{ flex: 1, padding: '0.5rem 1rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                     >
-                      <MessageSquare size={14} /> 1:1 채팅
+                      <MessageSquare size={14} /> {t('oneOnOneChat')}
                     </button>
                   )}
                   
@@ -464,7 +586,7 @@ export function PostFeed({
                         e.currentTarget.style.color = isLight ? '#1e40af' : '#60a5fa';
                       }}
                     >
-                      <MessageCircle size={14} /> 연락하기
+                      <MessageCircle size={14} /> {t('contactText')}
                     </button>
                   )}
                   
@@ -473,7 +595,7 @@ export function PostFeed({
                       className="btn btn-outline"
                       onClick={() => handleOpenReportModal('post', post.id, `${post.nickname}의 교환글`)}
                       style={{ padding: '0.5rem 0.6rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.2)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                      title="게시글 신고하기"
+                      title={language === 'ko' ? "게시글 신고하기" : "Report Post"}
                     >
                       🚨
                     </button>
@@ -484,7 +606,7 @@ export function PostFeed({
                       className="btn btn-outline" 
                       onClick={() => handleAdminDeletePost(post.id)}
                       style={{ padding: '0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)', flexShrink: 0 }}
-                      title="관리자 강제 삭제"
+                      title={language === 'ko' ? "관리자 강제 삭제" : "Admin Delete"}
                     >
                       <Trash2 size={14} />
                     </button>
@@ -496,31 +618,31 @@ export function PostFeed({
                         className="btn btn-outline" 
                         onClick={() => handleTogglePostComplete(post.id, post.is_completed)}
                         style={{ padding: '0.5rem 0.85rem', fontSize: '0.82rem', color: post.is_completed ? '#fca5a5' : '#86efac', borderColor: post.is_completed ? 'rgba(239, 68, 68, 0.3)' : 'rgba(16, 185, 129, 0.3)', fontWeight: 'bold' }}
-                        title={post.is_completed ? "거래중 상태로 돌리기" : "거래 완료 상태로 변경"}
+                        title={post.is_completed ? (language === 'ko' ? "거래중 상태로 돌리기" : "Set Active") : (language === 'ko' ? "거래 완료 상태로 변경" : "Set Completed")}
                       >
-                        {post.is_completed ? "복원" : "완료"}
+                        {post.is_completed ? t('restore') : t('complete')}
                       </button>
                       <button 
                         className="btn btn-outline" 
                         onClick={() => handleOpenEditModal(post)}
                         style={{ padding: '0.5rem 0.85rem', fontSize: '0.82rem', color: '#60a5fa', borderColor: 'rgba(96, 165, 250, 0.3)', fontWeight: 'bold' }}
-                        title="글 수정하기"
+                        title={language === 'ko' ? "글 수정하기" : "Edit Post"}
                       >
-                        수정
+                        {language === 'ko' ? "수정" : "Edit"}
                       </button>
                       <button 
                         className="btn btn-outline" 
                         onClick={() => handleBumpPost(post.id)}
                         style={{ padding: '0.5rem 0.85rem', fontSize: '0.82rem', color: 'var(--primary-color)', borderColor: 'rgba(133, 195, 0, 0.3)', fontWeight: 'bold' }}
-                        title="글 맨 위로 끌어올리기"
+                        title={language === 'ko' ? "글 맨 위로 끌어올리기" : "Bump post to top"}
                       >
-                        끌올
+                        {language === 'ko' ? "끌올" : "Bump"}
                       </button>
                       <button 
                         className="btn btn-outline" 
                         onClick={() => handleDeletePost(post.id)}
                         style={{ padding: '0.5rem', color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)' }}
-                        title="내 글 삭제"
+                        title={language === 'ko' ? "내 글 삭제" : "Delete My Post"}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -534,7 +656,7 @@ export function PostFeed({
                     onClick={() => toggleComments(post.id)}
                     style={{ background: 'none', border: 'none', color: expandedComments[post.id] ? 'var(--primary-color)' : 'var(--text-muted)', cursor: 'pointer', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '4px', padding: '0 2px' }}
                   >
-                    💬 댓글 ({post.commentCount ?? (comments[post.id] ? comments[post.id].length : 0)})
+                    💬 {language === 'ko' ? "댓글" : "Comments"} ({post.commentCount ?? (comments[post.id] ? comments[post.id].length : 0)})
                   </button>
 
                   {expandedComments[post.id] && (
