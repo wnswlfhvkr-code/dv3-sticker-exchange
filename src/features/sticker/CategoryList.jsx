@@ -1,4 +1,3 @@
-import React from 'react';
 import { BookOpen, HelpCircle } from 'lucide-react';
 import { getCategoryImage, categories } from '../../stickersData';
 
@@ -67,12 +66,16 @@ export function CategoryList({
               {/* 상단: 대표 이미지 영역 */}
               <div className="category-img-container">
                 {imgUrl ? (
-                  <img 
-                    src={imgUrl} 
-                    alt={cat.name} 
-                    title={cat.name}
-                    className="category-img"
-                  />
+                  <div className="category-img-crop">
+                    <img
+                      src={imgUrl}
+                      alt={cat.name}
+                      title={cat.name}
+                      className="category-img"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
                     <HelpCircle size={32} color="var(--text-muted)" />
@@ -82,17 +85,7 @@ export function CategoryList({
 
               {/* 하단: 카테고리 이름 영역 */}
               <div className="category-title-container">
-                <span style={{ 
-                  fontWeight: '700', 
-                  fontSize: '0.88rem', 
-                  color: 'var(--text-primary)',
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  width: '100%'
-                }}>
-                  {cat.name}
-                </span>
+                <span className="category-title">{cat.name}</span>
               </div>
             </div>
           );

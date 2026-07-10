@@ -281,9 +281,9 @@ categories.forEach(cat => {
   }
 });
 
-// 카테고리 대표 썸네일 - 배지 아이콘만 크롭한 별도 파일 사용
+// 카테고리 대표 썸네일 - 카드 영역에서 배지 프레임만 보이도록 중앙 크롭
 export const getCategoryImage = (catId) => {
   const cat = categories.find(c => c.id === catId);
   if (!cat || !cat.image) return null;
-  return `/sticker_images/cropped_${cat.image}.png`;
+  return `/sticker_images/thumb_${cat.image}.png`;
 };

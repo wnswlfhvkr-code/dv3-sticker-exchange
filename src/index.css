@@ -9,6 +9,11 @@
   --text-primary: #f3f4f6;
   --text-secondary: #a1a8b5;
   --text-muted: #6b7280;
+  --category-card-bg: #1d2025;
+  --category-image-bg: #15181c;
+  --category-title-bg: #25282e;
+  --category-title-text: #f3f4f6;
+  --category-title-border: rgba(255, 255, 255, 0.08);
   
   --primary-color: #85c300;
   --primary-gradient: linear-gradient(135deg, #85c300 0%, #a3e635 100%);
@@ -54,6 +59,11 @@
   --text-primary: #151d2a;
   --text-secondary: #334155; /* 훨씬 더 짙은 슬레이트 톤으로 가독성 대폭 향상 */
   --text-muted: #57657a; /* 연한 노랑/연두/회색 대신 확실히 식별되는 짙은 회색 */
+  --category-card-bg: #ffffff;
+  --category-image-bg: #f1eee5;
+  --category-title-bg: #f8f6ef;
+  --category-title-text: #151d2a;
+  --category-title-border: #dcd9c6;
 
   --primary-color: #689f38; /* 조금 더 밝고 에너제틱한 중간 숲색 올리브 */
   --primary-gradient: linear-gradient(135deg, #689f38 0%, #8bc34a 100%);
@@ -692,37 +702,70 @@ input:focus, select:focus, textarea:focus {
   align-items: center;
   border-radius: 20px;
   transition: all 0.2s ease;
-  height: 230px;
-  background: #1d2025;
+  min-height: 205px;
+  background: var(--category-card-bg);
   position: relative;
 }
 
 .category-img-container {
-  height: 185px;
+  aspect-ratio: 10 / 7;
   width: 100%;
   overflow: hidden;
   position: relative;
-  background: #15181c;
+  display: grid;
+  place-items: center;
+  padding: 0.4rem;
+  background: var(--category-image-bg);
 }
 
 .category-img {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: translateY(-50%);
+}
+
+.category-img-crop {
+  position: relative;
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  display: block;
-  padding: 4px;
+  overflow: hidden;
+  border-radius: 18% / 24%;
+}
+
+.glass-card:hover .category-img {
+  transform: translateY(-50%);
+}
+
+.category-card:hover .category-img {
+  transform: translateY(-50%) scale(1.03);
 }
 
 .category-title-container {
   height: 45px;
-  background: #25282e;
+  flex: 0 0 45px;
+  background: var(--category-title-bg);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0.25rem 0.5rem;
-  border-top: 1.5px solid rgba(255, 255, 255, 0.05);
+  border-top: 1.5px solid var(--category-title-border);
   text-align: center;
   width: 100%;
+}
+
+.category-title {
+  width: 100%;
+  overflow: hidden;
+  color: var(--category-title-text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 모바일 카테고리 카드 반응형 최적화 */
@@ -734,21 +777,22 @@ input:focus, select:focus, textarea:focus {
   }
 
   .category-card {
-    height: 135px !important;
+    min-height: 0;
     border-radius: 12px !important;
   }
 
   .category-img-container {
-    height: 100px !important;
-  }
-
-  .category-img {
-    padding: 2px !important;
+    height: auto !important;
+    padding: 0.2rem;
   }
 
   .category-title-container {
     height: 35px !important;
     padding: 0.1rem 0.25rem !important;
+  }
+
+  .category-title {
+    font-size: 0.75rem;
   }
 }
 
