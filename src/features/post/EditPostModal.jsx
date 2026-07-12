@@ -38,7 +38,7 @@ export function EditPostModal({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isEditModalOpen, categories.length, setEditCurrentCategoryId]);
+  }, [isEditModalOpen, setEditCurrentCategoryId]);
 
   useEffect(() => {
     const timers = touchTimersRef.current;
@@ -91,29 +91,11 @@ export function EditPostModal({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(5, 3, 10, 0.85)',
-      backdropFilter: 'blur(10px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      padding: '1.5rem'
-    }}>
-      <div className="glass-card" style={{
-        width: '100%',
-        maxWidth: '460px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
-        padding: '1.8rem',
-        borderRadius: '16px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
-        position: 'relative',
-        animation: 'fadeIn 0.2s ease-out'
-      }}>
+    <div className="modal-overlay edit-post-modal-overlay">
+      <div className="modal-content glass-card edit-post-modal">
         <button 
           onClick={onClose}
+          aria-label="수정 창 닫기"
           style={{
             position: 'absolute',
             top: '1rem',

@@ -142,6 +142,68 @@ header {
   position: relative;
 }
 
+.site-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: min(100%, 800px);
+  max-width: 100%;
+  margin: 0 auto 1.5rem;
+  gap: 1rem;
+}
+
+.site-header .logo-container {
+  max-width: 100%;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  gap: 0.75rem;
+}
+
+.header-actions > button,
+.header-actions > .badge {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.header-user-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+  gap: 0.5rem;
+  padding: 0.5rem 0.85rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
+.header-user-name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  max-width: min(12rem, 45vw);
+  gap: 5px;
+  overflow: hidden;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 .logo-container {
   display: inline-flex;
   flex-direction: column;
@@ -360,6 +422,36 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--shadow-glow);
   transform: translateY(20px);
   animation: slideUp 0.3s forwards;
+}
+
+.edit-post-modal-overlay {
+  z-index: 9999;
+  padding: 1.5rem;
+  background: rgba(5, 3, 10, 0.85);
+  backdrop-filter: blur(10px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.edit-post-modal {
+  width: min(100%, 460px);
+  max-width: 460px;
+  max-height: calc(100vh - 3rem);
+  max-height: calc(100dvh - 3rem);
+  padding: 1.8rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  background: var(--card-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.edit-post-modal.glass-card:hover {
+  transform: translateY(0);
 }
 
 @keyframes fadeIn {
@@ -583,6 +675,15 @@ input:focus, select:focus, textarea:focus {
     margin-bottom: 1.25rem !important;
   }
 
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  .header-user-menu {
+    gap: 0.4rem;
+    padding: 0.45rem 0.65rem;
+  }
+
   .logo-text {
     font-size: 1.55rem;
     letter-spacing: 0;
@@ -637,7 +738,12 @@ input:focus, select:focus, textarea:focus {
   .modal-content {
     width: calc(100vw - 1rem);
     max-height: calc(100vh - 1rem);
+    max-height: calc(100dvh - 1rem);
     padding: 1rem;
+  }
+
+  .edit-post-modal-overlay {
+    padding: 0.5rem;
   }
 
   .chat-widget-root {

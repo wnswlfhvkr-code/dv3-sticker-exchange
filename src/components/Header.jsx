@@ -1,4 +1,3 @@
-import React from 'react';
 import { User, Info, LogOut, Sun, Moon } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -21,7 +20,7 @@ export function Header({
   const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
 
   return (
-    <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto', flexWrap: 'wrap', gap: '1rem' }}>
+    <header className="site-header">
       <div 
         className="logo-container" 
         onClick={() => {
@@ -35,7 +34,7 @@ export function Header({
         <div className="sub-logo-text">STICKER BOOK MATCHING CENTER</div>
       </div>
       
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <div className="header-actions">
         {/* 언어 전환 버튼 */}
         <button
           onClick={() => setLanguage(language === 'ko' ? 'en' : 'ko')}
@@ -130,10 +129,10 @@ export function Header({
         </button>
 
         {userNickname ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.05)', padding: '0.5rem 0.85rem', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="header-user-menu">
             <User size={14} color="var(--primary-color)" />
             <span 
-              style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+              className="header-user-name"
               onClick={() => setIsMyInfoOpen(true)}
               title={t('myInfo')}
             >
@@ -197,9 +196,11 @@ export function Header({
             {t('login')}
           </button>
         )}
-        <div className="badge badge-have" style={{ textTransform: 'none', margin: 0 }}>
-          {dbMode}
-        </div>
+        {dbMode ? (
+          <div className="badge badge-have" style={{ textTransform: 'none', margin: 0 }}>
+            {dbMode}
+          </div>
+        ) : null}
       </div>
     </header>
   );
