@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 const GUIDE_CONTENT = {
@@ -43,8 +43,8 @@ const GUIDE_CONTENT = {
       tablePriceTitle: '② 판매가 (골드)',
       tableColGrade: '등급',
       tableColAccum: '누적(+5)',
-      tableNote: '※ 판매가는 대부분 누적 강화 비용의 약 50%를 보전하여 환급해 주는 규칙을 따릅니다.',
-      rankTitle: '3. 1P당 가성비 기준 누적 효율 순위',
+      tableNote: '※ 결과는 이 표에 입력된 강화 비용과 판매가를 기준으로 계산됩니다. 게임 데이터가 바뀌면 값도 달라질 수 있습니다.',
+      rankTitle: '3. 1P당 비용이 낮은 상위 6개 누적 구간',
       rankNote: '1P(포인트)당 소모되는 골드가 적을수록 효율이 높습니다.',
       tableColRank: '순위',
       tableColTarget: '목표',
@@ -60,87 +60,87 @@ const GUIDE_CONTENT = {
       rankCBonus: 'C등급 (보너스)',
       analysisTitle: '4. 효율 분석 및 등급 가이드',
       analysisS: '🟢 S등급 (최우선 순위 - 1P당 500골드 이하)',
-      analysisSDesc: '영웅 +1 / 일반 +2\n극소량의 골드만으로 엄청난 포인트를 고속 회수하는 절대적 가성비 구간입니다.',
+      analysisSDesc: '일반 +1 / 영웅 +1 / 일반 +2\n현재 입력값 기준으로 1P당 계산 비용이 500골드 이하인 구간입니다.',
       analysisA: '🔵 A등급 (효율 좋음 - 1P당 500~1,000골드)',
-      analysisADesc: '전설 +1 / 일반 +3 / 영웅 +2\n가성비가 매우 뛰어나며 골드 소모 대비 확실한 효율을 보장합니다.',
+      analysisADesc: '전설 +1 / 일반 +3 / 영웅 +2\n현재 입력값 기준으로 1P당 계산 비용이 500~1,000골드인 구간입니다.',
       analysisB: '🟡 B등급 (보통 - 1P당 1,000~2,500골드)',
-      analysisBDesc: '영웅 +3 / 일반 +4 / 전설 +2\n보통의 효율을 보이며, 도감 및 덱 성장을 위한 가장 안정적인 실질적 강화 마지노선입니다.',
+      analysisBDesc: '영웅 +3 / 일반 +4 / 전설 +2\n현재 입력값 기준으로 1P당 계산 비용이 1,000~2,500골드인 구간입니다.',
       analysisC: '🟣 C등급 (낮음/특정 목적 - 1P당 2,500~5,500골드)',
-      analysisCDesc: '전설 +3 / 영웅 +4 / 전설 +5 (60점 보너스 목적)\n기본 가성비는 떨어지지만, 전설 젬의 60점 추가 보너스(+100P)가 100% 확정일 때는 포인트 환산 효율이 5,395골드로 복구되므로 고려할 만합니다.',
+      analysisCDesc: '전설 +3 / 영웅 +4 / 전설 +5 (60점 보너스 선택)\n계산기에서 60점 보너스(+100P)를 선택한 경우 전설 +5의 1P당 비용은 5,475골드로 계산됩니다.',
       analysisD: '🔴 D등급 (비추천/효율 최악 - 1P당 5,500골드 초과)',
-      analysisDDesc: '일반 +5 / 전설 +5 (55점 달성) / 영웅 +5 / 전설 +5 (보너스 없음)\n전설 +5 (55점 달성)은 보너스 포인트(+50P)를 받더라도 1P당 8,992골드라는 극악의 비효율을 보여주므로 비추천합니다. 투자 골드 대비 포인트 리턴이 극단적으로 낮으므로 절대 피하시는 것이 좋습니다.',
+      analysisDDesc: '일반 +5 / 전설 +5 (55점 선택) / 전설 +4 / 영웅 +5 / 전설 +5 (보너스 없음)\n현재 입력값에서 1P당 비용이 5,500골드를 넘는 구간입니다. 보유 골드와 목적을 함께 고려해 판단하세요.',
       summaryTitle: '5. 최종 요약 및 추천 강화 한계선',
-      summaryDesc1: '순수 효율 기준 추천 한계선: 일반 젬은 +4까지, 영웅 젬은 +3까지, 전설 젬은 +3까지 투자하는 것이 비용 대 효율 측면에서 가장 유리합니다.',
-      summaryDesc2: '전설 +5의 예외성: 오직 전설 젬의 60점 보너스를 확실하게 띄울 수 있는 조건일 때만 투자 가치가 성립됩니다. 55점 보너스는 투입 재화 대비 효율이 너무 낮아 손해입니다.',
-      summaryDesc3: '추천 강화 우선순위 테크: 영웅 +1 ➔ 일반 +2 ➔ 전설 +1 ➔ 일반 +3 ➔ 영웅 +2 ➔ 영웅 +3 ➔ 일반 +4'
+      summaryDesc1: '현재 표의 1P당 비용만 비교하면 일반 +4, 영웅 +3, 전설 +3 이전 구간이 상대적으로 낮게 계산됩니다.',
+      summaryDesc2: '전설 +5는 선택한 55점·60점 보너스에 따라 1P당 비용이 크게 달라집니다.',
+      summaryDesc3: '참고 순서: 일반 +1 ➔ 영웅 +1 ➔ 일반 +2 ➔ 전설 +1 ➔ 일반 +3 ➔ 영웅 +2 ➔ 영웅 +3 ➔ 일반 +4'
     },
     colGuide: {
-      title: '스티커북 수집 효율 극대화 공략',
-      subtitle: '드빌3 스티커 수집 과정의 비효율을 줄이고 가장 단기간에 도감을 완성하는 실전 수집 전술서입니다.',
-      sec1Title: '1. 무과금 유저를 위한 스티커 획득 데일리 루틴',
-      sec1Desc: '과금 없이 스티커북을 채우기 위해서는 인게임에서 무상으로 지급되는 스티커 수집 루트를 매일 빠짐없이 수행하는 것이 필수적입니다. 첫째, 일일 퀘스트 및 주간 퀘스트를 클리어하세요. 퀘스트 최종 보상 상자에는 높은 확률로 일반~희귀 등급의 스티커 팩이 포함되어 있습니다. 둘째, 모험 하트(행동력)를 낭비 없이 소모해야 합니다. 특정 모험 지역은 클리어 시 확률적으로 해당 테마의 모험 스티커가 필드 드롭됩니다. 셋째, 이벤트 상점 및 한정 던전 공략입니다. 매 시즌 진행되는 특별 이벤트 주화를 모아 상점에서 한정판 스티커 팩으로 우선 교환하는 것이 현명합니다. 이 일일 루틴을 꾸준히 돌려 모아둔 중복 카드들이 추후 교환소에서 고가치 등급 카드를 데려오는 소중한 밑천이 됩니다.',
-      sec2Title: '2. 수집 효율을 비약적으로 높이는 5가지 실전 전략',
-      strat1Title: '중복 스티커 발생 시 실시간 교환 등록',
-      strat1Desc: '인벤토리에 중복 스티커가 쌓여있는 것은 기회비용의 낭비입니다. 새로운 중복을 얻는 즉시 본 스티커교환소의 내 바구니에 추가하고 교환 피드를 작성하세요. 서버 내에 동일한 카드의 매물이 쌓일수록 내 카드의 교환 경쟁력은 하락합니다. 신속한 교환이 도감 완성 기간을 절반 이하로 단축시킵니다.',
-      strat2Title: '희귀/영웅 스티커의 교환 가치 최적화 (1:N 거래)',
-      strat2Desc: '전설 및 영웅 등급의 최고급 스티커는 단순히 1:1로만 거래할 필요가 없습니다. 만약 내가 인기 드래곤의 영웅 카드를 한 장 중복으로 가지고 있다면, 내가 아직 채우지 못한 일반~희귀 등급 스티커 3~4장을 묶어서 요구해 보세요. 도감 완성 막바지에 이른 유저들은 영웅 카드 한 장을 얻기 위해 하위 카드 여러 장을 선뜻 넘겨주는 경우가 많습니다.',
-      strat3Title: '단일 카테고리 집중 타겟팅 돌파법',
-      strat3Desc: '모든 스티커북을 동시에 채우려 하면 죽도 밥도 안 됩니다. 초반에는 수집 난이도가 가장 낮은 \'드래곤 알\' 카테고리나 완성 스크롤이 짧은 특정 속성 컬렉션부터 타겟으로 지정하세요. 하나의 도감을 끝까지 완성해 능력치 보너스를 획득하고, 그 보너스로 모험 속도를 높여 더 상위의 스티커 팩을 파밍하는 스노우볼을 굴려야 합니다.',
-      strat4Title: '바구니 Haves와 Wants의 세밀한 필터 설정',
-      strat4Desc: '교환소 매칭 엔진을 극대화하려면 Wants(희망 목록)를 넓게 잡는 것이 좋습니다. 꼭 오늘 완성해야 하는 타겟 카드 외에도, 언젠가 모아야 할 위시리스트 카드까지 바구니에 등록해 두면 시스템에 \'부분 매칭\' 또는 \'양방향 매칭\' 알림이 더 빈번하게 잡혀 교환 대화의 물꼬를 트기 쉬워집니다.',
-      strat5Title: '활동 시간대를 겨냥한 글 갱신 (리프레시)',
-      strat5Desc: '많은 유저들이 저녁 시간대(오후 7시 ~ 11시)와 주말에 접속합니다. 이 골든타임에 교환글을 새로고침하여 목록 최상단에 노출시키면 채팅 문의가 들어올 확률이 비약적으로 증가합니다. 낮 시간에 방치해 두는 것보다 트래픽이 높은 시간에 노출시키는 것이 효율적입니다.',
-      sec3Title: '3. 스티커 합성 시스템의 함정과 올바른 활용법',
-      sec3Desc: '인게임에는 필요 없는 스티커 여러 장을 소모해 상위 등급의 무작위 스티커를 뽑는 \'합성 시스템\'이 존재합니다. 하지만 이는 무과금 유저에게 매우 치명적인 함정이 될 수 있습니다. 합성 결과물은 여전히 무작위이기 때문에, 또다시 원치 않는 중복 영웅이나 희귀 카드가 나올 위험이 큽니다. 따라서 "합성하기 전에 반드시 교환소에서 1:1 매칭 거래를 먼저 시도"하는 습관을 들이세요. 교환소에서 도무지 찾아가지 않는 비인기 일반 카드들만 최종적으로 모아 합성의 제물로 바치는 것이 자원 효율을 극대화하는 길입니다.',
-      sec4Title: '4. 알 코드 공유 게시판과의 연계 전략',
-      sec4Desc: '게임 내에서 알 코드를 타인과 공유하고 등록하면 다량의 한정판 스티커 팩을 우편으로 수령할 수 있습니다. 본 사이트의 \'자유게시판\' 영역에 상시 개설되어 있는 알 코드 공유 릴레이 스레드를 방문하세요. 서로의 코드를 품앗이하듯 등록해 주면 인게임 상점에서 다량의 스티커 팩을 공짜로 수급할 수 있으며, 여기서 나온 미확인 카드들을 다시 교환소 도감 바구니에 업데이트하는 선순환 구조를 만들 수 있습니다.',
-      keyTitle: '💡 핵심 요약',
-      key1: '1. 중복 카드는 무조건 교환소 바구니에 즉시 등록한다.',
-      key2: '2. 가치가 높은 카드 1장으로 가치가 낮은 필요한 카드 여러 장을 얻는 1:N 거래를 설계한다.',
-      key3: '3. 무조건 합성을 돌리기 전에 교환 거래를 먼저 알아본다.'
+      title: '교환 목록 관리 가이드',
+      subtitle: '사이트의 Haves와 Wants를 실제 보유 상태와 맞춰 오래된 매칭을 줄이는 절차입니다.',
+      sec1Title: '1. 입력 전 기준',
+      sec1Desc: 'Haves에는 현재 보유한 교환 가능 여분만, Wants에는 아직 필요한 항목만 표시하세요. 이 사이트는 게임 인벤토리를 읽지 않으므로 사용자가 입력한 목록이 매칭의 유일한 기준입니다.',
+      sec2Title: '2. 최신 목록을 유지하는 5단계',
+      strat1Title: '게임에서 현재 보유 상태 확인',
+      strat1Desc: '기억에 의존하지 말고 실제 여분과 미보유 항목을 확인한 뒤 입력합니다.',
+      strat2Title: '묶음별로 Haves와 Wants 구분',
+      strat2Desc: '20개 묶음을 순서대로 확인하고 같은 항목을 양쪽 목록에 동시에 넣지 않습니다.',
+      strat3Title: '교환 불가 항목 제외',
+      strat3Desc: '황금 테두리로 잠긴 24개 슬롯은 Haves와 Wants에 등록할 수 없습니다.',
+      strat4Title: '연락처와 설명 검토',
+      strat4Desc: '만료된 링크나 오타가 없는지 확인하고 교환에 필요하지 않은 개인정보는 게시하지 않습니다.',
+      strat5Title: '교환 직후 목록 정리',
+      strat5Desc: '넘긴 항목은 Haves에서, 받은 항목은 Wants에서 즉시 제거해 다른 사용자에게 오래된 매칭이 보이지 않게 합니다.',
+      sec3Title: '3. 매칭 신호 해석',
+      sec3Desc: '완전 매칭은 서로 주고받을 후보가 최소 한 개씩 있다는 뜻이고, 부분 매칭은 한쪽 조건만 맞는다는 뜻입니다. 어느 표시도 수량, 실제 보유, 교환 성사를 보장하지 않습니다.',
+      sec4Title: '4. 주기적 점검',
+      sec4Desc: '새 스티커를 얻었을 때, 교환을 마쳤을 때, 오랜만에 접속했을 때 목록을 게임 상태와 다시 대조하세요.',
+      keyTitle: '핵심 요약',
+      key1: '1. Haves는 실제 교환 가능한 여분만 기록합니다.',
+      key2: '2. Wants는 아직 필요한 항목만 유지합니다.',
+      key3: '3. 교환 후 두 목록을 바로 갱신합니다.'
     },
     safetyRules: {
-      title: '안전 거래 및 사기 방지 가이드',
-      subtitle: '유저 간 1:1 스티커 교환 진행 시 안전을 확보하고 사기 피해를 예방하기 위한 상세 매뉴얼입니다.',
-      sec1Title: '1. 드빌3 인게임 교환 시스템의 안전망 활용',
-      sec1Desc: '드래곤빌리지 3 개발진은 유저들의 안전한 스티커 이동을 위해 공식적으로 \'교환 시스템\'을 게임 내에 구현해 두었습니다. 이 시스템은 양쪽 유저가 교환 창을 열어 거래할 스티커를 서로 올린 뒤, 확인 버튼을 눌러 조건이 일치할 때만 동시에 거래가 성사되는 \'동시 확정 거래\' 방식입니다. 따라서 공식적인 루트만 활용한다면 원칙적으로 물리적인 배달 사고나 사기가 발생할 수 없습니다. 사기 피해는 대부분 이 공식적인 시스템을 우회하여 편법 거래를 유도할 때 발생합니다.',
-      sec2Title: '2. 반드시 주의해야 할 3대 교환 사기 수법',
-      warning1Title: '⚠️ 수법 1: "선(先) 전송 요구" 수법',
-      warning1Desc: '사기꾼들이 가장 흔하게 사용하는 수법으로, 본인의 신용도가 높다거나 "교환 슬롯에 오류가 있어서 선물하기 기능을 이용해 먼저 스티커를 우편으로 보내주면 나도 즉시 우편으로 답례하겠다"고 속집니다. 이에 응하여 먼저 카드를 보내는 순간 사기꾼은 즉각 잠적하거나 메신저 차단을 실행합니다. 어떠한 핑계가 있더라도 먼저 우편으로 카드를 전송하는 거래는 절대 응하지 마세요.',
-      warning2Title: '⚠️ 수법 2: 유사 닉네임을 이용한 신분 사칭',
-      warning2Desc: '인기 유저나 신용 등급이 높은 유저의 닉네임과 매우 유사한 닉네임(예: 알파벳 \'l\'과 숫자 \'1\', 한글 \'ㅇ\'과 \'o\' 조합 등)으로 부캐릭터를 생성한 뒤, 원래의 거래자인 것처럼 행세하며 카드를 받아 가려 합니다. 게임 내 교환 확정 창에서 거래 상대방의 정확한 프로필 레벨, 대표 드래곤, 길드 마크가 일치하는지 마지막의 마지막까지 대조 검증하셔야 합니다.',
-      warning3Title: '⚠️ 수법 3: 거래 품목 바꿔치기',
-      warning3Desc: '교환 로비에서 대화 도중, 갑자기 거래 조건을 재협상하자며 상대방이 창을 닫았다가 다시 열어 신속한 수락을 재촉합니다. 이때 자세히 보지 않으면 처음 약속했던 영웅 등급 카드가 아닌 외형이 유사한 일반 등급 카드로 교체되어 올라온 것을 인지하지 못하고 \'확정\' 버튼을 누르게 될 수 있습니다. 매 거래 확정 직전에는 카드 위에 커서를 올려 정확한 스티커 등급과 명칭을 재차 마우스오버해 보시기 바랍니다.',
-      sec3Title: '3. 사기 피해를 원천 차단하는 행동 지침',
-      sec3Desc: '안전하고 쾌적한 교환 문화를 만들기 위해 다음 지침을 생활화해 주세요.',
-      sec3List1: '채팅 스크린샷 아카이빙: 교환 조율 과정에서 나눈 모든 대화(닉네임, 약속한 스티커 종류, 시간 등)의 캡처본을 남겨두세요. 분쟁 발생 시 결정적인 증거 자료가 됩니다.',
-      sec3List2: '외부 링크 이동 금지: 카카오톡 오픈프로필이나 외부 메신저로의 이동 요청은 가급적 거절하고, 본 교환소의 RLS 보안이 적용된 내장 채팅 메신저 내에서 대화를 지속하는 것이 안전합니다.',
-      sec3List3: '이상 제안 차단: 지나치게 파격적인 조건(예: 일반 카드 1장으로 전설 카드 제공 등)으로 먼저 다가오는 유저는 사칭 및 해킹 유저일 가능성이 매우 높으니 반드시 경계하십시오.',
-      sec4Title: '4. 불성실 교환 유저 및 사기 피해 발생 시 대처법',
-      sec4List1: '해당 거래 유저의 교환글 카드 우측의 \'신고\' 단추를 눌러 상세 정황을 기재해 접수합니다.',
-      sec4List2: '스크린샷과 게임 내 닉네임을 첨부하여 공식 관리자 이메일(helper.dv3sticker@gmail.com)로 제보해 주시면, RLS 관리자 권한을 통해 해당 유저의 닉네임과 IP 대역을 영구 이용 정지 처리합니다.',
-      sec4List3: '다만, 본 플랫폼은 자발적으로 개설된 정보 매칭 도구이므로 실제 거래 중 발생한 인게임 자산 손실에 대해서는 복구 의무 및 법적 손해 배상의 대행 책임을 지지 않음을 알려드립니다.'
+      title: '안전 교환 체크리스트',
+      subtitle: '사이트가 확인할 수 있는 정보와 실제 게임에서 사용자가 다시 확인해야 할 정보를 구분합니다.',
+      sec1Title: '1. 사이트 기능의 범위',
+      sec1Desc: '이 사이트는 사용자가 게시한 목록을 비교하고 연락과 신고 기능을 제공합니다. 실제 게임 인벤토리, 상대 신원, 최종 교환 완료 여부는 확인하거나 보증하지 않습니다.',
+      sec2Title: '2. 연락 전에 확인할 세 가지',
+      warning1Title: '⚠️ 오래된 목록',
+      warning1Desc: '상대 글의 Haves가 현재 게임 상태와 다를 수 있습니다. 연락할 때 일치한 항목을 아직 보유하고 있는지 다시 확인하세요.',
+      warning2Title: '⚠️ 닉네임·연락처 불일치',
+      warning2Desc: '게시글의 닉네임, 외부 연락처의 계정, 실제 게임에서 만난 상대가 같은지 각각 확인하세요. 외부 링크는 운영자가 소유권을 인증한 주소가 아닙니다.',
+      warning3Title: '⚠️ 최종 조건 변경',
+      warning3Desc: '대화 중 조건이 바뀌었다면 줄 항목, 받을 항목, 수량을 다시 한 문장으로 합의하고 최종 화면과 대조하세요.',
+      sec3Title: '3. 개인정보와 확인 기록',
+      sec3Desc: '문제가 생겼을 때 상황을 설명할 수 있도록 필요한 범위에서 기록하세요.',
+      sec3List1: '합의 기록: 닉네임, 항목 이름과 슬롯, 수량, 시간을 남깁니다.',
+      sec3List2: '개인정보 보호: 비밀번호, 인증번호, 복구 코드, 결제 정보는 전달하지 않습니다.',
+      sec3List3: '외부 링크 확인: 로그인이나 파일 설치를 요구하는 낯선 주소는 열지 않습니다.',
+      sec4Title: '4. 신고할 때',
+      sec4List1: '교환글 또는 게시글의 신고 버튼으로 구체적인 상황을 접수합니다.',
+      sec4List2: '필요하면 개인정보를 가린 스크린샷과 닉네임을 helper.dv3sticker@gmail.com으로 보냅니다.',
+      sec4List3: '운영자는 접수 내용을 검토하지만 처리 시간, 특정 제재, 게임 아이템 복구를 보장하지 않습니다.'
     },
     matchEngine: {
-      title: '자동 매칭 알고리즘의 원리와 100% 활용법',
-      subtitle: '본 교환소가 자랑하는 실시간 매칭 엔진이 최적의 거래 상대를 찾아내는 논리적 원리를 설명합니다.',
-      sec1Title: '1. 자동 매칭 엔진(Matching Engine) 설계 배경',
-      sec1Desc: '기존의 일반적인 게임 커뮤니티나 카페 게시판에서 스티커 교환 글을 올리면, 매번 수많은 글들 속에서 나와 이해관계가 맞는 사람을 일일이 수작업으로 대조해야 했습니다. 이는 엄청난 시간 낭비이자 스트레스였습니다. 본 교환소는 이러한 문제를 해결하기 위해 유저들이 등록한 Haves(줄 수 있는 카드) 목록과 Wants(받고 싶은 카드) 데이터셋을 실시간으로 비교하여 맞춤 파트너를 자동으로 짝지어 주는 \'매칭 알고리즘\'을 자체 개발하여 이식하였습니다.',
-      sec2Title: '2. 두 가지 핵심 매칭 모드의 논리적 원리',
-      sec2Desc: '매칭 엔진은 매칭의 조건 강도에 따라 \'양방향 매칭\'과 \'부분 매칭\' 두 가지 신호로 분류하여 제공합니다.',
-      perfectTitle: '🟢 100% 양방향 매칭 (Perfect Matching)',
-      perfectDesc1: '양방향 매칭은 나와 상대방의 이해관계가 완벽하게 일치하는 최상의 매칭 상태입니다. 수학적 합집합과 교집합 개념을 활용하여 다음과 같이 작동합니다.',
+      title: '완전·부분 매칭 판정 원리',
+      subtitle: '현재 서비스가 Haves와 Wants의 교집합으로 두 매칭 신호를 계산하는 조건입니다.',
+      sec1Title: '1. 비교 대상',
+      sec1Desc: '내 Haves와 Wants, 상대 교환글의 Haves와 Wants를 스티커 식별자로 비교합니다. 이름이나 이미지가 아니라 묶음 번호와 슬롯 번호가 결합된 ID가 기준입니다.',
+      sec2Title: '2. 두 가지 매칭 신호',
+      sec2Desc: '두 방향의 교집합이 비어 있는지에 따라 완전 매칭과 부분 매칭을 구분합니다.',
+      perfectTitle: '완전 매칭 (Perfect Match)',
+      perfectDesc1: '양쪽 방향에 최소 한 개씩 겹치는 항목이 있을 때 표시합니다.',
       perfectFormula: '나의 Haves ∩ 상대방의 Wants ≠ ∅ (공집합이 아님)\nAND\n나의 Wants ∩ 상대방의 Haves ≠ ∅ (공집합이 아님)',
-      perfectDesc2: '즉, 내가 남아서 줄 수 있는 카드 중 하나를 상대가 간절히 원하고, 동시에 상대가 남아서 줄 수 있는 카드 중 하나를 내가 간절히 원할 때 이 녹색 배지가 활성화됩니다. 이 상태는 대화를 시도하면 거래 성공률이 99%에 수렴하므로, 발견하는 즉시 채팅을 시도하시는 것이 유리합니다.',
-      partialTitle: '🟡 부분 매칭 (Partial Matching)',
-      partialDesc1: '부분 매칭은 절반의 일치 상태를 뜻하며, 다음과 같이 단방향적 요구 충족 상황에서 노란색 배지로 표시됩니다.',
+      perfectDesc2: '“완전”은 목록 전체가 같다는 뜻이 아니라 서로 주고받을 후보가 최소 한 개씩 있다는 뜻입니다. 수량과 실제 보유 여부는 대화에서 확인해야 합니다.',
+      partialTitle: '부분 매칭 (Partial Match)',
+      partialDesc1: '완전 매칭이 아니면서 한쪽 방향에만 겹치는 항목이 있을 때 표시합니다.',
       partialFormula: '나의 Haves ∩ 상대방의 Wants ≠ ∅ (상대가 내 카드를 원함)\nOR\n나의 Wants ∩ 상대방의 Haves ≠ ∅ (내가 상대 카드를 원함)',
-      partialDesc2: '예를 들어, 나는 상대가 보유한 카드를 원하지만 상대는 내가 가진 카드를 원하지 않을 때, 또는 반대로 상대가 내 카드를 원하지만 상대의 보유 리스트에 내가 필요한 카드가 없을 때 활성화됩니다. 비록 완전한 일치는 아니지만, 유저 간 추가적인 스티커 조율이나 \'알 코드\', 또는 다른 카드를 제안하여 협상할 수 있는 훌륭한 교두보가 됩니다.',
-      sec3Title: '3. 매칭 매니저를 통한 성사율 200% 올리기',
-      sec3List1: '바구니 데이터의 적극적 최신화: 교환이 완료되어 소모된 카드는 즉시 바구니에서 제외해 주세요. 잘못된 정보가 바구니에 방치되면 다른 유저와의 헛된 매칭 신호가 잡혀 매칭 엔진의 신뢰도를 저하시킵니다.',
-      sec3List2: 'Wants 리스트의 점진적 다각화: 내가 당장 갖고 싶은 전설 등급 카드만 Wants에 채워넣지 말고, 틈틈이 도감을 채워야 하는 희귀/영웅 등급 카드도 여러 장 추가해 두세요. 리스트가 다양할수록 더 많은 유저들과 매칭 교차점이 형성되어 거래 문의 횟수가 획기적으로 상승합니다.',
-      sec4Title: '4. 결론: 똑똑한 데이터 교환 플랫폼',
-      sec4Desc: '드빌3 스티커교환소는 단순한 텍스트 나열형 게시판을 넘어, 데이터 알고리즘을 통해 유저의 시간과 노력을 획기적으로 절약해 주는 스마트 플랫폼입니다. 본 매칭 엔진의 작동 원리를 명확히 이해하고 자신의 스티커 컬렉션 데이터셋을 영리하게 관리한다면, 서버 내 어떤 수집가들보다도 빠르고 합리적으로 드빌3 스티커 도감을 완성해 나갈 수 있을 것입니다.'
+      partialDesc2: '내가 상대 항목을 원하지만 상대가 내 항목을 원하지 않거나, 그 반대인 경우입니다. 어느 방향이 일치했는지 확인한 뒤 대화하세요.',
+      sec3Title: '3. 결과 정확도를 높이는 방법',
+      sec3List1: '교환이 끝난 항목은 Haves와 Wants에서 즉시 제거해 오래된 매칭을 줄입니다.',
+      sec3List2: '게시 전에 현재 게임 상태와 사이트 목록을 대조하고, 연락할 때 일치한 항목을 다시 확인합니다.',
+      sec4Title: '4. 판정의 한계',
+      sec4Desc: '매칭은 목록의 교집합만 확인합니다. 실제 보유, 수량, 연락 가능 여부, 교환 조건과 성공 여부는 판정하지 않으며 특정 성공률을 보장하지 않습니다.'
     }
   },
   en: {
@@ -184,8 +184,8 @@ const GUIDE_CONTENT = {
       tablePriceTitle: '② Resale Price (Gold)',
       tableColGrade: 'Grade',
       tableColAccum: 'Accum.(+5)',
-      tableNote: '※ Resale price generally recovers around 50% of the accumulated reinforcement gold cost.',
-      rankTitle: '3. Accumulated Efficiency Rankings (Cost per 1P)',
+      tableNote: '※ Results use the cost and resale values entered in this table. They may change when game data changes.',
+      rankTitle: '3. Top 6 Accumulated Ranges by Cost per 1P',
       rankNote: 'Lower cost per 1P equals higher efficiency.',
       tableColRank: 'Rank',
       tableColTarget: 'Target',
@@ -201,87 +201,87 @@ const GUIDE_CONTENT = {
       rankCBonus: 'C Grade (Bonus)',
       analysisTitle: '4. Efficiency Analysis & Rating Guide',
       analysisS: '🟢 S Grade (Top Priority - Under 500 Gold per 1P)',
-      analysisSDesc: 'Hero +1 / Normal +2\nAbsolute best value range, pulling back large amounts of points with minimal gold investment.',
+      analysisSDesc: 'Normal +1 / Hero +1 / Normal +2\nThese entries calculate to 500 Gold or less per point with the current values.',
       analysisA: '🔵 A Grade (Good - 500 ~ 1,000 Gold per 1P)',
-      analysisADesc: 'Legend +1 / Normal +3 / Hero +2\nHigh cost-effectiveness, providing solid return relative to gold spent.',
+      analysisADesc: 'Legend +1 / Normal +3 / Hero +2\nThese entries calculate to 500–1,000 Gold per point with the current values.',
       analysisB: '🟡 B Grade (Average - 1,000 ~ 2,500 Gold per 1P)',
-      analysisBDesc: 'Hero +3 / Normal +4 / Legend +2\nModerate value. This is the most stable and realistic baseline limit for deck growth.',
+      analysisBDesc: 'Hero +3 / Normal +4 / Legend +2\nThese entries calculate to 1,000–2,500 Gold per point with the current values.',
       analysisC: '🟣 C Grade (Low/Specific Use - 2,500 ~ 5,500 Gold per 1P)',
-      analysisCDesc: 'Legend +3 / Hero +4 / Legend +5 (With 60pt Bonus)\nLow base efficiency, but if the 60pt Legend bonus (+100P) is guaranteed, efficiency recovers to 5,395 Gold, making it viable.',
+      analysisCDesc: 'Legend +3 / Hero +4 / Legend +5 (60-point bonus selected)\nWhen the +100P option is selected, Legend +5 calculates to 5,475 Gold per point.',
       analysisD: '🔴 D Grade (Not Recommended - Exceeds 5,500 Gold per 1P)',
-      analysisDDesc: 'Normal +5 / Legend +5 (55pt) / Hero +5 / Legend +5 (No Bonus)\nLegend +5 with only 55pt bonus returns a terrible 8,992 Gold per 1P efficiency. Highly recommended to avoid these tiers.',
+      analysisDDesc: 'Normal +5 / Legend +5 (55 points selected) / Legend +4 / Hero +5 / Legend +5 (no bonus)\nThese entries exceed 5,500 Gold per point with the current values. Consider your goal and available Gold.',
       summaryTitle: '5. Summary & Recommended Limits',
-      summaryDesc1: 'Efficiency-Based Recommended Limits: For Normal Gems up to +4, Hero Gems up to +3, and Legend Gems up to +3 to optimize cost performance.',
-      summaryDesc2: 'Legend +5 Exception: Only worth the cost if you can guarantee the 60pt (+100P) bonus. The 55pt bonus efficiency is too low.',
-      summaryDesc3: 'Optimal Upgrade Route: Hero +1 ➔ Normal +2 ➔ Legend +1 ➔ Normal +3 ➔ Hero +2 ➔ Hero +3 ➔ Normal +4'
+      summaryDesc1: 'By cost per point in this table, the ranges through Normal +4, Hero +3, and Legend +3 calculate relatively lower.',
+      summaryDesc2: 'Legend +5 changes substantially depending on whether the 55-point or 60-point bonus option applies.',
+      summaryDesc3: 'Reference order: Normal +1 ➔ Hero +1 ➔ Normal +2 ➔ Legend +1 ➔ Normal +3 ➔ Hero +2 ➔ Hero +3 ➔ Normal +4'
     },
     colGuide: {
-      title: 'Maximizing Sticker Collection Efficiency Guide',
-      subtitle: 'Practical guide to cutting down inefficiencies and completing your DV3 sticker book in the shortest time possible.',
-      sec1Title: '1. Daily Routine for Free-to-Play Users',
-      sec1Desc: 'To fill up your sticker book without paying, executing daily in-game free sticker routes is crucial. First, clear all Daily & Weekly quests. The final reward chests have a high chance of containing Normal-Rare sticker packs. Second, spend all adventure hearts (stamina) without wasting them. Specific adventure zones drop thematic stickers on clear. Third, utilize event shops and limited dungeons. Exchanging event currency for limited sticker packs first is the smartest choice. Duplicates accumulated this way become your capital for high-tier stickers at the exchange.',
-      sec2Title: '2. 5 Strategies to Accelerate Collection',
-      strat1Title: 'Register Duplicates Immediately',
-      strat1Desc: 'Leaving duplicate stickers in your inventory wastes opportunity. Add duplicates to your exchange basket immediately and write posts. As supply increases, the competitive value of your duplicates drops. Quick trading halves completion time.',
-      strat2Title: 'Optimize Exchange Value (1:N Trades)',
-      strat2Desc: 'Legend and Hero grade duplicates do not need to be traded 1:1. If you have a duplicate hero card of a popular dragon, demand 3-4 Normal-Rare cards that you lack. Collectors close to completing their books often trade multiple lower cards for one Hero card.',
-      strat3Title: 'Target One Category at a Time',
-      strat3Desc: 'Trying to collect everything at once slows down progress. Focus on easy categories like \'Dragon Egg\' or specific attribute collections with short completion scrolls first. Complete them to get stat bonuses, which speed up farming for higher packs.',
-      strat4Title: 'Set Detailed Haves and Wants Filters',
-      strat4Desc: 'Broaden your Wants list to maximize matching engine exposure. Adding long-term wishlist cards in addition to immediate targets generates more partial and dual match alerts, starting chat conversations easily.',
-      strat5Title: 'Bump Posts During Active Hours',
-      strat5Desc: 'Most users connect in the evening (7 PM - 11 PM) and on weekends. Refreshing/bumping your posts during these golden hours drastically increases your chances of getting chat inquiries compared to daytime hours.',
-      sec3Title: '3. Sticker Synthesis Trap and Correct Usage',
-      sec3Desc: 'In-game synthesis consumes multiple stickers to draft a random higher-tier card. This can be a trap for F2P players, as the outcome is still random and might yield unwanted duplicate heroes or rares. Always try 1:1 exchange trading first. Synthesize only unpopular normal cards that nobody wants.',
-      sec4Title: '4. Synergy with Egg Code Sharing Boards',
-      sec4Desc: 'Sharing egg codes yields free limited sticker packs via mail. Visit the \'Trade Board\' or relay threads in our Free Board. Mutually registering codes generates massive free sticker packs, creating a loop where you update your basket with newly drafted cards.',
-      keyTitle: '💡 Core Summary',
-      key1: '1. Register duplicate cards in your exchange basket immediately.',
-      key2: '2. Design 1:N trades to get multiple lower-tier cards with 1 high-tier card.',
-      key3: '3. Exhaust exchange opportunities before resorting to synthesis.'
+      title: 'Exchange List Management Guide',
+      subtitle: 'Keep Haves and Wants aligned with your actual inventory to reduce stale match signals.',
+      sec1Title: '1. Before entering a list',
+      sec1Desc: 'Use Haves only for tradable extras you currently own, and Wants only for stickers you still need. This site cannot read the game inventory, so your entries are the only matching source.',
+      sec2Title: '2. Five steps for current lists',
+      strat1Title: 'Check the current game inventory',
+      strat1Desc: 'Verify extras and missing stickers in the game instead of relying on memory.',
+      strat2Title: 'Separate Haves and Wants by collection',
+      strat2Desc: 'Review all 20 collections in order and do not place the same sticker in both lists.',
+      strat3Title: 'Exclude non-exchangeable slots',
+      strat3Desc: 'The 24 gold-bordered locked slots cannot be added to Haves or Wants.',
+      strat4Title: 'Review contact details and notes',
+      strat4Desc: 'Check for expired links or typos, and do not publish personal data that is unnecessary for an exchange.',
+      strat5Title: 'Clean up immediately after a trade',
+      strat5Desc: 'Remove sent stickers from Haves and received stickers from Wants so other users do not see stale matches.',
+      sec3Title: '3. Reading match signals',
+      sec3Desc: 'A perfect match means each side has at least one candidate for the other. A partial match means only one direction overlaps. Neither signal verifies quantity, current ownership, or completion.',
+      sec4Title: '4. Periodic review',
+      sec4Desc: 'Compare the site list with the game after getting a new sticker, completing a trade, or returning after a break.',
+      keyTitle: 'Summary',
+      key1: '1. Record only real tradable extras in Haves.',
+      key2: '2. Keep only stickers you still need in Wants.',
+      key3: '3. Update both lists immediately after a trade.'
     },
     safetyRules: {
-      title: 'Safe Trading & Scam Prevention Guide',
-      subtitle: 'Detailed manual for maintaining safety and preventing scam damage during 1:1 sticker trades.',
-      sec1Title: '1. Utilizing the In-Game Safe Exchange System',
-      sec1Desc: 'The developers of Dragon Village 3 officially implemented an in-game exchange system. This system is a \'simultaneous confirmation trade\' where both users place stickers in the lobby and must both click confirm for the trade to execute. Physically, scams cannot happen if you use this official route. Scams occur when users bypass this system.',
-      sec2Title: '2. Three Major Scams to Watch Out For',
-      warning1Title: '⚠️ Scam 1: "Send First" Requests',
-      warning1Desc: 'The most common scam where scammers claim high credibility or slot bugs, requesting you to mail the sticker first with a promise to return mail immediately. Sending cards first leads to instant blocking. Never agree to trades that require mailing cards first.',
-      warning2Title: '⚠️ Scam 2: Impersonation via Similar Nicknames',
-      warning2Desc: 'Creating sub-characters with nicknames highly similar to popular or trusted users (e.g. swapping \'l\' and \'1\', or \'o\' and \'0\') to steal cards. Always double check profile levels, representative dragons, and guild marks in the trade window before hitting confirm.',
-      warning3Title: '⚠️ Scam 3: Sticker Swapping',
-      warning3Desc: 'Re-negotiating conditions mid-trade, closing the window, and opening it again quickly to rush confirmation. Scammers swap the agreed Hero card with a similar-looking Normal card. Always mouseover and check the grade and name before confirming.',
-      sec3Title: '3. Operational Guidelines to Block Scams',
-      sec3Desc: 'Incorporate these habits for a safe trading culture:',
-      sec3List1: 'Archive Chat Screenshots: Capture all conversations detailing nicknames, cards, and times. Essential evidence if disputes arise.',
-      sec3List2: 'Avoid External Links: Reject moves to external messengers. Sticking to our RLS-secured built-in chat is safer.',
-      sec3List3: 'Beware of Too-Good-To-Be-True Deals: Users offering Legend cards for 1 Normal card are likely compromised or malicious. Be cautious.',
-      sec4Title: '4. Action Checklist for Unfair Traders & Scams',
-      sec4List1: 'Click \'Report\' on the user\'s exchange card and describe the details.',
-      sec4List2: 'Email screenshots and nicknames to helper.dv3sticker@gmail.com. Admins will permanently ban the user\'s nickname and IP range.',
-      sec4List3: 'Note: As a voluntary match tool, this platform does not assume recovery obligations or legal liabilities for in-game asset losses.'
+      title: 'Safe Exchange Checklist',
+      subtitle: 'Separate information this site can display from details you must confirm in the game.',
+      sec1Title: '1. Scope of this site',
+      sec1Desc: 'This site compares user-posted lists and provides contact and reporting features. It does not verify game inventories, identity, or final exchange completion.',
+      sec2Title: '2. Three checks before contact',
+      warning1Title: '⚠️ Stale lists',
+      warning1Desc: 'A posted Have may no longer be available. Ask whether the matched sticker is still owned and tradable.',
+      warning2Title: '⚠️ Nickname or contact mismatch',
+      warning2Desc: 'Check that the post nickname, external contact account, and in-game nickname refer to the same person. External links are not ownership-verified by the site.',
+      warning3Title: '⚠️ Changed final terms',
+      warning3Desc: 'If terms change, restate the stickers and quantities each side will give, then compare them with the final screen.',
+      sec3Title: '3. Personal data and records',
+      sec3Desc: 'Keep only the information needed to explain an issue:',
+      sec3List1: 'Agreement record: Keep nicknames, sticker names and slots, quantities, and time.',
+      sec3List2: 'Personal data: Never share passwords, verification codes, recovery codes, or payment details.',
+      sec3List3: 'External links: Avoid unknown pages that request login, file installation, or remote access.',
+      sec4Title: '4. Reporting an issue',
+      sec4List1: 'Use Report on the relevant exchange or board post and describe what happened.',
+      sec4List2: 'If needed, email redacted screenshots and the nickname to helper.dv3sticker@gmail.com.',
+      sec4List3: 'Reports are reviewed, but the site does not guarantee a response time, a specific sanction, or restoration of game items.'
     },
     matchEngine: {
-      title: 'Matching Algorithm Principles & Best Use',
-      subtitle: 'Explains the logical principles of our real-time matching engine in finding your optimal trading partners.',
-      sec1Title: '1. Background of the Matching Engine',
-      sec1Desc: 'In traditional game communities, posting trades required manually searching hundreds of listings to find compatible traders. To solve this, we developed a real-time matching algorithm that correlates Haves and Wants datasets of all users, automatically pairing complementary matches.',
-      sec2Title: '2. Logic of the Two Core Match Signals',
-      sec2Desc: 'The engine categorizes matches into \'Perfect Matching\' and \'Partial Matching\':',
-      perfectTitle: '🟢 100% Perfect Matching',
-      perfectDesc1: 'Perfect matching is a complete mutual fit where both parties\' needs align perfectly. It uses mathematical intersection logic:',
+      title: 'Perfect and Partial Match Logic',
+      subtitle: 'The current conditions used to compare intersections between Haves and Wants.',
+      sec1Title: '1. Compared data',
+      sec1Desc: 'The service compares my Haves and Wants with the other post\'s Haves and Wants by sticker ID. The ID combines the collection number and slot number.',
+      sec2Title: '2. Two match signals',
+      sec2Desc: 'The service checks whether each directional intersection is empty.',
+      perfectTitle: 'Perfect Match',
+      perfectDesc1: 'Displayed when both directions contain at least one overlapping sticker:',
       perfectFormula: 'My Haves ∩ Other\'s Wants ≠ ∅\nAND\nMy Wants ∩ Other\'s Haves ≠ ∅',
-      perfectDesc2: 'When you have a card they want, and they have a card you want, this green badge lights up. These trades have a 99% success rate; initiate chat immediately.',
-      partialTitle: '🟡 Partial Matching',
-      partialDesc1: 'Partial matching represents a one-way fit, flagged with a yellow badge:',
+      perfectDesc2: '“Perfect” does not mean the full lists are identical. It only means each side has at least one candidate for the other. Confirm quantity and current ownership in chat.',
+      partialTitle: 'Partial Match',
+      partialDesc1: 'Displayed when the result is not perfect and only one direction overlaps:',
       partialFormula: 'My Haves ∩ Other\'s Wants ≠ ∅ (They want my card)\nOR\nMy Wants ∩ Other\'s Haves ≠ ∅ (I want their card)',
-      partialDesc2: 'Triggered when you want their card but they don\'t need yours, or vice versa. Still a great bridge to negotiate using egg codes or other filler cards.',
-      sec3Title: '3. Bumping Success Rates by 200%',
-      sec3List1: 'Keep Basket Updated: Remove traded stickers immediately. Outdated lists lead to dead matches, reducing engine utility.',
-      sec3List2: 'Diversify Wants List: Don\'t just list high-end Legend cards. Adding Rare and Hero cards generates more match intersections, increasing inquiries.',
-      sec4Title: '4. Conclusion: Smart Data Exchange Platform',
-      sec4Desc: 'We move beyond traditional boards to offer a smart platform saving you time. Keeping your data updated ensures you finish your DV3 sticker book faster than anyone else.'
+      partialDesc2: 'This occurs when you want one of their stickers but they do not want yours, or the reverse. Check which direction matched before contacting them.',
+      sec3Title: '3. Improve result accuracy',
+      sec3List1: 'Remove completed stickers from Haves and Wants immediately to reduce stale signals.',
+      sec3List2: 'Compare the site list with the current game state before posting, and confirm matched items in chat.',
+      sec4Title: '4. Limits of the signal',
+      sec4Desc: 'Matching checks list intersections only. It does not verify ownership, quantity, contact availability, terms, or completion, and it does not guarantee a success rate.'
     }
   }
 };
@@ -298,10 +298,9 @@ const gemData = {
   },
   legend: {
     costs: [0, 7640, 36230, 74520, 292000, 958000],
-    prices: [1000, 13820, 31935, 69195, 215195, 694000] // +0 가격 수정 10,000 -> 1,000 혹은 10,000 (기존 10,000 유지)
+    prices: [10000, 13820, 31935, 69195, 215195, 694000]
   }
 };
-gemData.legend.prices[0] = 10000; // 기존 HTML 스펙과 동기화
 
 const pointsData = [0, 5, 10, 15, 20, 25];
 
@@ -315,69 +314,37 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
   const [target, setTarget] = useState(2);
   const [bonus, setBonus] = useState(0);
 
-  // 결과 계산
-  const [result, setResult] = useState({
-    cost: 0,
-    refund: 0,
-    actual: 0,
-    points: 0,
-    unitCost: 0,
-    rating: '',
-    ratingClass: ''
-  });
+  const activeData = gemData[grade];
+  let totalCost = 0;
+  for (let i = start + 1; i <= target; i++) {
+    totalCost += activeData.costs[i];
+  }
 
-  useEffect(() => {
-    // target 제어: target이 start보다 작거나 같을 수 없음
-    if (target <= start) {
-      setTarget(start + 1);
-      return;
-    }
+  const refundDiff = activeData.prices[target] - activeData.prices[start];
+  const actualCost = totalCost - refundDiff;
+  const basePoints = pointsData[target] - pointsData[start];
+  const points = basePoints + (grade === 'legend' && target === 5 ? bonus : 0);
+  const unitCost = points > 0 ? Math.round(actualCost / points) : 0;
 
-    const activeData = gemData[grade];
-    let totalCost = 0;
-    for (let i = start + 1; i <= target; i++) {
-      totalCost += activeData.costs[i];
-    }
+  const { rating, ratingClass } = unitCost <= 500
+    ? { rating: c.gemTable.rank1, ratingClass: 'badge-s' }
+    : unitCost <= 1000
+      ? { rating: c.gemTable.rank2, ratingClass: 'badge-a' }
+      : unitCost <= 2500
+        ? { rating: c.gemTable.rank3, ratingClass: 'badge-b' }
+        : unitCost <= 5500
+          ? { rating: c.gemTable.rank4, ratingClass: 'badge-c' }
+          : { rating: c.gemTable.rank5, ratingClass: 'badge-d' };
 
-    const refundDiff = activeData.prices[target] - activeData.prices[start];
-    const actualCost = totalCost - refundDiff;
-
-    let pts = pointsData[target] - pointsData[start];
-    if (grade === 'legend' && target === 5) {
-      pts += bonus;
-    }
-
-    const unitCost = pts > 0 ? Math.round(actualCost / pts) : 0;
-
-    let rating = '';
-    let ratingClass = '';
-    if (unitCost <= 500) {
-      rating = c.gemTable.rank1;
-      ratingClass = 'badge-s';
-    } else if (unitCost <= 1000) {
-      rating = c.gemTable.rank2;
-      ratingClass = 'badge-a';
-    } else if (unitCost <= 2500) {
-      rating = c.gemTable.rank3;
-      ratingClass = 'badge-b';
-    } else if (unitCost <= 5500) {
-      rating = c.gemTable.rank4;
-      ratingClass = 'badge-c';
-    } else {
-      rating = c.gemTable.rank5;
-      ratingClass = 'badge-d';
-    }
-
-    setResult({
-      cost: totalCost,
-      refund: refundDiff,
-      actual: actualCost,
-      points: pts,
-      unitCost: unitCost,
-      rating,
-      ratingClass
-    });
-  }, [grade, start, target, bonus, language, c]);
+  const result = {
+    cost: totalCost,
+    refund: refundDiff,
+    actual: actualCost,
+    points,
+    unitCost,
+    rating,
+    ratingClass
+  };
 
   return (
     <div className="guide-container" style={{
@@ -486,7 +453,11 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                 </label>
                 <select 
                   value={start}
-                  onChange={(e) => setStart(parseInt(e.target.value))}
+                  onChange={(e) => {
+                    const nextStart = parseInt(e.target.value);
+                    setStart(nextStart);
+                    if (target <= nextStart) setTarget(nextStart + 1);
+                  }}
                   style={{
                     background: 'rgba(0, 0, 0, 0.25)',
                     border: '1px solid var(--border-color)',
@@ -520,10 +491,10 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                     outline: 'none'
                   }}
                 >
-                  <option value="1">+1강</option>
-                  <option value="2">+2강</option>
-                  <option value="3">+3강</option>
-                  <option value="4">+4강</option>
+                  <option value="1" disabled={start >= 1}>+1강</option>
+                  <option value="2" disabled={start >= 2}>+2강</option>
+                  <option value="3" disabled={start >= 3}>+3강</option>
+                  <option value="4" disabled={start >= 4}>+4강</option>
                   <option value="5">+5강</option>
                 </select>
               </div>
@@ -744,6 +715,15 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
               <tbody>
                 <tr style={{ background: 'rgba(167, 139, 250, 0.05)' }}>
                   <td style={{ padding: '10px' }}>1</td>
+                  <td style={{ padding: '10px' }}>{c.gemTable.normalGrade}</td>
+                  <td style={{ padding: '10px' }}>+1</td>
+                  <td style={{ padding: '10px' }}>750</td>
+                  <td style={{ padding: '10px' }}>5</td>
+                  <td style={{ padding: '10px', color: 'var(--primary-color)', fontWeight: 'bold' }}>150</td>
+                  <td style={{ padding: '10px' }}><span className="badge badge-s">{c.gemTable.rank1}</span></td>
+                </tr>
+                <tr style={{ background: 'rgba(167, 139, 250, 0.05)' }}>
+                  <td style={{ padding: '10px' }}>2</td>
                   <td style={{ padding: '10px', color: '#60a5fa' }}>{c.gemTable.heroGrade}</td>
                   <td style={{ padding: '10px' }}>+1</td>
                   <td style={{ padding: '10px' }}>1,530</td>
@@ -752,7 +732,7 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                   <td style={{ padding: '10px' }}><span className="badge badge-s">{c.gemTable.rank1}</span></td>
                 </tr>
                 <tr style={{ background: 'rgba(167, 139, 250, 0.05)' }}>
-                  <td style={{ padding: '10px' }}>2</td>
+                  <td style={{ padding: '10px' }}>3</td>
                   <td style={{ padding: '10px' }}>{c.gemTable.normalGrade}</td>
                   <td style={{ padding: '10px' }}>+2</td>
                   <td style={{ padding: '10px' }}>4,365</td>
@@ -761,7 +741,7 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                   <td style={{ padding: '10px' }}><span className="badge badge-s">{c.gemTable.rank1}</span></td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '10px' }}>3</td>
+                  <td style={{ padding: '10px' }}>4</td>
                   <td style={{ padding: '10px', color: '#fbbf24' }}>{c.gemTable.legendGrade}</td>
                   <td style={{ padding: '10px' }}>+1</td>
                   <td style={{ padding: '10px' }}>3,820</td>
@@ -770,7 +750,7 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                   <td style={{ padding: '10px' }}><span className="badge badge-a">{c.gemTable.rank2}</span></td>
                 </tr>
                 <tr style={{ background: 'rgba(167, 139, 250, 0.05)' }}>
-                  <td style={{ padding: '10px' }}>4</td>
+                  <td style={{ padding: '10px' }}>5</td>
                   <td style={{ padding: '10px' }}>{c.gemTable.normalGrade}</td>
                   <td style={{ padding: '10px' }}>+3</td>
                   <td style={{ padding: '10px' }}>12,600</td>
@@ -779,7 +759,7 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                   <td style={{ padding: '10px' }}><span className="badge badge-a">{c.gemTable.rank2}</span></td>
                 </tr>
                 <tr>
-                  <td style={{ padding: '10px' }}>5</td>
+                  <td style={{ padding: '10px' }}>6</td>
                   <td style={{ padding: '10px', color: '#60a5fa' }}>{c.gemTable.heroGrade}</td>
                   <td style={{ padding: '10px' }}>+2</td>
                   <td style={{ padding: '10px' }}>8,770</td>

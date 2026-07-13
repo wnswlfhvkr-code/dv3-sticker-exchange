@@ -38,9 +38,10 @@ import { Footer } from './components/Footer';
 import { AdBanner } from './components/AdBanner';
 import { dbService } from './supabaseClient';
 import { GuideSection } from './components/GuideSection';
+import { ContentHub } from './components/ContentHub';
 
 function App() {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   // 1. 사용자 인증 및 세션 정보
   const authVM = useAuthViewModel();
 
@@ -195,6 +196,14 @@ function App() {
 
       {currentView === 'main' ? (
         <>
+          <ContentHub
+            onOpenGuide={() => {
+              setCurrentView('guide');
+              setGuideActiveTab('matchEngine');
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+          />
+
           {/* 1.2. 비공식 안내 및 안전 거래 수칙 정보성 콘텐츠 (AdSense 콘텐츠 가치 보강) */}
           <div style={{
             maxWidth: '1200px',
@@ -286,7 +295,6 @@ function App() {
                   setGuideActiveTab('gemTable');
                 }}
                 style={{
-                  border: 'none',
                   padding: '10px 16px',
                   borderRadius: '12px',
                   background: isLight ? '#f3e8ff' : 'rgba(167, 139, 250, 0.15)',
@@ -311,7 +319,6 @@ function App() {
                   setGuideActiveTab('colGuide');
                 }}
                 style={{
-                  border: 'none',
                   padding: '10px 16px',
                   borderRadius: '12px',
                   background: isLight ? '#eff6ff' : 'rgba(96, 165, 250, 0.15)',
@@ -336,7 +343,6 @@ function App() {
                   setGuideActiveTab('safetyRules');
                 }}
                 style={{
-                  border: 'none',
                   padding: '10px 16px',
                   borderRadius: '12px',
                   background: isLight ? '#fffbeb' : 'rgba(245, 158, 11, 0.15)',
@@ -361,7 +367,6 @@ function App() {
                   setGuideActiveTab('matchEngine');
                 }}
                 style={{
-                  border: 'none',
                   padding: '10px 16px',
                   borderRadius: '12px',
                   background: isLight ? '#ecfdf5' : 'rgba(16, 185, 129, 0.15)',

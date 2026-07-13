@@ -3,21 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>드빌3 젬 강화 효율 분석 - 가성비 극대화 가이드</title>
-  <meta name="description" content="드래곤빌리지 3(드빌3) 젬 강화 효율성과 판매 환급가를 고려한 1P당 가성비 분석표입니다. 일반, 영웅, 전설 젬의 최적의 강화 마지노선과 가성비 계산기를 제공합니다.">
+  <title>드빌3 젬 강화 비용 계산기 | 입력 데이터와 계산식</title>
+  <meta name="description" content="입력된 강화 비용과 판매가를 기준으로 드빌3 일반·영웅·전설 젬의 실질 소모 골드와 1P당 비용을 계산합니다. 계산식과 가정도 함께 공개합니다.">
+  <link rel="canonical" href="https://dv3-sticker.vercel.app/tips-gem-reinforcement.html">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💎</text></svg>">
   <link rel="stylesheet" href="/static-pages.css">
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3489777827665018" crossorigin="anonymous"></script>
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": "드빌3 젬 강화 효율 분석",
-    "description": "골드 투자 대비 획득 강화 포인트 효율성 및 추천 강화 한계치 분석 자료",
+    "@type": "TechArticle",
+    "headline": "드빌3 젬 강화 비용 계산기",
+    "description": "입력된 강화 비용과 판매가로 실질 소모 골드와 1P당 비용을 계산하는 자료",
+    "datePublished": "2026-07-13",
+    "dateModified": "2026-07-13",
     "author": {
       "@type": "Organization",
-      "name": "드빌3 스티커교환소"
-    }
+      "name": "DV3 스티커교환소"
+    },
+    "mainEntityOfPage": "https://dv3-sticker.vercel.app/tips-gem-reinforcement.html"
   }
   </script>
   <style>
@@ -131,25 +135,37 @@
   </style>
 </head>
 <body>
-  <nav class="top-nav">
-    <a href="/" class="nav-logo">🐉 드빌3 스티커교환소</a>
+  <nav class="top-nav" aria-label="주요 문서">
+    <a href="/" class="nav-logo">DV3 스티커교환소</a>
     <div class="nav-links">
-      <a href="/about.html">소개</a>
-      <a href="/tips-gem-reinforcement.html" style="color: #a78bfa; font-weight: 700;">젬 강화 효율표</a>
-      <a href="/guide.html">이용 가이드</a>
+      <a href="/about-stickers.html">스티커 데이터</a>
+      <a href="/tips-matching-guide.html">매칭 원리</a>
+      <a href="/tips-sticker-collection.html">목록 관리</a>
+      <a href="/tips-gem-reinforcement.html" aria-current="page">젬 계산기</a>
       <a href="/faq.html">FAQ</a>
-      <a href="/">메인으로</a>
     </div>
   </nav>
 
-  <div class="page-wrapper">
-    <h1 class="page-title">젬(Gem) 강화 효율 분석 및 가이드</h1>
-    <p class="page-subtitle">투자 골드 대비 획득하는 강화 포인트(P) 효율을 판매 회수 골드 기준으로 정밀 연산한 가성비 리포트입니다.</p>
+  <main class="page-wrapper">
+    <p class="page-kicker">COST CALCULATOR</p>
+    <h1 class="page-title">젬 강화 비용 계산기</h1>
+    <p class="page-subtitle">현재 표에 입력된 강화 비용·판매가·포인트를 사용해 단계별 실질 소모 골드와 1P당 비용을 계산합니다.</p>
+
+    <div class="article-meta">
+      <span>작성: DV3 스티커교환소 운영</span>
+      <span>최종 검토: 2026-07-13</span>
+      <span>기준: 페이지에 공개된 입력표</span>
+    </div>
+
+    <div class="highlight-box warning">
+      <strong>계산 전 확인</strong>
+      <p>이 계산기는 아래 표의 고정 입력값을 사용합니다. 게임 업데이트 뒤 실제 비용·판매가·포인트가 달라졌다면 결과도 맞지 않을 수 있으므로, 중요한 결정 전에는 게임 화면의 최신 값을 확인하세요.</p>
+    </div>
 
     <!-- 실시간 가성비 계산기 탑재 -->
     <div class="calc-container">
       <div class="calc-title">
-        <span>💎</span> 실시간 젬 강화 가성비 계산기
+        <span>💎</span> 단계별 젬 강화 비용 계산기
       </div>
       <div class="calc-grid">
         <div class="calc-group">
@@ -326,14 +342,14 @@
           </tbody>
         </table>
       </div>
-      <p style="font-size:12px; color:rgba(255,255,255,0.45); margin-top:8px;">※ 판매가는 대부분 누적 강화 비용의 약 50%를 보전하여 환급해 주는 규칙을 따릅니다.</p>
+      <p style="font-size:12px; color:rgba(255,255,255,0.55); margin-top:8px;">※ 계산 결과는 이 표에 입력된 판매가를 사용합니다. 실제 게임 수치가 바뀌면 표도 갱신해야 합니다.</p>
     </div>
 
     <div class="content-section">
-      <h2>3. 1P당 가성비 기준 누적 효율 순위</h2>
-      <p>1P(포인트)당 소모되는 골드가 적을수록 효율이 높습니다.</p>
+      <h2>3. 1P당 비용 기준 전체 누적 구간 순위</h2>
+      <p>아래 17개 구간은 모두 0강에서 목표 단계까지 강화하는 조건입니다. 1P당 소모 골드가 적을수록 이 표의 입력값 안에서 효율이 높습니다.</p>
       <div style="overflow-x: auto;">
-        <table>
+        <table id="efficiency-ranking">
           <thead>
             <tr>
               <th>순위</th>
@@ -346,141 +362,23 @@
             </tr>
           </thead>
           <tbody>
-            <tr style="background: rgba(167, 139, 250, 0.05);">
-              <td>1</td>
-              <td style="color:#60a5fa">영웅</td>
-              <td>+1</td>
-              <td>1,530</td>
-              <td>5</td>
-              <td style="color:#a78bfa; font-weight:700">306</td>
-              <td><span class="badge badge-s">S등급 (최우선)</span></td>
-            </tr>
-            <tr style="background: rgba(167, 139, 250, 0.05);">
-              <td>2</td>
-              <td>일반</td>
-              <td>+2</td>
-              <td>4,365</td>
-              <td>10</td>
-              <td style="color:#a78bfa; font-weight:700">437</td>
-              <td><span class="badge badge-s">S등급 (최우선)</span></td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td style="color:#fbbf24">전설</td>
-              <td>+1</td>
-              <td>3,820</td>
-              <td>5</td>
-              <td style="font-weight:700">764</td>
-              <td><span class="badge badge-a">A등급 (좋음)</span></td>
-            </tr>
-            <tr style="background: rgba(167, 139, 250, 0.05);">
-              <td>4</td>
-              <td>일반</td>
-              <td>+3</td>
-              <td>12,600</td>
-              <td>15</td>
-              <td style="color:#a78bfa; font-weight:700">840</td>
-              <td><span class="badge badge-a">A등급 (좋음)</span></td>
-            </tr>
-            <tr>
-              <td>5</td>
-              <td style="color:#60a5fa">영웅</td>
-              <td>+2</td>
-              <td>8,770</td>
-              <td>10</td>
-              <td style="font-weight:700">877</td>
-              <td><span class="badge badge-a">A등급 (좋음)</span></td>
-            </tr>
-            <tr>
-              <td>6</td>
-              <td style="color:#60a5fa">영웅</td>
-              <td>+3</td>
-              <td>23,620</td>
-              <td>15</td>
-              <td style="color:#60a5fa; font-weight:700">1,575</td>
-              <td><span class="badge badge-b">B등급 (보통)</span></td>
-            </tr>
-            <tr>
-              <td>7</td>
-              <td>일반</td>
-              <td>+4</td>
-              <td>36,100</td>
-              <td>20</td>
-              <td style="color:#60a5fa; font-weight:700">1,805</td>
-              <td><span class="badge badge-b">B등급 (보통)</span></td>
-            </tr>
-            <tr>
-              <td>8</td>
-              <td style="color:#fbbf24">전설</td>
-              <td>+2</td>
-              <td>21,935</td>
-              <td>10</td>
-              <td>2,194</td>
-              <td><span class="badge badge-b">B등급 (보통)</span></td>
-            </tr>
-            <tr>
-              <td>9</td>
-              <td style="color:#fbbf24">전설</td>
-              <td>+3</td>
-              <td>59,195</td>
-              <td>15</td>
-              <td>3,946</td>
-              <td><span class="badge badge-c">C등급 (낮음)</span></td>
-            </tr>
-            <tr>
-              <td>10</td>
-              <td style="color:#60a5fa">영웅</td>
-              <td>+4</td>
-              <td>85,870</td>
-              <td>20</td>
-              <td>4,294</td>
-              <td><span class="badge badge-c">C등급 (낮음)</span></td>
-            </tr>
-            <tr>
-              <td>11</td>
-              <td style="color:#fbbf24">전설</td>
-              <td>+5 (60점)</td>
-              <td>674,390</td>
-              <td>125</td>
-              <td style="color:#34d399">5,395</td>
-              <td><span class="badge badge-c">C등급 (보너스)</span></td>
-            </tr>
-            <tr>
-              <td>12</td>
-              <td>일반</td>
-              <td>+5</td>
-              <td>139,200</td>
-              <td>25</td>
-              <td>5,568</td>
-              <td><span class="badge badge-d">D등급 (비추천)</span></td>
-            </tr>
-            <tr>
-              <td>13</td>
-              <td style="color:#fbbf24">전설</td>
-              <td>+5 (55점)</td>
-              <td>674,390</td>
-              <td>75</td>
-              <td style="color:#f87171">8,992</td>
-              <td><span class="badge badge-d">D등급 (비추천)</span></td>
-            </tr>
-            <tr>
-              <td>14</td>
-              <td style="color:#60a5fa">영웅</td>
-              <td>+5</td>
-              <td>277,240</td>
-              <td>25</td>
-              <td>11,090</td>
-              <td><span class="badge badge-d">D등급 (비추천)</span></td>
-            </tr>
-            <tr>
-              <td>15</td>
-              <td style="color:#fbbf24">전설</td>
-              <td>+5 (보너스無)</td>
-              <td>674,390</td>
-              <td>25</td>
-              <td style="color:#f87171">26,976</td>
-              <td><span class="badge badge-d">D등급 (비추천)</span></td>
-            </tr>
+            <tr><td>1</td><td>일반</td><td>+1</td><td>750</td><td>5</td><td>150</td><td><span class="badge badge-s">S등급</span></td></tr>
+            <tr><td>2</td><td style="color:#60a5fa">영웅</td><td>+1</td><td>1,530</td><td>5</td><td>306</td><td><span class="badge badge-s">S등급</span></td></tr>
+            <tr><td>3</td><td>일반</td><td>+2</td><td>4,365</td><td>10</td><td>437</td><td><span class="badge badge-s">S등급</span></td></tr>
+            <tr><td>4</td><td style="color:#fbbf24">전설</td><td>+1</td><td>3,820</td><td>5</td><td>764</td><td><span class="badge badge-a">A등급</span></td></tr>
+            <tr><td>5</td><td>일반</td><td>+3</td><td>12,600</td><td>15</td><td>840</td><td><span class="badge badge-a">A등급</span></td></tr>
+            <tr><td>6</td><td style="color:#60a5fa">영웅</td><td>+2</td><td>8,770</td><td>10</td><td>877</td><td><span class="badge badge-a">A등급</span></td></tr>
+            <tr><td>7</td><td style="color:#60a5fa">영웅</td><td>+3</td><td>23,620</td><td>15</td><td>1,575</td><td><span class="badge badge-b">B등급</span></td></tr>
+            <tr><td>8</td><td>일반</td><td>+4</td><td>36,100</td><td>20</td><td>1,805</td><td><span class="badge badge-b">B등급</span></td></tr>
+            <tr><td>9</td><td style="color:#fbbf24">전설</td><td>+2</td><td>21,935</td><td>10</td><td>2,194</td><td><span class="badge badge-b">B등급</span></td></tr>
+            <tr><td>10</td><td style="color:#fbbf24">전설</td><td>+3</td><td>59,195</td><td>15</td><td>3,946</td><td><span class="badge badge-c">C등급</span></td></tr>
+            <tr><td>11</td><td style="color:#60a5fa">영웅</td><td>+4</td><td>88,870</td><td>20</td><td>4,444</td><td><span class="badge badge-c">C등급</span></td></tr>
+            <tr><td>12</td><td style="color:#fbbf24">전설</td><td>+5 (60점)</td><td>684,390</td><td>125</td><td>5,475</td><td><span class="badge badge-c">C등급</span></td></tr>
+            <tr><td>13</td><td>일반</td><td>+5</td><td>140,200</td><td>25</td><td>5,608</td><td><span class="badge badge-d">D등급</span></td></tr>
+            <tr><td>14</td><td style="color:#fbbf24">전설</td><td>+5 (55점)</td><td>684,390</td><td>75</td><td>9,125</td><td><span class="badge badge-d">D등급</span></td></tr>
+            <tr><td>15</td><td style="color:#fbbf24">전설</td><td>+4</td><td>205,195</td><td>20</td><td>10,260</td><td><span class="badge badge-d">D등급</span></td></tr>
+            <tr><td>16</td><td style="color:#60a5fa">영웅</td><td>+5</td><td>280,240</td><td>25</td><td>11,210</td><td><span class="badge badge-d">D등급</span></td></tr>
+            <tr><td>17</td><td style="color:#fbbf24">전설</td><td>+5 (보너스 없음)</td><td>684,390</td><td>25</td><td>27,376</td><td><span class="badge badge-d">D등급</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -491,43 +389,48 @@
       
       <div class="step-card" style="border-left:4px solid #a78bfa">
         <h3>🟢 S등급 (최우선 순위 - 1P당 500골드 이하)</h3>
-        <p><strong>영웅 +1 / 일반 +2</strong><br>
-        극소량의 골드만으로 엄청난 포인트를 고속 회수하는 절대적 가성비 구간입니다.</p>
+        <p><strong>일반 +1 / 영웅 +1 / 일반 +2</strong><br>
+        현재 입력값 기준으로 1P당 계산 비용이 500골드 이하인 구간입니다.</p>
       </div>
 
       <div class="step-card" style="border-left:4px solid #60a5fa">
         <h3>🔵 A등급 (효율 좋음 - 1P당 500~1,000골드)</h3>
         <p><strong>전설 +1 / 일반 +3 / 영웅 +2</strong><br>
-        가성비가 매우 뛰어나며 골드 소모 대비 확실한 효율을 보장합니다.</p>
+        현재 입력값 기준으로 1P당 계산 비용이 500~1,000골드인 구간입니다.</p>
       </div>
 
       <div class="step-card" style="border-left:4px solid #fbbf24">
         <h3>🟡 B등급 (보통 - 1P당 1,000~2,500골드)</h3>
         <p><strong>영웅 +3 / 일반 +4 / 전설 +2</strong><br>
-        보통의 효율을 보이며, 도감 및 덱 성장을 위한 가장 안정적인 실질적 강화 마지노선입니다.</p>
+        현재 입력값 기준으로 1P당 계산 비용이 1,000~2,500골드인 구간입니다.</p>
       </div>
 
       <div class="step-card" style="border-left:4px solid #10b981">
         <h3>🟣 C등급 (낮음/특정 목적 - 1P당 2,500~5,500골드)</h3>
-        <p><strong>전설 +3 / 영웅 +4 / 전설 +5 (60점 보너스 목적)</strong><br>
-        기본 가성비는 떨어지지만, 전설 젬의 60점 추가 보너스(+100P)가 100% 확정일 때는 포인트 환산 효율이 5,395골드로 복구되므로 고려할 만합니다.</p>
+        <p><strong>전설 +3 / 영웅 +4 / 전설 +5 (60점 보너스 선택)</strong><br>
+        계산기에서 60점 보너스(+100P)를 선택한 경우 전설 +5의 1P당 비용은 5,475골드로 계산됩니다.</p>
       </div>
 
       <div class="step-card" style="border-left:4px solid #ef4444">
         <h3>🔴 D등급 (비추천/효율 최악 - 1P당 5,500골드 초과)</h3>
-        <p><strong>일반 +5 / 전설 +5 (55점 달성) / 영웅 +5 / 전설 +5 (보너스 없음)</strong><br>
-        <strong>전설 +5 (55점 달성)</strong>은 보너스 포인트(+50P)를 받더라도 1P당 8,992골드라는 극악의 비효율을 보여주므로 <strong>비추천</strong>합니다. 투자 골드 대비 포인트 리턴이 극단적으로 낮으므로 절대 피하시는 것이 좋습니다.</p>
+        <p><strong>일반 +5 / 전설 +5 (55점 달성) / 전설 +4 / 영웅 +5 / 전설 +5 (보너스 없음)</strong><br>
+        현재 입력값에서 1P당 비용이 5,500골드를 넘는 구간입니다. 보유 골드와 강화 목적을 함께 고려해 판단하세요.</p>
       </div>
     </div>
 
     <div class="content-section">
-      <h2>5. 최종 요약 및 추천 강화 한계선</h2>
+      <h2>5. 계산 결과를 읽는 방법</h2>
       <ul>
-        <li><strong>순수 효율 기준 추천 한계선</strong>: 일반 젬은 <strong>+4까지</strong>, 영웅 젬은 <strong>+3까지</strong>, 전설 젬은 <strong>+3까지</strong> 투자하는 것이 비용 대 효율 측면에서 가장 유리합니다.</li>
-        <li><strong>전설 +5의 예외성</strong>: 오직 전설 젬의 **60점 보너스**를 확실하게 띄울 수 있는 조건일 때만 투자 가치가 성립됩니다. 55점 보너스는 투입 재화 대비 효율이 너무 낮아 손해입니다.</li>
-        <li><strong>추천 강화 우선순위 테크</strong>: 영웅 +1 ➔ 일반 +2 ➔ 전설 +1 ➔ 일반 +3 ➔ 영웅 +2 ➔ 영웅 +3 ➔ 일반 +4</li>
+        <li><strong>1P당 비용 비교</strong>: 숫자가 낮을수록 이 표의 가정 안에서는 같은 포인트를 얻는 데 필요한 골드가 적습니다.</li>
+        <li><strong>전설 +5 보너스</strong>: 55점 또는 60점 옵션 선택에 따라 분모인 획득 포인트가 달라져 결과 차이가 큽니다.</li>
+        <li><strong>판단 범위</strong>: 이 표는 골드와 포인트만 비교하며, 강화 목적이나 다른 게임 자원의 가치는 반영하지 않습니다.</li>
       </ul>
     </div>
+
+    <aside class="source-note">
+      <strong>계산 방법</strong>
+      <p>누적 강화 비용에서 목표 판매가와 시작 판매가의 차이를 빼 실질 소모 골드를 구하고, 이를 해당 구간의 획득 포인트로 나눕니다. 반올림은 가장 가까운 정수 골드 단위로 적용합니다.</p>
+    </aside>
 
     <a href="/" class="back-btn">← 메인 교환소로 이동</a>
 
@@ -537,7 +440,7 @@
         <a href="/privacy.html">개인정보처리방침</a> · <a href="/terms.html">이용규칙</a> · <a href="/about.html">소개</a> · <a href="/tips-gem-reinforcement.html">젬 강화 효율표</a>
       </p>
     </footer>
-  </div>
+  </main>
 
   <script>
     // 젬 강화 기초 DB

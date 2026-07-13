@@ -1,4 +1,3 @@
-import React from 'react';
 import { ShieldCheck, Scale, Mail, Info, BookOpen, HelpCircle, Book } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -96,7 +95,7 @@ export function Footer({ onNavigate }) {
             </a>
 
             <a 
-              href="#gem-table"
+              href="/tips-gem-reinforcement.html"
               onClick={(e) => {
                 e.preventDefault();
                 if (onNavigate) onNavigate('gemTable');
@@ -119,7 +118,7 @@ export function Footer({ onNavigate }) {
             </a>
 
             <a 
-              href="#guide"
+              href="/tips-sticker-collection.html"
               onClick={(e) => {
                 e.preventDefault();
                 if (onNavigate) onNavigate('colGuide');

@@ -204,6 +204,176 @@ header {
   cursor: pointer;
 }
 
+.header-content-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.9rem;
+  width: 100%;
+}
+
+.header-content-nav a {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.header-content-nav a:hover,
+.header-content-nav a:focus-visible {
+  color: var(--primary-color);
+}
+
+.content-hub {
+  width: 100%;
+  max-width: 1200px;
+  margin: 32px auto 12px;
+  text-align: left;
+}
+
+.content-hub-heading {
+  max-width: 760px;
+}
+
+.content-hub-eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--primary-color);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.content-hub-heading h2 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.45rem;
+  line-height: 1.35;
+}
+
+.content-hub-heading p {
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.75;
+}
+
+.content-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 24px 0;
+  padding: 18px 0;
+  border-top: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.content-metric {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 3px;
+  min-width: 0;
+  padding: 0 18px;
+  border-right: 1px solid var(--border-color);
+}
+
+.content-metric:first-child { padding-left: 0; }
+.content-metric:last-child { border-right: 0; }
+
+.content-metric dt {
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.content-metric dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.content-resource-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.content-resource-link {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.content-resource-link:hover,
+.content-resource-link:focus-visible {
+  background: var(--card-hover-bg);
+  border-color: var(--border-hover-color);
+  transform: translateY(-1px);
+}
+
+.content-resource-icon {
+  display: inline-flex;
+  color: var(--primary-color);
+}
+
+.content-resource-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.content-resource-copy strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.content-resource-copy > span {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.content-resource-arrow {
+  color: var(--text-muted);
+}
+
+.content-hub-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+}
+
+.content-hub-meta button {
+  padding: 7px 10px;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.content-hub-meta button:hover,
+.content-hub-meta button:focus-visible {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
 .logo-container {
   display: inline-flex;
   flex-direction: column;
@@ -677,6 +847,45 @@ input:focus, select:focus, textarea:focus {
 
   .header-actions {
     gap: 0.5rem;
+  }
+
+  .header-content-nav {
+    gap: 0.4rem 0.75rem;
+  }
+
+  .content-hub {
+    margin-top: 24px;
+    padding: 0 0.35rem;
+  }
+
+  .content-hub-heading h2 {
+    font-size: 1.2rem;
+  }
+
+  .content-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 0;
+  }
+
+  .content-metric {
+    padding: 0 12px;
+  }
+
+  .content-metric:nth-child(2) {
+    border-right: 0;
+  }
+
+  .content-metric:nth-child(3) {
+    padding-left: 0;
+  }
+
+  .content-resource-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .content-hub-meta {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .header-user-menu {

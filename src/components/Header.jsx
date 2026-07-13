@@ -202,6 +202,13 @@ export function Header({
           </div>
         ) : null}
       </div>
+
+      <nav className="header-content-nav" aria-label={language === 'ko' ? '정보 문서' : 'Reference pages'}>
+        <a href="/about-stickers.html">{language === 'ko' ? '스티커 데이터' : 'Sticker data'}</a>
+        <a href="/tips-matching-guide.html">{language === 'ko' ? '매칭 원리' : 'Match logic'}</a>
+        <a href="/tips-safe-trading.html">{language === 'ko' ? '안전 교환' : 'Safe exchange'}</a>
+        <a href="/tips-gem-reinforcement.html">{language === 'ko' ? '젬 계산기' : 'Gem calculator'}</a>
+      </nav>
     </header>
   );
 }
