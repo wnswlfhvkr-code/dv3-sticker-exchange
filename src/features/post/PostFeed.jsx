@@ -170,7 +170,7 @@ export function PostFeed({
       <AdBanner type="horizontal" />
 
       {/* 검색 및 필터 바 */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', width: '100%', maxWidth: '800px', margin: '0 auto 1.5rem auto' }}>
+      <div className="content-width" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem', margin: '0 auto 1.5rem auto' }}>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
           <button 
             className={`btn ${(!filterMatchedOnly && !filterExchangeableOnly) ? 'btn-primary' : 'btn-outline'}`}
@@ -243,16 +243,16 @@ export function PostFeed({
 
       {/* 등록된 글 피드 그리드 */}
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 0', gap: '1rem', width: '100%' }}>
+        <div className="content-width" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4rem 0', gap: '1rem' }}>
           <RefreshCw size={32} className="spin-anim" />
           <p>{t('loadingExchangeFeeds')}</p>
         </div>
       ) : filteredPosts.length === 0 ? (
-        <div className="glass-card" style={{ padding: '4rem 2rem', color: 'var(--text-secondary)', textAlign: 'center', width: '100%', maxWidth: '800px', margin: '0 auto' }}>
+        <div className="glass-card content-width" style={{ padding: '4rem 2rem', color: 'var(--text-secondary)', textAlign: 'center', margin: '0 auto' }}>
           {t('noExchangePosts')}
         </div>
       ) : (
-        <div className="grid-container" style={{ width: '100%', maxWidth: '800px', margin: '0 auto' }}>
+        <div className="grid-container content-width" style={{ margin: '0 auto' }}>
           {currentPosts.map(post => {
             const isMyPost = userNickname && post.nickname === userNickname;
             const { isPerfectMatch, isPartialMatch, myWantsMatch, myHavesMatch } = checkMatching(post);

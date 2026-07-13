@@ -205,8 +205,7 @@ function App() {
           />
 
           {/* 1.5. 공략 가이드북 및 백과사전 퀵 배너 */}
-          <div style={{
-            maxWidth: '1200px',
+          <div className="content-width" style={{
             margin: '20px auto 10px auto',
             padding: '24px',
             background: 'var(--card-bg)',
@@ -356,9 +355,7 @@ function App() {
           )}
 
           {/* 5.5 퀵 서치 (스티커 빠른 검색) */}
-          <div style={{
-            maxWidth: '800px',
-            width: '100%',
+          <div className="content-width" style={{
             margin: '1.5rem auto 1.5rem auto',
             padding: '1.5rem',
             background: 'var(--card-bg)',
@@ -457,8 +454,7 @@ function App() {
           <BoardSection userNickname={authVM.userNickname} setShowLoginModal={authVM.setShowLoginModal} />
 
           {/* 6.8 비공식 안내 및 안전 거래 수칙 */}
-          <div style={{
-            maxWidth: '1200px',
+          <div className="content-width" style={{
             margin: '20px auto 10px auto',
             padding: '24px',
             background: 'var(--card-bg)',

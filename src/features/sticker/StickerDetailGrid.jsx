@@ -117,7 +117,7 @@ export function StickerDetailGrid({
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', textAlign: 'left', marginBottom: '2.5rem', width: '100%', maxWidth: '800px', position: 'relative' }} className="detail-work-layout">
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem', textAlign: 'left', marginBottom: '2.5rem', position: 'relative' }} className="detail-work-layout content-width">
       
       {/* 이전 카테고리 플로팅 화살표 (4번 카드 왼쪽 바깥) */}
       <button 

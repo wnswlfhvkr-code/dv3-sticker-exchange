@@ -5,7 +5,7 @@ export function Footer({ onNavigate }) {
   const { t } = useLanguage();
 
   return (
-    <footer style={{
+    <footer className="content-width" style={{
         marginTop: '60px',
         padding: '30px 20px',
         background: 'rgba(5, 3, 10, 0.65)',
@@ -17,7 +17,7 @@ export function Footer({ onNavigate }) {
         lineHeight: '1.6',
       }}>
         <div style={{
-          maxWidth: '1200px',
+          width: '100%',
           margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',

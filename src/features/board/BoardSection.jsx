@@ -80,7 +80,7 @@ Post Content: "${content}"`;
   };
 
   return (
-    <section style={{ width: '100%', maxWidth: '800px', margin: '0 auto 2.5rem' }}>
+    <section className="content-width" style={{ margin: '0 auto 2.5rem' }}>
       {/* 자유게시판 상단 광고 배너 */}
       <AdBanner type="horizontal" />
 

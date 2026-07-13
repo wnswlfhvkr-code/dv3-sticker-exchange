@@ -7,7 +7,7 @@ export function CategoryList({
   setSelectedCategoryId 
 }) {
   return (
-    <div className="glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%', maxWidth: '800px' }}>
+    <div className="glass-card content-width" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       <h2 style={{ fontSize: '1.3rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
         <BookOpen size={20} color="var(--primary-color)" />
         나의 스티커북

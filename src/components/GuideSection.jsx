@@ -347,8 +347,7 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
   };
 
   return (
-    <div className="guide-container" style={{
-      maxWidth: '1200px',
+    <div className="guide-container content-width" style={{
       margin: '20px auto',
       padding: '24px',
       background: 'var(--card-bg)',
@@ -605,7 +604,8 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
               {c.gemTable.dataTitle}
             </h2>
             <h3 style={{ fontSize: '15px', color: 'var(--primary-color)', margin: '15px 0 8px 0' }}>{c.gemTable.tableCostTitle}</h3>
-            <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <div className="table-scroll">
+              <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
                   <th style={{ padding: '10px', textAlign: 'left' }}>{c.gemTable.tableColGrade}</th>
@@ -646,10 +646,12 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                   <td style={{ padding: '10px', color: 'var(--primary-color)' }}>1,368,390</td>
                 </tr>
               </tbody>
-            </table>
+              </table>
+            </div>
 
             <h3 style={{ fontSize: '15px', color: 'var(--primary-color)', margin: '25px 0 8px 0' }}>{c.gemTable.tablePriceTitle}</h3>
-            <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+            <div className="table-scroll">
+              <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
                   <th style={{ padding: '10px', textAlign: 'left' }}>{c.gemTable.tableColGrade}</th>
@@ -690,7 +692,8 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                   <td style={{ padding: '10px' }}>694,000</td>
                 </tr>
               </tbody>
-            </table>
+              </table>
+            </div>
             <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>{c.gemTable.tableNote}</p>
           </div>
 
@@ -700,7 +703,8 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
               {c.gemTable.rankTitle}
             </h2>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{c.gemTable.rankNote}</p>
-            <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginTop: '10px' }}>
+            <div className="table-scroll">
+              <table className="custom-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', marginTop: '10px' }}>
               <thead>
                 <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
                   <th style={{ padding: '10px' }}>{c.gemTable.tableColRank}</th>
@@ -768,7 +772,8 @@ export function GuideSection({ activeTab, setActiveTab, onBack }) {
                   <td style={{ padding: '10px' }}><span className="badge badge-a">{c.gemTable.rank2}</span></td>
                 </tr>
               </tbody>
-            </table>
+              </table>
+            </div>
           </div>
 
           {/* 효율 분석 및 등급 */}
