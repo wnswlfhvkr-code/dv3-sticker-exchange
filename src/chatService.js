@@ -39,7 +39,7 @@ const makeSafeChannelName = (str) => {
   try {
     const utf8Btoa = (s) => btoa(encodeURIComponent(s).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode(parseInt(p1, 16))));
     return utf8Btoa(str).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-  } catch (e) {
+  } catch {
     return str.replace(/[^a-zA-Z0-9-_]/g, '_');
   }
 };
@@ -91,7 +91,9 @@ const hideRoomForUser = (nickname, roomId) => {
 
 const unhideRoomForUser = (nickname, roomId) => {
   if (!nickname || !roomId) return;
-  const next = getHiddenRoomIds(nickname).filter(id => String(id) !== String(roomId));
+  const hiddenRoomIds = getHiddenRoomIds(nickname);
+  const next = hiddenRoomIds.filter(id => String(id) !== String(roomId));
+  if (next.length === hiddenRoomIds.length) return;
   saveHiddenRoomIds(nickname, next);
 };
 
@@ -180,37 +182,17 @@ export const chatService = {
       } catch (e) {
         console.error('Supabase chat room error:', e);
         throw e;
-        
-        // Supabase의 chat_rooms.id가 아직 숫자 타입인 운영 DB에서도 메시지 기반 방은 계속 작동해야 한다.
-        const syntheticRoom = {
-          id: roomId,
-          postId,
-          buyerNickname,
-          sellerNickname,
-          lastMessage: '',
-          updatedAt: new Date().toISOString()
-        };
-
-        const rooms = getLocalRooms();
-        let room = rooms.find(r => r.id === roomId);
-        if (!room) {
-          room = syntheticRoom;
-          rooms.push(room);
-          saveLocalRooms(rooms);
-        }
-        unhideRoomForUser(buyerNickname, roomId);
-        return syntheticRoom;
       }
     }
   },
 
   // 2. 내가 속한 채팅방 목록 가져오기 (최신 3세그먼트 1:1 통합 방 규격만 필터링)
-  async getMyChatRooms(nickname) {
+  async getMyChatRooms(nickname, { includeHidden = false } = {}) {
     if (isMock) {
       const rooms = getLocalRooms();
       return rooms.filter(r => {
         const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
-        return isMyRoom && !isRoomHiddenForUser(nickname, r.id);
+        return isMyRoom && (includeHidden || !isRoomHiddenForUser(nickname, r.id));
       });
     } else {
       try {
@@ -232,16 +214,10 @@ export const chatService = {
         return Object.values(allRoomsMap).map(room => {
           const formatted = formatDbRoom(room);
           return formatted || room;
-        }).filter(r => !isRoomHiddenForUser(nickname, r.id));
+        }).filter(r => includeHidden || !isRoomHiddenForUser(nickname, r.id));
       } catch (e) {
         console.error('Supabase chat rooms fetch failed:', e);
         throw e;
-        
-        const rooms = getLocalRooms();
-        return rooms.filter(r => {
-          const isMyRoom = r.buyerNickname === nickname || r.sellerNickname === nickname;
-          return isMyRoom && !isRoomHiddenForUser(nickname, r.id);
-        });
       }
     }
   },
@@ -278,13 +254,14 @@ export const chatService = {
           .insert([{
             room_id: roomId,
             sender,
-            text,
-            timestamp: newMessage.timestamp
+            text
           }])
           .select()
           .single();
         
         if (error) throw error;
+        const storedMessage = formatDbMessage(data);
+        const storedTimestamp = storedMessage?.timestamp || newMessage.timestamp;
         
         // 채팅방 정보(마지막 메시지 및 갱신 시간) 업데이트
         try {
@@ -292,62 +269,95 @@ export const chatService = {
             .from('chat_rooms')
             .update({
               last_message: text,
-              updated_at: newMessage.timestamp
+              updated_at: storedTimestamp
             })
             .eq('id', roomId);
         } catch (updateErr) {
           console.warn('Failed to update last message on chat room:', updateErr);
         }
 
-        return formatDbMessage(data);
+        return storedMessage;
       } catch (e) {
         console.error('Supabase send message failed:', e);
         throw e;
-        
-        // 폴백 저장
-        const messages = getLocalMessages();
-        messages.push(newMessage);
-        saveLocalMessages(messages);
-
-        const rooms = getLocalRooms();
-        const roomIndex = rooms.findIndex(r => r.id === roomId);
-        if (roomIndex !== -1) {
-          rooms[roomIndex].lastMessage = text;
-          rooms[roomIndex].updatedAt = newMessage.timestamp;
-          saveLocalRooms(rooms);
-        }
-        return newMessage;
       }
     }
   },
 
   // 4. 특정 채팅방 메시지 히스토리 가져오기
-  async getMessages(roomId) {
+  async getMessages(roomId, { since = null } = {}) {
     if (isMock) {
       const messages = getLocalMessages();
-      return messages.filter(m => String(m.roomId) === String(roomId));
+      return messages.filter((message) => {
+        if (String(message.roomId) !== String(roomId)) return false;
+        return !since || Date.parse(message.timestamp || '') >= Date.parse(since);
+      });
     } else {
       try {
-        const { data, error } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .eq('room_id', String(roomId))
-          .order('timestamp', { ascending: true });
-        if (error) throw error;
-        return (data || []).map(formatDbMessage);
+        const pageSize = 1000;
+        const messages = [];
+        let from = 0;
+
+        while (true) {
+          let query = supabase
+            .from('chat_messages')
+            .select('*')
+            .eq('room_id', String(roomId));
+          if (since) query = query.gte('timestamp', since);
+
+          const { data, error } = await query
+            .order('timestamp', { ascending: true })
+            .order('id', { ascending: true })
+            .range(from, from + pageSize - 1);
+          if (error) throw error;
+
+          const page = data || [];
+          messages.push(...page.map(formatDbMessage));
+          if (page.length < pageSize) break;
+          from += pageSize;
+        }
+
+        return messages;
       } catch (e) {
         console.error('Supabase fetch messages failed:', e);
         throw e;
-        
-        const messages = getLocalMessages();
-        return messages.filter(m => String(m.roomId) === String(roomId));
       }
+    }
+  },
+
+  async getLatestMessage(roomId) {
+    if (isMock) {
+      const messages = getLocalMessages()
+        .filter(message => String(message.roomId) === String(roomId));
+      return messages[messages.length - 1] || null;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('room_id', String(roomId))
+        .order('timestamp', { ascending: false })
+        .order('id', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      return formatDbMessage(data);
+    } catch (error) {
+      console.error('Supabase latest message fetch failed:', error);
+      throw error;
     }
   },
 
   leaveChatRoom(nickname, roomId) {
     hideRoomForUser(nickname, roomId);
-    localStorage.setItem(`dv3_unread_${roomId}`, '0');
+    localStorage.removeItem(`dv3_unread_${roomId}`);
+  },
+
+  restoreChatRoom(nickname, roomId) {
+    if (isRoomHiddenForUser(nickname, roomId)) {
+      unhideRoomForUser(nickname, roomId);
+    }
   },
 
   // 5. 실시간 메시지 리스너 구독 설정
@@ -514,7 +524,7 @@ export const chatService = {
   },
 
   // 7. 나에게 오는 모든 메시지 글로벌 실시간 구독 (알림음, 미리보기, 안읽은 개수 추적용)
-  subscribeAllMyMessages(myNickname, onNewMessage) {
+  subscribeAllMyMessages(myNickname, onNewMessage, onConnected) {
     if (!isMock) {
       const client = getActiveSupabaseClient() || rawSupabase;
       if (!client) return () => {};
@@ -543,7 +553,11 @@ export const chatService = {
             }
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            onConnected?.();
+          }
+        });
 
       return () => {
         client.removeChannel(channel);
