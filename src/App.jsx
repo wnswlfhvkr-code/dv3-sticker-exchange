@@ -204,59 +204,6 @@ function App() {
             }}
           />
 
-          {/* 1.2. 비공식 안내 및 안전 거래 수칙 정보성 콘텐츠 (AdSense 콘텐츠 가치 보강) */}
-          <div style={{
-            maxWidth: '1200px',
-            margin: '20px auto 10px auto',
-            padding: '24px',
-            background: 'var(--card-bg)',
-            backdropFilter: 'blur(12px)',
-            borderRadius: '24px',
-            border: '1px solid var(--border-color)',
-            boxShadow: 'var(--shadow-main)',
-            textAlign: 'left'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
-              <span style={{ fontSize: '22px' }}>🛡️</span>
-              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--primary-color)' }}>
-                {t('safetyTitle')}
-              </h2>
-            </div>
-            <p style={{ margin: '0 0 16px 0', fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
-              {t('safetyDesc')}
-            </p>
-            
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', 
-              gap: '16px', 
-              borderTop: '1px solid var(--border-color)', 
-              paddingTop: '16px' 
-            }}>
-              <div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule1Title')}</h4>
-                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                  <li>{t('rule1Desc1')}</li>
-                  <li>{t('rule1Desc2')}</li>
-                </ul>
-              </div>
-              <div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule2Title')}</h4>
-                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                  <li>{t('rule2Desc1')}</li>
-                  <li>{t('rule2Desc2')}</li>
-                </ul>
-              </div>
-              <div>
-                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule3Title')}</h4>
-                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
-                  <li>{t('rule3Desc1')}</li>
-                  <li>{t('rule3Desc2')}</li>
-                </ul>
-              </div>
-            </div>
-          </div>
-
           {/* 1.5. 공략 가이드북 및 백과사전 퀵 배너 */}
           <div style={{
             maxWidth: '1200px',
@@ -508,6 +455,59 @@ function App() {
 
           {/* 6.5 로그인 전용 독립 게시판 */}
           <BoardSection userNickname={authVM.userNickname} setShowLoginModal={authVM.setShowLoginModal} />
+
+          {/* 6.8 비공식 안내 및 안전 거래 수칙 */}
+          <div style={{
+            maxWidth: '1200px',
+            margin: '20px auto 10px auto',
+            padding: '24px',
+            background: 'var(--card-bg)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: '24px',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow-main)',
+            textAlign: 'left'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
+              <span style={{ fontSize: '22px' }}>🛡️</span>
+              <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--primary-color)' }}>
+                {t('safetyTitle')}
+              </h2>
+            </div>
+            <p style={{ margin: '0 0 16px 0', fontSize: '13.5px', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
+              {t('safetyDesc')}
+            </p>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '16px',
+              borderTop: '1px solid var(--border-color)',
+              paddingTop: '16px'
+            }}>
+              <div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule1Title')}</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  <li>{t('rule1Desc1')}</li>
+                  <li>{t('rule1Desc2')}</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule2Title')}</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  <li>{t('rule2Desc1')}</li>
+                  <li>{t('rule2Desc2')}</li>
+                </ul>
+              </div>
+              <div>
+                <h4 style={{ margin: '0 0 6px 0', fontSize: '14px', color: 'var(--text-primary)', fontWeight: '700' }}>{t('rule3Title')}</h4>
+                <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '12.5px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+                  <li>{t('rule3Desc1')}</li>
+                  <li>{t('rule3Desc2')}</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </>
       ) : (
         <GuideSection 
