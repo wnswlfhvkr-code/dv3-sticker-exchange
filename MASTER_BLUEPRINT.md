@@ -86,4 +86,24 @@
 *   **동일 탭 뷰 전환 제어**: 헤더 로고, 메인 퀵 배너, 푸터의 가이드북 링크 클릭 시 브라우저 새 창이 뜨지 않고 동일 탭 내에서 React `currentView` 상태 조작을 통해 자연스럽게 가이드북 화면으로 전환되며, 전환과 함께 화면의 최상단(Top)으로 부드럽게 스크롤되도록 제어하여 UX를 획기적으로 개선했습니다.
 *   **푸터(Footer) 영역의 다국어화**: 사이트 하단 푸터 내부의 개인정보처리방침, 커뮤니티 이용규칙, 사이트 소개, 젬 강화 효율표, 이용 가이드, 자주 묻는 질문, 문의 이메일 및 면책조항 저작권 안내 텍스트 전체에 `useLanguage`를 연동하여 한/영 번역이 실시간으로 동시 적용되도록 완벽히 이식하였습니다.
 
+---
+
+## 8. 포트폴리오 핵심 트러블슈팅 및 기술적 의사결정 하이라이트 (Troubleshooting & Decisions)
+*   **실시간 소켓 최적화 및 99% 트래픽 절감**: 1.5초 무한 폴링 방식을 Supabase Realtime 웹소켓 이벤트 구독으로 전면 전환하여 서버 부하 99% 감축. ES6 Proxy와 웹소켓의 `this` 바인딩 충돌을 싱글톤 바이패스로 해결하고, 낙관적 업데이트(Optimistic Update)로 0.001초 응답 UX 구현.
+*   **PostgreSQL RLS(Row Level Security) 정책 고도화**: 대화방 생성 및 메시지 전송 시 발생하는 RLS 충돌을 '발신자 사칭 방지'와 '구매자 검증'의 단일 책임 원칙으로 분리 해결. HTTP 헤더가 없는 Realtime 세션과 REST 세션을 분리 처리하고 관리자('간장') 우회 정책 완비.
+*   **무료 티어(월 5GB Egress) 방어 및 비상 데이터 복구**: 이전 DB 차단 사태 시 17개 리전 스캔 스크립트로 신규 DB를 구축하고, 1,000건 벌크 INSERT로 4,000여 건 데이터를 6초 만에 100% 무결성 이전 복구. 60초 메모리 캐시 및 브라우저 탭 비활성화에 따른 Presence 해제 + 백그라운드 실시간 알림 유지 하이브리드 아키텍처 설계.
+*   **3,500라인 모놀리식 ➡️ MVVM 아키텍처 리팩토링**: 거대 `App.jsx`를 5개 커스텀 ViewModel 훅과 12개 View 컴포넌트로 완벽 분리. 순환 의존성(Circular Dependency) 및 TDZ 문제를 `useRef` 지연 바인딩과 Getter 패턴으로 해결.
+*   **동적 스크래핑(Ulixee Hero) 및 TCG 반응형 UI**: 봇 방어를 우회하여 180종 스티커의 초고화질 CDN 데이터를 추출하고 `aspectRatio: 3/4` 기반의 게임 감성 도감 인터페이스 완성.
+
+---
+
+## 9. 프로젝트 인수인계 및 포트폴리오 핸드오프 문서 (Handoff & Portfolio Docs)
+*   🤝 **전체 프로젝트 인수인계서**: [HANDOFF.md](./HANDOFF.md)
+*   📄 **Supabase 한도 초과 장애 극복 포트폴리오 케이스 스터디**: [PORTFOLIO_CASE_STUDY_SUPABASE_OUTAGE.md](./PORTFOLIO_CASE_STUDY_SUPABASE_OUTAGE.md)
+*   🗺️ **컴포넌트 및 뷰모델 연결 아키텍처 맵**: [docs/architecture/ARCHITECTURE_MAP.md](./docs/architecture/ARCHITECTURE_MAP.md)
+*   📝 **개발일지 및 종합 리포트 모음**: [docs/dev-log/summary_20260924.md](./docs/dev-log/summary_20260924.md)
+
+
+
+
 

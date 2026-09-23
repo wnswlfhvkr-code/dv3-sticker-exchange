@@ -118,7 +118,7 @@ const GUIDE_CONTENT = {
       sec3List3: '외부 링크 확인: 로그인이나 파일 설치를 요구하는 낯선 주소는 열지 않습니다.',
       sec4Title: '4. 신고할 때',
       sec4List1: '교환글 또는 게시글의 신고 버튼으로 구체적인 상황을 접수합니다.',
-      sec4List2: '필요하면 개인정보를 가린 스크린샷과 닉네임을 helper.dv3sticker@gmail.com으로 보냅니다.',
+      sec4List2: '필요하면 개인정보를 가린 스크린샷과 닉네임을 wnsdudvhkr@gmail.com으로 보냅니다.',
       sec4List3: '운영자는 접수 내용을 검토하지만 처리 시간, 특정 제재, 게임 아이템 복구를 보장하지 않습니다.'
     },
     matchEngine: {
@@ -259,7 +259,7 @@ const GUIDE_CONTENT = {
       sec3List3: 'External links: Avoid unknown pages that request login, file installation, or remote access.',
       sec4Title: '4. Reporting an issue',
       sec4List1: 'Use Report on the relevant exchange or board post and describe what happened.',
-      sec4List2: 'If needed, email redacted screenshots and the nickname to helper.dv3sticker@gmail.com.',
+      sec4List2: 'If needed, email redacted screenshots and the nickname to wnsdudvhkr@gmail.com.',
       sec4List3: 'Reports are reviewed, but the site does not guarantee a response time, a specific sanction, or restoration of game items.'
     },
     matchEngine: {

@@ -168,7 +168,7 @@ export function Footer({ onNavigate }) {
               color: 'rgba(255, 255, 255, 0.4)',
             }}>
               <Mail size={15} />
-              {t('contactMail')}: helper.dv3sticker@gmail.com
+              {t('contactMail')}: wnsdudvhkr@gmail.com
             </span>
           </div>
  
